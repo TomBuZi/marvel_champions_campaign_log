@@ -145,8 +145,9 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (81 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (83 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang | print | import
+BROWSER_LANG=de-DE node test/run-browser.js   # unter einer anderen Browser-Sprache
 ```
 
 `test/seed.html` legt einen ausgefüllten Beispielbogen an und springt in die App —
@@ -155,6 +156,15 @@ praktisch für Screenshots und für den Druckvergleich.
 Der Selbsttest sucht Edge oder Chrome selbst; mit `BROWSER=/pfad/zum/chrome` lässt sich
 das überschreiben. Findet er keinen, bricht er mit Code 2 ab und sagt ausdrücklich,
 dass **nicht** getestet wurde — ein Skip ist kein Erfolg.
+
+Die Browser-Sprache ist auf `en-US` festgenagelt (`BROWSER_LANG` überschreibt das).
+Das ist Absicht: ohne gespeicherte Präferenz leitet die App ihre Sprache aus
+`navigator.language` ab, und Testfälle, die deutsche Wortlaute prüfen, hingen dadurch
+an der Sprache des Rechners — auf einem deutschen Desktop grün, in CI rot. Die Fälle
+setzen die App-Sprache jetzt selbst, und der Runner läuft absichtlich unter einer
+nicht-deutschen Locale, damit dieselbe Annahme nicht wieder durchrutscht. Die
+Auto-Erkennung selbst wird gegen `navigator.language` geprüft, nicht gegen eine
+festverdrahtete Sprache.
 
 CI (`.github/workflows/ci.yml`) fährt alle drei Schritte bei jedem Push.
 

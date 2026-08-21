@@ -6,7 +6,8 @@
    results into a <pre>, which this script reads back out of the dumped DOM.
 
    Usage: node test/run-browser.js [case …]
-   With no arguments it runs every case. Set BROWSER to point at a binary. */
+   With no arguments it runs every case. Set BROWSER to point at a binary, and
+   BROWSER_LANG to run under a different locale. */
 "use strict";
 
 const { execFileSync, spawn } = require("child_process");
@@ -19,6 +20,12 @@ const root = path.resolve(__dirname, "..");
 const CASES = ["basic", "quarantine", "share", "lang", "print", "import"];
 const cases = process.argv.slice(2).length ? process.argv.slice(2) : CASES;
 const PORT = Number(process.env.PORT || 8139);
+/* The browser locale is pinned, because the app picks its language from
+   navigator.language when nothing is stored. Leaving it to the machine made
+   this suite pass on a German desktop and fail in CI, so the cases now pin the
+   app language themselves and the browser runs under a fixed, deliberately
+   non-German locale that would catch the assumption again. */
+const LANG = process.env.BROWSER_LANG || "en-US";
 
 /* Browsers that can be told to dump a rendered DOM. Chrome and Edge share the
    flag, so either will do; the first one found wins. */
@@ -75,6 +82,7 @@ function dumpDom(browser, url, profile) {
     const args = [
       "--headless=new", "--disable-gpu", "--no-sandbox", "--no-first-run",
       "--disable-dev-shm-usage", "--user-data-dir=" + profile,
+      "--lang=" + LANG, "--accept-lang=" + LANG,
       "--virtual-time-budget=25000", "--dump-dom", url,
     ];
     const child = spawn(browser, args, { stdio: ["ignore", "pipe", "pipe"] });
@@ -97,7 +105,7 @@ function decodeEntities(s) {
     console.error("The browser self-test did NOT run — this is a skip, not a pass.");
     process.exit(2);
   }
-  console.log("browser: " + browser);
+  console.log("browser: " + browser + "   locale: " + LANG);
   const server = await serve();
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "mcclog-test-"));
   let failures = 0, total = 0;

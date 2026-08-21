@@ -34,6 +34,14 @@
         }
       }, 6000);
 
+      /* Pin the language before booting. Without a stored preference the app
+         derives it from navigator.language, so any case asserting German (or
+         English) wording would pass or fail with the machine's locale. Only the
+         auto-detection itself is allowed to leave this unset. */
+      function pinLang(l) {
+        localStorage.setItem("mcclog:lang", l);
+      }
+
       function seed(store, active) {
         localStorage.clear();
         localStorage.setItem("mcclog:logs", JSON.stringify(store));
@@ -57,6 +65,7 @@
       // ---------------------------------------------------------------- basic
       function caseBasic() {
         localStorage.clear();
+        pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
           var store = JSON.parse(localStorage.getItem("mcclog:logs") || "{}");
@@ -282,9 +291,10 @@
       // ------------------------------------------------------------- language
       function caseLang() {
         localStorage.clear();
+        pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
-          log("starts in German", d.documentElement.lang === "de", d.documentElement.lang);
+          log("stored preference wins", d.documentElement.lang === "de", d.documentElement.lang);
           log("German section heading",
             /Spieler-Informationen/.test(d.getElementById("campaign").textContent));
           d.getElementById("btn-lang").click();
@@ -310,13 +320,32 @@
           log("theme persisted", localStorage.getItem("mcclog:theme") === t1);
           log("campaign skin hook set",
             d.documentElement.getAttribute("data-campaign") === "fne");
-          finish();
+
+          /* With no stored preference the language follows the browser. Derive
+             the expectation from navigator.language instead of hardcoding one,
+             so this passes on a German and an English machine alike — the
+             assumption that broke this suite in CI. */
+          var logs = localStorage.getItem("mcclog:logs");
+          localStorage.clear();
+          localStorage.setItem("mcclog:logs", logs);
+          boot("", function (frame2, w2, d2) {
+            var expected = (w2.navigator.language || "de").toLowerCase().indexOf("en") === 0
+              ? "en" : "de";
+            log("auto-detected language follows the browser",
+              d2.documentElement.lang === expected,
+              "navigator.language=" + w2.navigator.language +
+              " expected=" + expected + " got=" + d2.documentElement.lang);
+            log("auto-detected language is one of de/en",
+              ["de", "en"].indexOf(d2.documentElement.lang) !== -1);
+            finish();
+          });
         });
       }
 
       // ---------------------------------------------------------------- print
       function casePrint() {
         localStorage.clear();
+        pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
           var hero = d.querySelectorAll(".player-card .text-input")[0];
