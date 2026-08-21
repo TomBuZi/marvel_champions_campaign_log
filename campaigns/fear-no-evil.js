@@ -76,6 +76,15 @@
   function scenarioLang(entry, lang) {
     return (lang === "de" && entry.de) ? null : "en";
   }
+  /* The villains not yet given to any scenario. Each is used exactly once, so
+     this is what the randomiser draws from. */
+  function unusedVillains(state) {
+    var taken = {};
+    state.scenarios.forEach(function (row) {
+      if (row.villain) taken[row.villain] = true;
+    });
+    return VILLAINS.filter(function (v) { return !taken[v.slug]; });
+  }
   function villainBySlug(slug) {
     for (var i = 0; i < VILLAINS.length; i++) if (VILLAINS[i].slug === slug) return VILLAINS[i];
     return null;
@@ -334,7 +343,7 @@
       }));
       tr.appendChild(doneCell);
 
-      var villainCell = W.el("td", null, { "data-label": t("colVillain") });
+      var villainCell = W.el("td", "villain-cell", { "data-label": t("colVillain") });
       var select = W.poolSelect({
         value: row.villain,
         label: name + " – " + t("colVillain"),
@@ -342,15 +351,42 @@
         options: VILLAINS.map(function (v) {
           return { value: v.slug, label: v.name, lang: "en" };
         }),
-        onChange: function (next) {
-          row.villain = next;
-          ctx.save();
-          W.syncUnique(selects);
-          paintVillainUsage(state, lang, t);
-        },
+        onChange: function (next) { setVillain(next); },
       });
       selects.push(select);
+
+      /* Rolls one of the villains nobody has been given yet. Only offered while
+         this row is empty — with a villain already in it there is nothing to
+         roll, and overwriting a choice on one click is not what a die is for. */
+      var die = W.iconButton({
+        glyph: "🎲",
+        label: name + " – " + t("randomVillain"),
+        disabled: !!row.villain,
+        lockReason: t("randomVillainTaken"),
+        onClick: function () {
+          var free = unusedVillains(state);
+          var pick = W.pickRandom(free);
+          if (!pick) return;
+          setVillain(pick.slug);
+        },
+      });
+
+      /* Applied from both the dropdown and the die, and in place rather than by
+         re-rendering the panel: that keeps the focus where the player put it. */
+      function setVillain(next) {
+        row.villain = next;
+        select.value = next;
+        ctx.save();
+        W.syncUnique(selects);
+        paintVillainUsage(state, lang, t);
+        die.disabled = !!next || unusedVillains(state).length === 0;
+        die.title = die.disabled
+          ? (next ? t("randomVillainTaken") : t("randomVillainNoneLeft"))
+          : name + " – " + t("randomVillain");
+      }
+
       villainCell.appendChild(select);
+      villainCell.appendChild(die);
       tr.appendChild(villainCell);
 
       var progressCell = W.el("td", null, { "data-label": t("colProgress") });
@@ -530,8 +566,8 @@
     render: render,
     renderPrint: renderPrint,
 
-    helpDe: "Jede Runde werden zwei Szenarien gezogen, die weder abgeschlossen noch gescheitert sind; beide erhalten einen Fortschrittspunkt. Der dritte Punkt bedeutet: Das Szenario ist gescheitert. Deshalb sind „1“, „2“ und „Gescheitert“ ein Zähler und keine drei einzelnen Kästchen — ein Klick auf das jeweils oberste gefüllte Kästchen nimmt einen Punkt zurück. „Abgeschlossen“ und „Gescheitert“ schließen sich aus: Ein abgeschlossenes Szenario friert seinen Fortschritt ein, ein gescheitertes sperrt den Abgeschlossen-Haken — die gesetzten Haken bleiben dabei sichtbar. Jeder der fünf Schurken wird genau einem Szenario zugeordnet; ein gewählter Schurke verschwindet aus den übrigen Zeilen und wird in der Schurkenliste durchgestrichen.",
-    helpEn: "Each round two scenarios that are neither completed nor failed are drawn, and both take one progress point. The third point means the scenario has failed. So “1”, “2” and “Failed” are one counter rather than three separate boxes — clicking the topmost filled box takes a point back. “Completed” and “Failed” are mutually exclusive: a completed scenario freezes its progress and a failed one locks the Completed box, with the existing marks left visible either way. Each of the five villains is assigned to exactly one scenario; a chosen villain disappears from the other rows and is struck through in the villain list.",
+    helpDe: "Jede Runde werden zwei Szenarien gezogen, die weder abgeschlossen noch gescheitert sind; beide erhalten einen Fortschrittspunkt. Der dritte Punkt bedeutet: Das Szenario ist gescheitert. Deshalb sind „1“, „2“ und „Gescheitert“ ein Zähler und keine drei einzelnen Kästchen — ein Klick auf das jeweils oberste gefüllte Kästchen nimmt einen Punkt zurück. „Abgeschlossen“ und „Gescheitert“ schließen sich aus: Ein abgeschlossenes Szenario friert seinen Fortschritt ein, ein gescheitertes sperrt den Abgeschlossen-Haken — die gesetzten Haken bleiben dabei sichtbar. Jeder der fünf Schurken wird genau einem Szenario zugeordnet; ein gewählter Schurke verschwindet aus den übrigen Zeilen und wird in der Schurkenliste durchgestrichen. Der Würfel neben einem leeren Schurken-Feld lost einen der noch freien Schurken aus.",
+    helpEn: "Each round two scenarios that are neither completed nor failed are drawn, and both take one progress point. The third point means the scenario has failed. So “1”, “2” and “Failed” are one counter rather than three separate boxes — clicking the topmost filled box takes a point back. “Completed” and “Failed” are mutually exclusive: a completed scenario freezes its progress and a failed one locks the Completed box, with the existing marks left visible either way. Each of the five villains is assigned to exactly one scenario; a chosen villain disappears from the other rows and is struck through in the villain list. The die next to an empty villain field rolls one of the villains still free.",
 
     i18n: {
       de: {
@@ -559,6 +595,9 @@
         lockedByCompleted: "Szenario ist abgeschlossen — der Fortschritt bleibt stehen und ist gesperrt. Zum Ändern zuerst „Abgeschlossen“ abwählen.",
         lockedByFailed: "Szenario ist gescheitert — „Abgeschlossen“ ist gesperrt. Zum Ändern zuerst einen Fortschrittspunkt zurücknehmen.",
         villainPlaceholder: "— Schurke wählen —",
+        randomVillain: "Zufälligen Schurken auslosen",
+        randomVillainTaken: "Es ist schon ein Schurke gewählt — zum Auslosen erst das Feld leeren.",
+        randomVillainNoneLeft: "Alle Schurken sind bereits zugeordnet.",
         /* "%s" = Szenarioname. */
         assignedTo: "Zugeordnet: %s",
 
@@ -590,6 +629,9 @@
         lockedByCompleted: "Scenario is completed — the progress stays as it is and is locked. Untick “Completed” first to change it.",
         lockedByFailed: "Scenario has failed — “Completed” is locked. Take a progress point back first to change it.",
         villainPlaceholder: "— choose a villain —",
+        randomVillain: "Roll a random villain",
+        randomVillainTaken: "A villain is already chosen — clear the field first to roll.",
+        randomVillainNoneLeft: "Every villain is already assigned.",
         assignedTo: "Assigned to: %s",
 
         cardNamePlaceholder: "Card name …",

@@ -628,7 +628,225 @@
         });
       }
 
-      var cases = { basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict };
+      /* WCAG relative luminance and contrast ratio, so "is this readable" can
+         be asserted as a number instead of eyeballed in a screenshot. */
+      function luminance(rgb) {
+        var c = rgb.map(function (v) {
+          v = v / 255;
+          return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+        });
+        return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+      }
+      function parseRgb(str) {
+        var m = String(str).match(/\d+(?:\.\d+)?/g);
+        return m ? m.slice(0, 3).map(Number) : [0, 0, 0];
+      }
+      function contrast(fg, bg) {
+        var a = luminance(parseRgb(fg)), b = luminance(parseRgb(bg));
+        var hi = Math.max(a, b), lo = Math.min(a, b);
+        return (hi + 0.05) / (lo + 0.05);
+      }
+
+      // ---------------------------------------------------------------- random
+      // The die next to an empty villain field rolls one of the unused villains.
+      function caseRandom() {
+        localStorage.clear();
+        pinLang("de");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          function rows() { return d.querySelectorAll("tbody tr"); }
+          function die(i) { return rows()[i].querySelector(".icon-btn"); }
+          function sel(i) { return rows()[i].querySelector(".pool-select"); }
+          function chosen() {
+            return Array.prototype.map.call(d.querySelectorAll(".pool-select"),
+              function (s) { return s.value; });
+          }
+          var ALL = ["bullseye", "electro", "hammerhead", "purple-man", "typhoid-mary"];
+
+          log("every die starts enabled",
+            Array.prototype.every.call(d.querySelectorAll(".icon-btn"),
+              function (b) { return !b.disabled; }));
+          log("there is one die per row", d.querySelectorAll(".icon-btn").length === 5,
+            d.querySelectorAll(".icon-btn").length);
+          log("die carries an accessible name",
+            /Kunstmuseum/.test(die(0).getAttribute("aria-label") || "") &&
+            /auslos/i.test(die(0).getAttribute("aria-label") || ""),
+            die(0).getAttribute("aria-label"));
+
+          // One roll fills this row and only this row.
+          die(0).click();
+          var first = sel(0).value;
+          log("rolling fills the field", !!first, first);
+          log("rolled value is a real villain", ALL.indexOf(first) !== -1, first);
+          log("only that row was filled",
+            chosen().filter(function (v) { return v; }).length === 1, JSON.stringify(chosen()));
+          log("its die is now disabled", die(0).disabled);
+          log("disabled die explains itself",
+            /schon ein Schurke/i.test(die(0).title || ""), die(0).title);
+          log("the other dice stay enabled",
+            [1, 2, 3, 4].every(function (i) { return !die(i).disabled; }));
+          log("rolled villain disabled in the other rows",
+            [1, 2, 3, 4].every(function (i) {
+              return sel(i).querySelector('option[value="' + first + '"]').disabled;
+            }));
+          log("rolled villain struck in the villain list",
+            d.querySelector('.chip[data-villain="' + first + '"]')
+              .classList.contains("chip--used"));
+
+          // A click on the now-disabled die must not overwrite the choice.
+          die(0).click();
+          log("clicking a disabled die changes nothing", sel(0).value === first, sel(0).value);
+
+          // Roll the rest: five rows, five distinct villains, nothing repeated.
+          [1, 2, 3, 4].forEach(function (i) { die(i).click(); });
+          var all = chosen();
+          log("all five rows filled by rolling",
+            all.every(function (v) { return !!v; }), JSON.stringify(all));
+          log("no villain drawn twice", new Set(all).size === 5, JSON.stringify(all));
+          log("the draw covers the whole pool",
+            ALL.every(function (v) { return all.indexOf(v) !== -1; }), JSON.stringify(all));
+          log("every die disabled once nothing is left",
+            Array.prototype.every.call(d.querySelectorAll(".icon-btn"),
+              function (b) { return b.disabled; }));
+
+          // Clearing a field hands its die back.
+          sel(2).value = "";
+          fire(sel(2), "change");
+          log("clearing a field re-enables its die", !die(2).disabled);
+          log("and only that one", [0, 1, 3, 4].every(function (i) { return die(i).disabled; }));
+
+          // A roll reaches storage like any other edit.
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var store = JSON.parse(localStorage.getItem("mcclog:logs"));
+            var st = store[Object.keys(store)[0]].state.scenarios;
+            var saved = st.map(function (r) { return r.villain; })
+              .filter(function (v) { return v; });
+            log("rolled villains persisted", saved.length === 4, JSON.stringify(saved));
+            log("persisted villains are distinct", new Set(saved).size === saved.length);
+            finish();
+          }, 500);
+        });
+      }
+
+      // ---------------------------------------------------------- randomness
+      /* The draw has to actually vary, and it has to stay inside the pool of
+         villains still free. Repeating one roll many times is what catches a
+         randomiser that is really an "always the first free one". */
+      function caseRandomSpread() {
+        localStorage.clear();
+        pinLang("de");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var seen = {}, rolls = 40;
+          for (var i = 0; i < rolls; i++) {
+            var row = d.querySelectorAll("tbody tr")[0];
+            row.querySelector(".icon-btn").click();
+            var got = row.querySelector(".pool-select").value;
+            seen[got] = (seen[got] || 0) + 1;
+            // Clear it again so the next roll draws from the full pool.
+            var sel = row.querySelector(".pool-select");
+            sel.value = "";
+            fire(sel, "change");
+          }
+          var distinct = Object.keys(seen);
+          log("the draw varies", distinct.length > 1,
+            rolls + " rolls -> " + JSON.stringify(seen));
+          log("the draw reaches every villain", distinct.length === 5,
+            JSON.stringify(seen));
+
+          // With four villains taken, the draw can only be the fifth.
+          var sels = d.querySelectorAll(".pool-select");
+          ["bullseye", "electro", "hammerhead", "purple-man"].forEach(function (v, i) {
+            sels[i + 1].value = v;
+            fire(sels[i + 1], "change");
+          });
+          d.querySelectorAll("tbody tr")[0].querySelector(".icon-btn").click();
+          log("the draw only ever takes a free villain",
+            d.querySelectorAll(".pool-select")[0].value === "typhoid-mary",
+            d.querySelectorAll(".pool-select")[0].value);
+          finish();
+        });
+      }
+
+      // ------------------------------------------------------------ appearance
+      /* Three things that were only ever checked by looking at a screenshot: a
+         settled row darkens its villain field, a filled progress box reads as
+         filled, and the menu is legible on the dark theme — the popover UA
+         style sets a colour of its own, which does not follow the theme. */
+      function caseAppearance() {
+        localStorage.clear();
+        pinLang("de");
+        localStorage.setItem("mcclog:theme", "dark");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          function rows() { return d.querySelectorAll("tbody tr"); }
+          function sel(i) { return rows()[i].querySelector(".pool-select"); }
+          function bg(node) { return w.getComputedStyle(node).backgroundColor; }
+
+          log("dark theme is active",
+            d.documentElement.getAttribute("data-theme") === "dark");
+          var plain = bg(sel(3));
+
+          // Completed darkens the villain field.
+          var done = rows()[0].querySelector(".sheet-check");
+          done.checked = true;
+          fire(done, "change");
+          var completedBg = bg(sel(0));
+          log("completed darkens the villain field", completedBg !== plain,
+            plain + " -> " + completedBg);
+          log("it darkens rather than lightens",
+            luminance(parseRgb(completedBg)) < luminance(parseRgb(plain)),
+            plain + " -> " + completedBg);
+
+          // Failed darkens it the same way.
+          rows()[1].querySelectorAll(".progress-box")[2].click();
+          log("failed darkens the villain field too", bg(sel(1)) !== plain,
+            plain + " -> " + bg(sel(1)));
+          log("both settled states look alike", bg(sel(1)) === bg(sel(0)),
+            bg(sel(0)) + " vs " + bg(sel(1)));
+
+          // The filled progress box has to read as filled.
+          rows()[2].querySelectorAll(".progress-box")[0].click();
+          var filled = rows()[2].querySelectorAll(".progress-box")[0];
+          var empty = rows()[2].querySelectorAll(".progress-box")[1];
+          var fs = w.getComputedStyle(filled);
+          log("filled progress box differs from an empty one",
+            fs.backgroundColor !== bg(empty),
+            fs.backgroundColor + " vs " + bg(empty));
+          log("filled box stands out against an empty one",
+            luminance(parseRgb(fs.backgroundColor)) >
+            luminance(parseRgb(bg(empty))) + 0.4,
+            "L " + luminance(parseRgb(fs.backgroundColor)).toFixed(3) +
+            " vs " + luminance(parseRgb(bg(empty))).toFixed(3));
+          log("the digit stays readable on the yellow",
+            contrast(fs.color, fs.backgroundColor) >= 4.5,
+            contrast(fs.color, fs.backgroundColor).toFixed(2) + ":1");
+
+          // Dark-theme menu readability.
+          var menu = d.getElementById("main-menu");
+          if (menu.showPopover) menu.showPopover();
+          else menu.classList.add("is-open");
+          var item = d.getElementById("btn-export");
+          var menuBg = w.getComputedStyle(menu).backgroundColor;
+          var itemColor = w.getComputedStyle(item).color;
+          log("dark menu text is not the UA black",
+            luminance(parseRgb(itemColor)) > 0.3, itemColor);
+          log("dark menu text has readable contrast",
+            contrast(itemColor, menuBg) >= 4.5,
+            contrast(itemColor, menuBg).toFixed(2) + ":1  (" + itemColor + " on " + menuBg + ")");
+          var heading = d.querySelector(".menu-heading");
+          log("menu headings readable too",
+            contrast(w.getComputedStyle(heading).color, menuBg) >= 3,
+            contrast(w.getComputedStyle(heading).color, menuBg).toFixed(2) + ":1");
+          log("native controls follow the dark theme",
+            w.getComputedStyle(d.documentElement).colorScheme === "dark",
+            w.getComputedStyle(d.documentElement).colorScheme);
+          finish();
+        });
+      }
+
+      var cases = { random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict };
       (cases[CASE] || caseBasic)();
     </script>
   </body>

@@ -17,6 +17,9 @@ als jeweils eigenes Modul dazu — siehe [Eine Kampagne hinzufügen](#eine-kampa
 * **Der ganze Bogen** — vier Spielerplätze mit Identität und verbleibenden Trefferpunkten,
   die fünf Szenarien mit Schurken-Zuordnung und Fortschritt, die aus der Kampagne
   entfernten Verbündeten und Persona-Unterstützungen, und die beiden Kampagnen-Marken.
+* **Schurken auslosen** — der Würfel neben einem leeren Schurken-Feld zieht einen der
+  noch nicht zugeordneten Schurken. Steht schon einer im Feld, ist der Würfel gesperrt;
+  ein Würfel überschreibt nie eine Wahl.
 * **Mehrere Durchläufe** parallel, mit Auswahl oben; die Kampagne wird beim Anlegen
   gewählt und bleibt danach fest.
 * **Automatisch gespeichert** im Speicher des Browsers — kein Server, kein Konto,
@@ -42,6 +45,9 @@ Ein Haken bei „Abgeschlossen“ friert den Fortschritt ein — die gesetzten K
 bleiben sichtbar, sind aber nicht mehr bedienbar. Umgekehrt sperrt ein gescheitertes
 Szenario den Abgeschlossen-Haken. Wer es doch ändern will, nimmt zuerst das jeweils
 andere zurück; ein Tooltip sagt das an den gesperrten Kästchen auch.
+
+Ein Szenario, das durch ist — abgeschlossen oder gescheitert —, stellt sein
+Schurken-Feld dunkler dar, damit die Zeilen, die noch laufen, hervorstechen.
 
 Die Sperre gilt nur, **solange die Zeile widerspruchsfrei ist**. Ein importierter oder
 handeditierter Bogen kann beides gesetzt haben — dann blieben beide Bedienelemente
@@ -97,7 +103,7 @@ auch über `file://` und direkt aus dem Repo-Root über GitHub Pages.
 | `index.html` | Rahmen: Topbar, Menü, Dialoge, Hinweisbereich, Druckcontainer. Enthält kein Markup einer bestimmten Kampagne. |
 | `styles.css` | Design-Tokens (hell / dunkel / Druck), Comic-Optik, Tabelle samt Schmalvariante, Listen, Menü, Dialoge |
 | `core.js` | Speichern, mehrere Bögen, Quarantäne, Export/Import, Share-Link, Druck, Sprache, Theme, Kampagnen-Registry |
-| `widgets.js` | wiederverwendbare Bausteine: Checkbox, Zahlenfeld, Textfeld, Auswahl mit Ausschluss, Fortschrittszähler, String-Liste mit Drag&Drop |
+| `widgets.js` | wiederverwendbare Bausteine: Checkbox, Zahlenfeld, Textfeld, Auswahl mit Ausschluss, Fortschrittszähler, Icon-Button, String-Liste mit Drag&Drop — jeweils mit optionalem gesperrten Zustand |
 | `i18n.js` | `window.I18N = { de, en }` — nur Strings des Rahmens |
 | `heroes.js` | 68 Helden (Name, Trefferpunkte) als Vorschlagsliste für die Identitätsfelder |
 | `campaigns/fear-no-evil.js` | die Kampagne MC60: eigenes Datenmodell, eigenes Rendering, eigene Strings |
@@ -157,9 +163,10 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (107 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (142 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
-                                    #   print | import | lock | lockconflict
+                                    #   print | import | lock | lockconflict |
+                                    #   random | randomspread | appearance
 BROWSER_LANG=de-DE node test/run-browser.js   # unter einer anderen Browser-Sprache
 ```
 
@@ -197,6 +204,16 @@ ausdrücklichen `[data-theme]`-Überschreibungen und noch einmal in `@media prin
 (dort alles schwarz auf weiß). Vordergrundfarben, die auf einer *festen* Fläche
 sitzen — Gelb, Warnrot, die Seitenfläche —, haben eigene `--on-*`-Tokens, weil das
 Theme sonst hell und dunkel gegeneinander verdreht.
+
+`color-scheme` ist pro Theme gesetzt, damit auch die Teile, die die Seite nicht selbst
+malt — das aufgeklappte `<select>`, die Zahlen-Spinner, Scrollbalken — dem Theme folgen
+statt der Systemeinstellung. Das Menü setzt seine Textfarbe ausdrücklich: das
+UA-Stylesheet gibt `[popover]` ein eigenes `color: CanvasText`, das dem Theme **nicht**
+folgt — im Dark Mode stand das Menü dadurch schwarz auf fast schwarz.
+
+Der Fall `appearance` im Selbsttest rechnet Kontrastverhältnisse aus, statt sie auf
+Screenshots zu beurteilen: Menütext gegen Menühintergrund, die Ziffer auf dem Gelb,
+und ob ein erledigtes Schurken-Feld wirklich dunkler wird statt heller.
 
 `prefers-reduced-motion` schaltet Animationen ab.
 

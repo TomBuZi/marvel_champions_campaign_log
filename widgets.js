@@ -166,6 +166,28 @@
     });
   }
 
+  // ---- Icon button --------------------------------------------------------
+  /* A small square button carrying one glyph. cfg:
+       { glyph, label, disabled?, lockReason?, onClick }
+     The glyph is decoration — `label` is what carries the meaning, so it
+     becomes both the accessible name and the tooltip. */
+  function iconButton(cfg) {
+    var b = el("button", "icon-btn", {
+      type: "button", "aria-label": cfg.label,
+      title: cfg.disabled && cfg.lockReason ? cfg.lockReason : cfg.label,
+    });
+    b.textContent = cfg.glyph;
+    b.disabled = !!cfg.disabled;
+    b.addEventListener("click", cfg.onClick);
+    return b;
+  }
+
+  /* One item out of a list, uniformly at random; null for an empty list. */
+  function pickRandom(items) {
+    if (!items || !items.length) return null;
+    return items[Math.floor(Math.random() * items.length)];
+  }
+
   // ---- Progress row -------------------------------------------------------
   /* A row of N boxes acting as a 0..N counter. cfg:
        { value, steps: [label], labelFor(i), disabled?, lockReason?, onChange(next) }
@@ -498,6 +520,8 @@
     dataList: dataList,
     poolSelect: poolSelect,
     syncUnique: syncUnique,
+    iconButton: iconButton,
+    pickRandom: pickRandom,
     progressRow: progressRow,
     stringList: stringList,
     forgetLists: forgetLists,
