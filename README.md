@@ -99,7 +99,7 @@ auch über `file://` und direkt aus dem Repo-Root über GitHub Pages.
 | `core.js` | Speichern, mehrere Bögen, Quarantäne, Export/Import, Share-Link, Druck, Sprache, Theme, Kampagnen-Registry |
 | `widgets.js` | wiederverwendbare Bausteine: Checkbox, Zahlenfeld, Textfeld, Auswahl mit Ausschluss, Fortschrittszähler, String-Liste mit Drag&Drop |
 | `i18n.js` | `window.I18N = { de, en }` — nur Strings des Rahmens |
-| `heroes.js` | 66 Helden (Name, Trefferpunkte) als Vorschlagsliste für die Identitätsfelder |
+| `heroes.js` | 68 Helden (Name, Trefferpunkte) als Vorschlagsliste für die Identitätsfelder |
 | `campaigns/fear-no-evil.js` | die Kampagne MC60: eigenes Datenmodell, eigenes Rendering, eigene Strings |
 | `test/lint.js` | Prüfungen ohne Browser: Wörterbücher, Kampagnendefinition, Datenmodell, Paketierung |
 | `test/selftest.html`, `test/run-browser.js` | Selbsttest, der die echte Seite in einem iframe fernsteuert |
@@ -233,9 +233,16 @@ Als Regel für dieses Repository:
   Konvention der deutschen Ausgabe: dort behalten Figuren ihre Namen (Rhino, Klaw,
   Ultron), übersetzt werden nur Szenario- und Hauptplan-Namen.
 * **Die deutschen Szenarionamen sind vorläufig.** Von MC60 gibt es noch keine
-  offizielle deutsche Ausgabe; die Übersetzungen stehen als Entwurf in
-  `campaigns/fear-no-evil.js` und sind je eine Zeile zu korrigieren. Es migriert
-  nichts, weil gespeichert nur der Slug wird.
-* **Daredevil und Echo haben keine Trefferpunkte** in `heroes.js`, solange die
-  Kartendaten sie nicht kennen. Ein erfundener Wert wäre schlechter als keiner, also
-  bleibt der Hinweis neben dem Feld dort einfach leer.
+  offizielle deutsche Ausgabe; sie stehen als eine Zeile je Szenario in
+  `campaigns/fear-no-evil.js` und sind dort zu korrigieren, sobald es eine gibt.
+  Es migriert nichts, weil gespeichert nur der Slug wird.
+* **Helden mit zwei Trägern stehen einzeln in der Liste**, mit `*` getrennt:
+  „Spider-Man * Peter Parker“ und „Spider-Man * Miles Morales“, „Black Panther *
+  T'Challa“ und „Black Panther * Shuri“. Die Kartendaten führen sie unter einem Namen,
+  die Trefferpunkte unterscheiden sich aber.
+* **Das Identitätsfeld ist Freitext**, `heroes.js` liefert nur Vorschläge. Ein Umbenennen
+  in der Liste ändert also nie einen bestehenden Bogen — dort bleibt der eingetippte
+  Name stehen, höchstens der Trefferpunkte-Hinweis daneben findet keine Entsprechung
+  mehr. Es gibt deshalb nichts zu migrieren, wenn die Liste wächst oder sich ändert.
+* `health` darf `null` sein, wenn ein Wert nicht belegt ist; der Hinweis neben dem Feld
+  bleibt dann leer. Ein erfundener Wert wäre schlechter als keiner.
