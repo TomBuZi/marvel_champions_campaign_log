@@ -1,0 +1,127 @@
+#!/usr/bin/env node
+/* Runs test/selftest.html in a headless browser and fails on any FAIL line.
+
+   The harness drives the real index.html inside an iframe — typing in fields,
+   clicking boxes, importing files, following a share link — and prints its
+   results into a <pre>, which this script reads back out of the dumped DOM.
+
+   Usage: node test/run-browser.js [case …]
+   With no arguments it runs every case. Set BROWSER to point at a binary. */
+"use strict";
+
+const { execFileSync, spawn } = require("child_process");
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
+const http = require("http");
+
+const root = path.resolve(__dirname, "..");
+const CASES = ["basic", "quarantine", "share", "lang", "print", "import"];
+const cases = process.argv.slice(2).length ? process.argv.slice(2) : CASES;
+const PORT = Number(process.env.PORT || 8139);
+
+/* Browsers that can be told to dump a rendered DOM. Chrome and Edge share the
+   flag, so either will do; the first one found wins. */
+function findBrowser() {
+  if (process.env.BROWSER) return process.env.BROWSER;
+  const candidates = [
+    "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+    "C:/Program Files/Microsoft/Edge/Application/msedge.exe",
+    "C:/Program Files/Google/Chrome/Application/chrome.exe",
+    "/usr/bin/google-chrome",
+    "/usr/bin/chromium-browser",
+    "/usr/bin/chromium",
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  ];
+  for (const c of candidates) if (fs.existsSync(c)) return c;
+  for (const c of ["google-chrome", "chromium", "chrome"]) {
+    try {
+      execFileSync(process.platform === "win32" ? "where" : "which", [c],
+        { stdio: "ignore" });
+      return c;
+    } catch (e) { /* keep looking */ }
+  }
+  return null;
+}
+
+const MIME = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".woff2": "font/woff2",
+};
+
+/* The app must be served over http: it uses localStorage and a same-origin
+   iframe, and file:// gives each document its own opaque origin. */
+function serve() {
+  return new Promise((resolve) => {
+    const server = http.createServer((req, res) => {
+      const rel = decodeURIComponent(req.url.split("?")[0].split("#")[0]).replace(/^\/+/, "");
+      const file = path.join(root, rel || "index.html");
+      if (!file.startsWith(root) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
+        res.writeHead(404).end("not found");
+        return;
+      }
+      res.writeHead(200, { "content-type": MIME[path.extname(file)] || "application/octet-stream" });
+      fs.createReadStream(file).pipe(res);
+    });
+    server.listen(PORT, "127.0.0.1", () => resolve(server));
+  });
+}
+
+function dumpDom(browser, url, profile) {
+  return new Promise((resolve, reject) => {
+    const args = [
+      "--headless=new", "--disable-gpu", "--no-sandbox", "--no-first-run",
+      "--disable-dev-shm-usage", "--user-data-dir=" + profile,
+      "--virtual-time-budget=25000", "--dump-dom", url,
+    ];
+    const child = spawn(browser, args, { stdio: ["ignore", "pipe", "pipe"] });
+    let out = "";
+    child.stdout.on("data", (d) => { out += d; });
+    child.on("error", reject);
+    child.on("close", () => resolve(out));
+  });
+}
+
+function decodeEntities(s) {
+  return s.replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
+}
+
+(async function main() {
+  const browser = findBrowser();
+  if (!browser) {
+    console.error("No Chrome or Edge binary found. Set BROWSER=/path/to/chrome.");
+    console.error("The browser self-test did NOT run — this is a skip, not a pass.");
+    process.exit(2);
+  }
+  console.log("browser: " + browser);
+  const server = await serve();
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "mcclog-test-"));
+  let failures = 0, total = 0;
+
+  for (const name of cases) {
+    const url = "http://127.0.0.1:" + PORT + "/test/selftest.html?case=" + name;
+    const dom = await dumpDom(browser, url, path.join(tmp, "p_" + name));
+    const m = dom.match(/<pre id="out">([\s\S]*?)<\/pre>/);
+    console.log("\n=== " + name + " ===");
+    if (!m) {
+      failures++;
+      console.log("  no output — the harness never reported");
+      continue;
+    }
+    const text = decodeEntities(m[1]).trim();
+    console.log(text.split("\n").map((l) => "  " + l).join("\n"));
+    for (const line of text.split("\n")) {
+      if (/^(FAIL|ERROR|REJECT|TIMEOUT)/.test(line)) failures++;
+      if (/^(PASS|FAIL)/.test(line)) total++;
+    }
+  }
+
+  server.close();
+  fs.rmSync(tmp, { recursive: true, force: true });
+  console.log("\n" + total + " assertions, " + failures + " failure(s).");
+  process.exit(failures === 0 ? 0 : 1);
+})();

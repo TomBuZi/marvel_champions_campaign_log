@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta charset="utf-8" /><title>selftest</title></head>
+  <body>
+    <pre id="out">running…</pre>
+    <script>
+      // Temporary harness: drives index.html in an iframe and prints results,
+      // so headless --dump-dom can assert on real interactions. Not shipped.
+      var lines = [];
+      function log(name, ok, extra) {
+        lines.push((ok ? "PASS " : "FAIL ") + name + (extra == null ? "" : "  -> " + extra));
+      }
+      function finish() {
+        document.getElementById("out").textContent = lines.join("\n") +
+          "\nTOTAL " + lines.length + " FAILURES " +
+          lines.filter(function (l) { return l.indexOf("FAIL") === 0; }).length;
+      }
+
+      var CASE = new URLSearchParams(location.search).get("case") || "basic";
+
+      window.addEventListener("error", function (e) {
+        lines.push("ERROR " + e.message + " @" + e.filename + ":" + e.lineno);
+        finish();
+      });
+      window.addEventListener("unhandledrejection", function (e) {
+        lines.push("REJECT " + (e.reason && e.reason.message ? e.reason.message : e.reason));
+        finish();
+      });
+      // Safety net: print whatever was collected even if a case never calls finish().
+      setTimeout(function () {
+        if (document.getElementById("out").textContent === "running…") {
+          lines.push("TIMEOUT: case never finished");
+          finish();
+        }
+      }, 6000);
+
+      function seed(store, active) {
+        localStorage.clear();
+        localStorage.setItem("mcclog:logs", JSON.stringify(store));
+        if (active) localStorage.setItem("mcclog:activeId", active);
+        localStorage.setItem("mcclog:lang", "de");
+      }
+
+      function boot(hash, then) {
+        var f = document.createElement("iframe");
+        f.style.cssText = "width:1200px;height:900px";
+        f.src = "../index.html" + (hash || "");
+        f.onload = function () { setTimeout(function () { then(f, f.contentWindow, f.contentDocument); }, 60); };
+        document.body.appendChild(f);
+      }
+
+      function fire(node, type) {
+        node.dispatchEvent(new f0.Event(type, { bubbles: true }));
+      }
+      var f0 = window; // replaced with the frame's window before use
+
+      // ---------------------------------------------------------------- basic
+      function caseBasic() {
+        localStorage.clear();
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var store = JSON.parse(localStorage.getItem("mcclog:logs") || "{}");
+          var ids = Object.keys(store);
+          log("a fresh visit creates one log", ids.length === 1, ids.length);
+          var log0 = store[ids[0]];
+          log("log carries campaignId", log0 && log0.campaignId === "fear-no-evil", log0 && log0.campaignId);
+          log("log title auto-named", log0 && log0.title === "Fear No Evil", log0 && log0.title);
+          log("state has 5 scenarios", log0 && log0.state.scenarios.length === 5);
+
+          // Type a hero, check the starting-hit-points hint appears.
+          var hero = d.querySelectorAll(".player-card .text-input")[0];
+          hero.value = "She-Hulk";
+          fire(hero, "input");
+          var hint = d.querySelectorAll(".player-card .num-hint")[0];
+          log("hero hint shows printed HP", hint.textContent.trim() === "/ 15", JSON.stringify(hint.textContent));
+
+          // Duplicate hero marking.
+          var hero2 = d.querySelectorAll(".player-card .text-input")[1];
+          hero2.value = "she-hulk";
+          fire(hero2, "input");
+          log("duplicate hero flagged",
+            d.querySelectorAll(".player-card.is-duplicate").length === 2,
+            d.querySelectorAll(".player-card.is-duplicate").length);
+          hero2.value = "";
+          fire(hero2, "input");
+          log("duplicate mark clears",
+            d.querySelectorAll(".player-card.is-duplicate").length === 0);
+
+          // HP clamp: empty stays null, over-max clamps.
+          var hp = d.querySelectorAll(".player-card .num-input")[0];
+          hp.value = "120";
+          fire(hp, "input");
+          fire(hp, "blur");
+          log("HP clamps to 99", hp.value === "99", hp.value);
+          hp.value = "";
+          fire(hp, "input");
+          fire(hp, "blur");
+
+          // Villain mutual exclusion.
+          var sel = d.querySelectorAll(".pool-select");
+          sel[0].value = "bullseye";
+          fire(sel[0], "change");
+          var disabledElsewhere = 0;
+          for (var i = 1; i < sel.length; i++) {
+            if (sel[i].querySelector('option[value="bullseye"]').disabled) disabledElsewhere++;
+          }
+          log("chosen villain disabled in other rows", disabledElsewhere === 4, disabledElsewhere);
+          log("own value stays enabled",
+            !sel[0].querySelector('option[value="bullseye"]').disabled);
+          var usedChip = d.querySelector('.chip[data-villain="bullseye"]');
+          log("villain chip marked used", usedChip.classList.contains("chip--used"));
+          log("chip names the scenario",
+            /Kunstmuseum/.test(usedChip.title || ""), usedChip.title);
+          sel[0].value = "";
+          fire(sel[0], "change");
+          log("clearing frees the villain again",
+            !sel[1].querySelector('option[value="bullseye"]').disabled &&
+            !d.querySelector('.chip[data-villain="bullseye"]').classList.contains("chip--used"));
+
+          // Progress counter: click up, then click the top box to step back.
+          function boxes(row) { return d.querySelectorAll("tbody tr")[row].querySelectorAll(".progress-box"); }
+          boxes(0)[0].click();
+          log("progress 1 fills one box",
+            d.querySelectorAll("tbody tr")[0].querySelectorAll(".progress-box.filled").length === 1);
+          boxes(0)[2].click();
+          log("progress 3 marks the row failed",
+            d.querySelectorAll("tbody tr")[0].classList.contains("is-failed"));
+          boxes(0)[2].click();
+          log("clicking the top box steps back to 2",
+            d.querySelectorAll("tbody tr")[0].querySelectorAll(".progress-box.filled").length === 2 &&
+            !d.querySelectorAll("tbody tr")[0].classList.contains("is-failed"));
+          boxes(0)[1].click();
+          boxes(0)[0].click();
+          log("stepping down reaches 0",
+            d.querySelectorAll("tbody tr")[0].querySelectorAll(".progress-box.filled").length === 0);
+
+          // String list: add is blocked while an empty row is open.
+          var add = d.querySelector(".entry-add");
+          add.click();
+          log("add disabled while an empty row is open", add.disabled);
+          var entry = d.querySelector(".entry-input");
+          entry.value = "~Mockingbird";
+          fire(entry, "input");
+          fire(entry, "blur");
+          log("tilde strikes the entry through", entry.classList.contains("struck"));
+          log("tilde is hidden while unfocused", entry.value === "Mockingbird", entry.value);
+          fire(entry, "focus");
+          log("focus restores the raw text", entry.value === "~Mockingbird", entry.value);
+          fire(entry, "blur");
+          log("add enabled again once filled", !d.querySelector(".entry-add").disabled);
+
+          // Flags.
+          var flagBoxes = d.querySelectorAll(".flag .sheet-check");
+          flagBoxes[1].checked = true;
+          fire(flagBoxes[1], "change");
+
+          // Persistence: flush and read back what is in storage.
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var saved = JSON.parse(localStorage.getItem("mcclog:logs"))[ids[0]];
+            log("hero persisted", saved.state.players[0].hero === "She-Hulk", saved.state.players[0].hero);
+            log("empty HP persisted as null", saved.state.players[0].hp === null, JSON.stringify(saved.state.players[0].hp));
+            log("removed list persisted",
+              JSON.stringify(saved.state.removed) === JSON.stringify(["~Mockingbird"]),
+              JSON.stringify(saved.state.removed));
+            log("flag persisted", saved.state.flags.maryDefeated === true);
+            log("updatedAt moved on", saved.updatedAt > saved.createdAt || saved.updatedAt === saved.createdAt);
+            finish();
+          }, 500);
+        });
+      }
+
+      // ------------------------------------------------------- quarantine set
+      function caseQuarantine() {
+        var mk = function (over) {
+          var base = {
+            schemaVersion: 1, id: over.id, campaignId: "fear-no-evil", stateVersion: 1,
+            title: over.title, createdAt: "2026-01-01T00:00:00.000Z",
+            updatedAt: "2026-01-02T00:00:00.000Z",
+            state: { players: [], scenarios: [], removed: ["keep me"], flags: {} },
+            extraFieldFromTheFuture: "must survive",
+          };
+          Object.keys(over).forEach(function (k) { base[k] = over[k]; });
+          return base;
+        };
+        var future = mk({ id: "aaa", title: "Future schema", schemaVersion: 99 });
+        var unknown = mk({ id: "bbb", title: "Unknown campaign", campaignId: "rise-of-red-skull" });
+        var newerSheet = mk({ id: "ccc", title: "Newer sheet", stateVersion: 42 });
+        var before = { aaa: JSON.stringify(future), bbb: JSON.stringify(unknown), ccc: JSON.stringify(newerSheet) };
+        seed({ aaa: future, bbb: unknown, ccc: newerSheet }, "aaa");
+
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var notice = d.getElementById("notice");
+          log("future schema shows a notice", !notice.hidden && /neueren Version/.test(notice.textContent),
+            notice.textContent.slice(0, 60));
+          log("sheet hidden while quarantined", d.getElementById("campaign").hidden);
+          log("rename blocked", d.getElementById("btn-rename").disabled);
+          log("delete still available", !d.getElementById("btn-delete").disabled);
+          log("picker marks quarantined logs",
+            (d.getElementById("log-select").textContent.match(/⚠/g) || []).length === 3);
+          log("unknown campaign gets its own optgroup",
+            /rise-of-red-skull/.test(d.getElementById("log-select").innerHTML));
+
+          var sel = d.getElementById("log-select");
+          sel.value = "bbb";
+          fire(sel, "change");
+          log("unknown-campaign notice names the campaign",
+            /rise-of-red-skull/.test(d.getElementById("notice").textContent),
+            d.getElementById("notice").textContent.slice(0, 70));
+          sel.value = "ccc";
+          fire(sel, "change");
+          log("newer-sheet notice names the campaign",
+            /Fear No Evil/.test(d.getElementById("notice").textContent),
+            d.getElementById("notice").textContent.slice(0, 70));
+
+          var after = JSON.parse(localStorage.getItem("mcclog:logs"));
+          ["aaa", "bbb", "ccc"].forEach(function (id) {
+            log("blob " + id + " left byte-identical",
+              JSON.stringify(after[id]) === before[id]);
+          });
+          finish();
+        });
+      }
+
+      // ------------------------------------------------------------ sharelink
+      function caseShare() {
+        // Build a share payload the way core.js does, then load it.
+        var payloadLog = {
+          schemaVersion: 1, id: "shared-1", campaignId: "fear-no-evil", stateVersion: 1,
+          title: "Von unterwegs", createdAt: "2026-02-01T00:00:00.000Z",
+          updatedAt: "2026-02-02T00:00:00.000Z",
+          state: {
+            players: [{ hero: "Daredevil", hp: 7 }],
+            scenarios: [{ slug: "the-getaway", completed: true, villain: "purple-man", progress: 2 }],
+            removed: ["Jessica Jones"],
+            flags: { trustEstablished: true, maryDefeated: false },
+          },
+        };
+        var bytes = new TextEncoder().encode(JSON.stringify(payloadLog));
+        var cs = new CompressionStream("deflate-raw");
+        new Response(new Blob([bytes]).stream().pipeThrough(cs)).arrayBuffer().then(function (buf) {
+          var u8 = new Uint8Array(buf), bin = "";
+          for (var i = 0; i < u8.length; i++) bin += String.fromCharCode(u8[i]);
+          var payload = "d" + btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+          localStorage.clear();
+          // The import asks for confirmation; auto-accept it inside the frame.
+          var f = document.createElement("iframe");
+          f.style.cssText = "width:1200px;height:900px";
+          f.src = "../index.html#log=" + payload;
+          f.onload = function () { setTimeout(check, 200); };
+          document.body.appendChild(f);
+          // confirm() must be stubbed before the frame's script runs, which is
+          // why the srcdoc-free path above is paired with this early hook.
+          var iv = setInterval(function () {
+            try { if (f.contentWindow) { f.contentWindow.confirm = function () { return true; }; } } catch (e) {}
+          }, 1);
+          function check() {
+            clearInterval(iv);
+            var w = f.contentWindow, d = f.contentDocument;
+            f0 = w;
+            var store = JSON.parse(localStorage.getItem("mcclog:logs") || "{}");
+            var got = store["shared-1"];
+            log("share link imported the log", !!got, Object.keys(store).join(","));
+            if (got) {
+              log("title came through", got.title === "Von unterwegs", got.title);
+              log("hero came through", got.state.players[0].hero === "Daredevil");
+              log("hp came through", got.state.players[0].hp === 7);
+              log("partial scenario list filled to 5", got.state.scenarios.length === 5);
+              var g = got.state.scenarios.filter(function (s) { return s.slug === "the-getaway"; })[0];
+              log("scenario data landed on the right row",
+                g && g.completed === true && g.villain === "purple-man" && g.progress === 2,
+                JSON.stringify(g));
+              log("flag came through", got.state.flags.trustEstablished === true);
+            }
+            log("hash removed from the address", w.location.hash === "", w.location.hash);
+            finish();
+          }
+        });
+      }
+
+      // ------------------------------------------------------------- language
+      function caseLang() {
+        localStorage.clear();
+        boot("", function (frame, w, d) {
+          f0 = w;
+          log("starts in German", d.documentElement.lang === "de", d.documentElement.lang);
+          log("German section heading",
+            /Spieler-Informationen/.test(d.getElementById("campaign").textContent));
+          d.getElementById("btn-lang").click();
+          log("switches to English", d.documentElement.lang === "en", d.documentElement.lang);
+          log("English section heading",
+            /Player Information/.test(d.getElementById("campaign").textContent));
+          log("English scenario names",
+            /Art Museum Heist/.test(d.getElementById("campaign").textContent));
+          log("English scenario row tagged lang=en",
+            d.querySelector(".scenario-name").getAttribute("lang") === "en");
+          log("villain names stay English",
+            /Typhoid Mary/.test(d.getElementById("campaign").textContent));
+          log("no empty labels left",
+            Array.prototype.every.call(d.querySelectorAll("[data-i18n]"),
+              function (n) { return n.textContent.trim().length > 0; }));
+          d.getElementById("btn-lang").click();
+          log("switches back to German", d.documentElement.lang === "de");
+
+          // Theme toggle survives a reload.
+          d.getElementById("btn-theme").click();
+          var t1 = d.documentElement.getAttribute("data-theme");
+          log("theme attribute set", t1 === "dark" || t1 === "light", t1);
+          log("theme persisted", localStorage.getItem("mcclog:theme") === t1);
+          log("campaign skin hook set",
+            d.documentElement.getAttribute("data-campaign") === "fne");
+          finish();
+        });
+      }
+
+      // ---------------------------------------------------------------- print
+      function casePrint() {
+        localStorage.clear();
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var hero = d.querySelectorAll(".player-card .text-input")[0];
+          hero.value = "Daredevil";
+          fire(hero, "input");
+          var sel = d.querySelectorAll(".pool-select")[1];
+          sel.value = "typhoid-mary";
+          fire(sel, "change");
+          d.querySelectorAll("tbody tr")[1].querySelectorAll(".progress-box")[2].click();
+          var add = d.querySelector(".entry-add");
+          add.click();
+          var entry = d.querySelector(".entry-input");
+          entry.value = "~Foggy Nelson";
+          fire(entry, "input");
+          fire(entry, "blur");
+          var flagBoxes = d.querySelectorAll(".flag .sheet-check");
+          flagBoxes[0].checked = true;
+          fire(flagBoxes[0], "change");
+
+          w.dispatchEvent(new w.Event("beforeprint"));
+          var pv = d.getElementById("print-view");
+          var text = pv.textContent;
+          log("print view built", pv.children.length > 0, pv.children.length);
+          log("print names the campaign", /Fear No Evil \(MC60\)/.test(text));
+          log("print carries the hero", /Daredevil/.test(text));
+          log("print marks the villain", /Typhoid Mary/.test(text));
+          log("print shows the failed scenario", /Gescheitert/.test(text));
+          log("print keeps the struck entry", /Foggy Nelson/.test(text));
+          log("print strikes it visually",
+            !!pv.querySelector(".print-list .struck"));
+          log("print hides the tilde", text.indexOf("~") === -1);
+          log("print ticks the set flag", /\[x\] Vertrauen hergestellt/.test(text));
+          log("print keeps the disclaimer", /MARVEL/.test(text));
+          finish();
+        });
+      }
+
+      // ----------------------------------------------------------- file import
+      function caseImport() {
+        localStorage.clear();
+        var f = document.createElement("iframe");
+        f.style.cssText = "width:1200px;height:900px";
+        f.src = "../index.html";
+        var answer = true;
+        var iv = setInterval(function () {
+          try { if (f.contentWindow) { f.contentWindow.confirm = function () { return answer; }; } } catch (e) {}
+        }, 1);
+        f.onload = function () { setTimeout(start, 120); };
+        document.body.appendChild(f);
+
+        /* FileReader is asynchronous, so wait for the store to actually change
+           instead of guessing a delay — a fixed sleep made assertions read the
+           state from before the import. */
+        function drop(obj, then) {
+          var w = f.contentWindow, d = f.contentDocument;
+          var before = localStorage.getItem("mcclog:logs");
+          var file = new w.File([JSON.stringify(obj, null, 2)], "log.json", { type: "application/json" });
+          var dt = new w.DataTransfer();
+          dt.items.add(file);
+          var input = d.getElementById("file-import");
+          input.files = dt.files;
+          input.dispatchEvent(new w.Event("change", { bubbles: true }));
+          var waited = 0;
+          (function poll() {
+            if (localStorage.getItem("mcclog:logs") !== before || waited > 3000) return then();
+            waited += 25;
+            setTimeout(poll, 25);
+          })();
+        }
+
+        function mk(id, title, over) {
+          var base = {
+            schemaVersion: 1, id: id, campaignId: "fear-no-evil", stateVersion: 1,
+            title: title, createdAt: "2026-03-01T00:00:00.000Z",
+            updatedAt: "2026-03-02T00:00:00.000Z",
+            state: {
+              players: [{ hero: "Echo", hp: 3 }],
+              scenarios: [{ slug: "protection-racket", completed: true, villain: "hammerhead", progress: 1 }],
+              removed: ["Ben Urich"], flags: { trustEstablished: false, maryDefeated: true },
+            },
+          };
+          Object.keys(over || {}).forEach(function (k) { base[k] = over[k]; });
+          return base;
+        }
+
+        function start() {
+          clearInterval(iv);
+          f.contentWindow.confirm = function () { return answer; };
+          var d = f.contentDocument;
+          var startingIds = Object.keys(JSON.parse(localStorage.getItem("mcclog:logs")));
+
+          // 1) A brand-new log is added alongside the one that already exists.
+          drop(mk("imp-1", "Aus der Datei"), function () {
+            var store = JSON.parse(localStorage.getItem("mcclog:logs"));
+            log("new log imported", !!store["imp-1"], Object.keys(store).join(","));
+            log("existing log untouched", !!store[startingIds[0]]);
+            log("imported data normalised to 5 scenarios",
+              store["imp-1"] && store["imp-1"].state.scenarios.length === 5);
+            log("imported hero kept", store["imp-1"].state.players[0].hero === "Echo");
+            log("import became the active log",
+              localStorage.getItem("mcclog:activeId") === "imp-1");
+
+            // 2) Same GUID -> updates in place rather than duplicating.
+            drop(mk("imp-1", "Aus der Datei", { state: {
+              players: [{ hero: "Daredevil", hp: 9 }], scenarios: [], removed: [], flags: {} } }),
+              function () {
+                var s2 = JSON.parse(localStorage.getItem("mcclog:logs"));
+                log("same GUID updates in place", Object.keys(s2).length === 2, Object.keys(s2).length);
+                log("update replaced the content",
+                  s2["imp-1"].state.players[0].hero === "Daredevil",
+                  s2["imp-1"].state.players[0].hero);
+
+                // 3) Same title, different GUID, confirmed -> replaces it.
+                drop(mk("imp-2", "Aus der Datei"), function () {
+                  var s3 = JSON.parse(localStorage.getItem("mcclog:logs"));
+                  log("same title accepted replaces the old log",
+                    !s3["imp-1"] && !!s3["imp-2"] && Object.keys(s3).length === 2,
+                    Object.keys(s3).join(","));
+
+                  // 4) Same title, declined -> kept side by side.
+                  answer = false;
+                  drop(mk("imp-3", "Aus der Datei"), function () {
+                    var s4 = JSON.parse(localStorage.getItem("mcclog:logs"));
+                    log("same title declined keeps both",
+                      !!s4["imp-2"] && !!s4["imp-3"], Object.keys(s4).join(","));
+                    answer = true;
+
+                    // 5) A log from a campaign we do not know is kept verbatim.
+                    var alien = mk("imp-4", "Fremde Kampagne", { campaignId: "mutant-genesis" });
+                    alien.somethingWeDoNotKnow = 7;
+                    var alienJson = JSON.stringify(alien);
+                    drop(alien, function () {
+                      var s5 = JSON.parse(localStorage.getItem("mcclog:logs"));
+                      log("unknown-campaign import kept", !!s5["imp-4"]);
+                      log("unknown-campaign blob byte-identical",
+                        JSON.stringify(s5["imp-4"]) === alienJson);
+                      log("unknown-campaign import quarantined",
+                        !d.getElementById("notice").hidden &&
+                        /mutant-genesis/.test(d.getElementById("notice").textContent));
+
+                      // 6) Garbage is refused without touching the store.
+                      var before = localStorage.getItem("mcclog:logs");
+                      var w = f.contentWindow;
+                      w.alert = function () {};
+                      var bad = new w.File(["not json at all"], "bad.json", { type: "application/json" });
+                      var dt = new w.DataTransfer();
+                      dt.items.add(bad);
+                      var input = d.getElementById("file-import");
+                      input.files = dt.files;
+                      input.dispatchEvent(new w.Event("change", { bubbles: true }));
+                      setTimeout(function () {
+                        log("malformed file changes nothing",
+                          localStorage.getItem("mcclog:logs") === before);
+                        finish();
+                      }, 250);
+                    });
+                  });
+                });
+              });
+          });
+        }
+      }
+
+      var cases = { basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, print: casePrint, "import": caseImport };
+      (cases[CASE] || caseBasic)();
+    </script>
+  </body>
+</html>

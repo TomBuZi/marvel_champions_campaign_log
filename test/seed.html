@@ -1,0 +1,28 @@
+<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>seed</title></head><body>
+<script>
+localStorage.clear();
+var id = "seed-1";
+localStorage.setItem("mcclog:logs", JSON.stringify({ "seed-1": {
+  schemaVersion: 1, id: id, campaignId: "fear-no-evil", stateVersion: 1,
+  title: "Höllenküche, Runde 1", createdAt: "2026-08-01T18:00:00.000Z",
+  updatedAt: "2026-08-14T21:30:00.000Z",
+  state: {
+    players: [
+      { hero: "Daredevil", hp: 8 }, { hero: "Echo", hp: 11 },
+      { hero: "Spider-Man", hp: 4 }, { hero: "", hp: null }
+    ],
+    scenarios: [
+      { slug: "art-museum-heist",  completed: true,  villain: "hammerhead",   progress: 1 },
+      { slug: "the-getaway",       completed: false, villain: "bullseye",     progress: 3 },
+      { slug: "protection-racket", completed: true,  villain: "purple-man",   progress: 2 },
+      { slug: "the-raft-breakout", completed: false, villain: "electro",      progress: 0 },
+      { slug: "stop-the-presses",  completed: false, villain: "typhoid-mary", progress: 1 }
+    ],
+    removed: ["~Foggy Nelson", "Karen Page", "Ben Urich"],
+    flags: { trustEstablished: true, maryDefeated: false }
+  }
+}}));
+localStorage.setItem("mcclog:activeId", id);
+localStorage.setItem("mcclog:lang", "de");
+location.replace("../index.html");
+</script></body></html>

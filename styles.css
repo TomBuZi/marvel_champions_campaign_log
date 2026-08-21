@@ -1,0 +1,844 @@
+/* Marvel Champions campaign log — styling.
+
+   The look is evoked from the official MC60 log sheet with nothing but colour
+   and typography: the palette below was sampled from the PDF, the display face
+   is Exo 2 (the sheet's own text face, OFL), and the comic devices — halftone
+   dots, diagonal hatching, hard ink outlines and offset shadows — are all CSS
+   gradients and borders. No publisher logo, artwork or scan is used anywhere,
+   including the favicon.
+
+   Tokens are declared four times: :root (light), the dark media query, the
+   explicit [data-theme] overrides, and again inside @media print. */
+
+/* ---------- Self-hosted fonts (OFL, see fonts/OFL.txt) ---------- */
+/* Exo 2 ships as a variable font, so one file per subset covers every weight;
+   the italic file likewise. Same unicode-range split as Google Fonts serves. */
+@font-face{font-family:"Exo 2";font-style:normal;font-weight:100 900;font-display:swap;src:url("fonts/Exo2-Upright.latin.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:"Exo 2";font-style:normal;font-weight:100 900;font-display:swap;src:url("fonts/Exo2-Upright.latinext.woff2") format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;}
+@font-face{font-family:"Exo 2";font-style:italic;font-weight:100 900;font-display:swap;src:url("fonts/Exo2-Italic.latin.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:"Exo 2";font-style:italic;font-weight:100 900;font-display:swap;src:url("fonts/Exo2-Italic.latinext.woff2") format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;}
+
+/* ---------- Design tokens ---------- */
+:root {
+  /* Sheet palette, sampled from mc60_campaign_log.pdf. */
+  --page:      #c9562a;   /* comic-orange page field                 */
+  --bar:       #681617;   /* dark red: bars, borders, ink outlines    */
+  --brick:     #a57265;   /* muted brick, table body                 */
+  --panel-1:   #fdece4;   /* peach panel gradient, top               */
+  --panel-2:   #f5d9cf;   /* … bottom                                */
+  --pill:      #eebcb0;   /* heading pill, table header row          */
+  --check:     #e7cec2;   /* empty checkbox                          */
+  --zap:       #e7d810;   /* accent yellow: focus, ticks, counters    */
+  --ink:       #241012;   /* warm near-black text                    */
+
+  /* Generic names, so component CSS never mentions a campaign colour. */
+  --bg: var(--page);
+  --bg-elev: var(--panel-1);
+  --bg-input: #fffaf7;
+  --panel-border: var(--bar);
+  --text: var(--ink);
+  --text-dim: #6d3b34;
+  --accent: var(--bar);
+  --accent-strong: #4d0f10;
+  --accent-2: #8c2b1f;
+  --accent-3: var(--zap);
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(231, 216, 16, 0.55);
+  /* Foreground colours tied to a FIXED surface. The theme swaps what is dark
+     and what is light, so anything sitting on the accent yellow, on the danger
+     red, on the ink colour or on the page itself needs its own token — reusing
+     --text or --ink there flips to the wrong side in the other theme. */
+  --on-brick: #fff4ef;    /* text on the brick table body            */
+  --on-page: #fdece4;     /* text directly on the page (footer)      */
+  --on-zap: #241012;      /* text on the accent yellow               */
+  --on-danger: #fff4ef;   /* text on the danger red                  */
+  --tick: #e7d810;        /* the checkbox tick, drawn on --bar       */
+  --title-shadow: #fdece4;/* hard offset behind the display title    */
+
+  /* Comic geometry. */
+  --rule: 2px;
+  --rule-heavy: 3px;
+  --radius: 10px;
+  --radius-pill: 999px;
+  --ink-shadow: 4px 4px 0 0 var(--bar);   /* hard, never blurred */
+  --halftone: rgba(104, 22, 23, 0.16);
+  --hatch: rgba(104, 22, 23, 0.10);
+
+  --font: "Exo 2", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  --font-head: "Exo 2", Impact, system-ui, sans-serif;
+}
+
+/* Dark theme inverts the page instead of desaturating it: ink-and-red stays
+   the identity, the paper turns to night. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #1b0d0c; --bar: #e8b3a6; --brick: #45231f;
+    --panel-1: #33191a; --panel-2: #291313; --pill: #5a2523;
+    --check: #3b1e1c; --zap: #f0e34a; --ink: #f7e6df;
+    --bg-input: #24100f; --panel-border: #7a3a33; --text-dim: #c79b90;
+    --accent: #e8b3a6; --accent-strong: #f3d0c6; --accent-2: #f0a08c;
+    --danger: #ff6b5c;
+    --glow: 0 0 0 3px rgba(240, 227, 74, 0.40);
+    --halftone: rgba(255, 255, 255, 0.06);
+    --hatch: rgba(255, 255, 255, 0.05);
+    --ink-shadow: 4px 4px 0 0 #0d0505;
+    --on-brick: #f7e6df;
+    --on-page: #f7e6df;
+    --on-zap: #241012;
+    --on-danger: #2b0a07;
+    --tick: #1b0d0c;
+    --title-shadow: #0d0505;
+  }
+}
+:root[data-theme="light"] {
+  --page: #c9562a; --bar: #681617; --brick: #a57265;
+  --panel-1: #fdece4; --panel-2: #f5d9cf; --pill: #eebcb0;
+  --check: #e7cec2; --zap: #e7d810; --ink: #241012;
+  --bg-input: #fffaf7; --panel-border: var(--bar); --text-dim: #6d3b34;
+  --accent: var(--bar); --accent-strong: #4d0f10; --accent-2: #8c2b1f;
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(231, 216, 16, 0.55);
+  --halftone: rgba(104, 22, 23, 0.16);
+  --hatch: rgba(104, 22, 23, 0.10);
+  --ink-shadow: 4px 4px 0 0 var(--bar);
+  --on-brick: #fff4ef;
+  --on-page: #fdece4;
+  --on-zap: #241012;
+  --on-danger: #fff4ef;
+  --tick: #e7d810;
+  --title-shadow: #fdece4;
+}
+:root[data-theme="dark"] {
+  --page: #1b0d0c; --bar: #e8b3a6; --brick: #45231f;
+  --panel-1: #33191a; --panel-2: #291313; --pill: #5a2523;
+  --check: #3b1e1c; --zap: #f0e34a; --ink: #f7e6df;
+  --bg-input: #24100f; --panel-border: #7a3a33; --text-dim: #c79b90;
+  --accent: #e8b3a6; --accent-strong: #f3d0c6; --accent-2: #f0a08c;
+  --danger: #ff6b5c;
+  --glow: 0 0 0 3px rgba(240, 227, 74, 0.40);
+  --halftone: rgba(255, 255, 255, 0.06);
+  --hatch: rgba(255, 255, 255, 0.05);
+  --ink-shadow: 4px 4px 0 0 #0d0505;
+  --on-brick: #f7e6df;
+  --on-page: #f7e6df;
+  --on-zap: #241012;
+  --on-danger: #2b0a07;
+  --tick: #1b0d0c;
+  --title-shadow: #0d0505;
+}
+
+/* ---------- Base ---------- */
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  color: var(--text);
+  /* Ben-Day halftone: two offset dot layers over the flat page colour. */
+  background:
+    radial-gradient(var(--halftone) 1.2px, transparent 1.4px) 0 0 / 9px 9px,
+    radial-gradient(var(--halftone) 1.2px, transparent 1.4px) 4.5px 4.5px / 9px 9px,
+    var(--page);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+h1, h2, h3, legend {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+a { color: var(--accent-2); }
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.hint {
+  margin: 0 0 0.6rem;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+/* ---------- Topbar ---------- */
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0.9rem clamp(0.75rem, 3vw, 2rem);
+  border-bottom: var(--rule-heavy) solid var(--bar);
+  /* Diagonal hatching, so the bar reads as a banner rather than a surface. */
+  background:
+    repeating-linear-gradient(45deg, var(--hatch) 0 2px, transparent 2px 7px),
+    linear-gradient(180deg, var(--panel-1), var(--panel-2));
+}
+
+.brand h1 {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: clamp(1.5rem, 4.2vw, 2.3rem);
+  text-transform: uppercase;
+  /* Sticker lettering: the ink colour as the fill with a hard, unblurred
+     offset in the surface colour behind it. --bar is dark on the light theme
+     and light on the dark one, and --title-shadow is always its opposite, so
+     the title keeps its contrast either way. The sheet's display face (Komika
+     Title) is not redistributable; Exo 2 ExtraBold Italic stands in for it. */
+  color: var(--bar);
+  text-shadow: 2px 2px 0 var(--title-shadow), 3px 3px 0 rgba(0, 0, 0, 0.18);
+}
+
+.badge-unofficial {
+  font-family: var(--font);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  /* The yellow is the same in both themes, so its text must be too. */
+  color: var(--on-zap);
+  background: var(--zap);
+  border: var(--rule) solid var(--on-zap);
+  border-radius: var(--radius-pill);
+  padding: 0.05rem 0.5rem;
+  text-shadow: none;
+  white-space: nowrap;
+}
+
+.subtitle {
+  margin: 0.2rem 0 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.log-picker { display: flex; }
+
+/* ---------- Buttons and inputs ---------- */
+select, input, textarea, button {
+  font: inherit;
+  color: inherit;
+}
+
+select, input[type="text"], input[type="number"], textarea {
+  background: var(--bg-input);
+  color: var(--text);
+  border: var(--rule) solid var(--bar);
+  border-radius: var(--radius);
+  padding: 0.35rem 0.5rem;
+}
+
+select:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+button:focus-visible {
+  outline: 3px solid var(--zap);
+  outline-offset: 2px;
+}
+
+.btn {
+  background: var(--pill);
+  color: var(--text);
+  border: var(--rule) solid var(--bar);
+  border-radius: var(--radius);
+  padding: 0.35rem 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn:hover { background: var(--panel-1); }
+.btn-primary { background: var(--zap); }
+.btn-icon {
+  border-radius: var(--radius-pill);
+  width: 2.4rem;
+  padding: 0.3rem 0;
+  text-align: center;
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+/* ---------- Menu ---------- */
+.menu {
+  position: fixed;
+  margin: 0;
+  padding: 0.4rem;
+  min-width: 15rem;
+  max-width: calc(100vw - 24px);
+  background: var(--panel-1);
+  border: var(--rule-heavy) solid var(--bar);
+  border-radius: var(--radius);
+  box-shadow: var(--ink-shadow);
+  z-index: 40;
+}
+/* Without native popover support the panel is driven by a class instead. */
+@supports not selector(:popover-open) {
+  .menu { display: none; }
+  .menu.is-open { display: block; }
+}
+
+.menu-heading {
+  margin: 0.35rem 0.5rem 0.2rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  text-align: left;
+  cursor: pointer;
+}
+.menu-item:hover:not(:disabled) { background: var(--pill); }
+.menu-item:disabled { opacity: 0.45; cursor: not-allowed; }
+.menu-item.danger { color: var(--danger); }
+.menu-badge { font-size: 0.8rem; color: var(--text-dim); }
+.menu-sep {
+  border: 0;
+  border-top: var(--rule) solid var(--bar);
+  opacity: 0.35;
+  margin: 0.35rem 0.3rem;
+}
+
+/* ---------- Layout ---------- */
+#app {
+  padding: clamp(0.75rem, 3vw, 2rem);
+  max-width: 78rem;
+  margin: 0 auto;
+  display: grid;
+  gap: 1rem;
+}
+
+.notice {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  background: var(--zap);
+  color: #241012;
+  border: var(--rule-heavy) solid var(--bar);
+  border-radius: var(--radius);
+  box-shadow: var(--ink-shadow);
+  font-weight: 700;
+}
+
+#campaign {
+  display: grid;
+  gap: 1rem;
+}
+
+/* Inked panel: a hard, unblurred offset shadow is what makes it read as line
+   art rather than as a material-design card. */
+.panel {
+  background: linear-gradient(165deg, var(--panel-1), var(--panel-2));
+  border: var(--rule-heavy) solid var(--bar);
+  border-radius: var(--radius);
+  box-shadow: var(--ink-shadow);
+  padding: 0.9rem 1rem 1.1rem;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: -0.2rem 0 0.8rem;
+}
+
+.panel-head h2 {
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  background: var(--pill);
+  border: var(--rule) solid var(--bar);
+  border-radius: var(--radius-pill);
+  padding: 0.25rem 1rem;
+}
+
+/* The scenario table and the villain list side by side on wide screens; the
+   DOM order is unchanged, so reading order and print output stay faithful. */
+.sheet-columns {
+  display: grid;
+  gap: 1rem;
+}
+@media (min-width: 60rem) {
+  .sheet-columns { grid-template-columns: minmax(0, 3fr) minmax(11rem, 1fr); }
+}
+
+/* ---------- Player cards ---------- */
+.player-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+}
+
+.player-card {
+  background: var(--bg-input);
+  border: var(--rule) solid var(--bar);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.7rem 0.7rem;
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+}
+.player-card.is-duplicate { border-color: var(--danger); }
+
+.player-name {
+  font-weight: 800;
+  font-style: italic;
+  font-size: 0.95rem;
+}
+
+.field-label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.text-input { width: 100%; }
+
+.num-field {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+.num-input { width: 4.5rem; }
+.num-hint {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
+/* ---------- Sheet table ---------- */
+.sheet-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--brick);
+  border: var(--rule) solid var(--bar);
+  border-radius: var(--radius);
+  overflow: hidden;
+  color: var(--on-brick);
+}
+.sheet-table th,
+.sheet-table td {
+  border: var(--rule) solid var(--bar);
+  padding: 0.45rem 0.6rem;
+  text-align: center;
+  vertical-align: middle;
+}
+.sheet-table thead th {
+  background: var(--pill);
+  color: var(--ink);
+  font-family: var(--font-head);
+  font-style: italic;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.sheet-table tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.07); }
+.sheet-table .scenario-name {
+  text-align: left;
+  font-weight: 700;
+  font-style: normal;
+  white-space: nowrap;
+}
+/* A failed scenario is out of play; dimming the row says so without taking
+   any control away, since the sheet enforces nothing here. */
+.sheet-table tr.is-failed .scenario-name { text-decoration: line-through; }
+.sheet-table tr.is-failed { opacity: 0.72; }
+
+.pool-select { max-width: 100%; }
+
+/* Hand-inked checkbox, drawn entirely in CSS so it survives printing. */
+.sheet-check {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: 0;
+  background: var(--check);
+  border: var(--rule) solid var(--bar);
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  vertical-align: middle;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+.sheet-check:checked { background: var(--bar); }
+/* A clip-path tick beats content:"✓" — it does not depend on a font subset
+   carrying the glyph, and it prints. */
+.sheet-check:checked::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--tick);
+  clip-path: polygon(16% 52%, 38% 74%, 84% 22%, 92% 32%, 40% 90%, 8% 60%);
+}
+.sheet-check.tone-danger:checked { background: var(--danger); }
+.sheet-check.tone-danger:checked::after { background: var(--on-danger); }
+
+/* ---------- Progress counter ---------- */
+.progress-row {
+  display: inline-flex;
+  gap: 0.3rem;
+}
+.progress-box {
+  min-width: 2.2rem;
+  height: 1.9rem;
+  padding: 0 0.35rem;
+  background: var(--check);
+  color: var(--ink);
+  border: var(--rule) solid var(--bar);
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+.progress-box.filled { background: var(--zap); color: var(--on-zap); }
+.progress-box.last.filled { background: var(--danger); color: var(--on-danger); }
+
+/* ---------- Villain chips ---------- */
+.chip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+.chip {
+  background: var(--bg-input);
+  border: var(--rule) solid var(--bar);
+  border-radius: var(--radius-pill);
+  padding: 0.3rem 0.8rem;
+  text-align: center;
+  font-weight: 700;
+}
+.chip--used {
+  text-decoration: line-through;
+  opacity: 0.5;
+  background: transparent;
+}
+
+/* ---------- Flags ---------- */
+.flag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+}
+.flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--bg-input);
+  border: var(--rule) solid var(--bar);
+  border-radius: var(--radius-pill);
+  padding: 0.3rem 0.5rem 0.3rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ---------- String lists ---------- */
+.field { display: grid; gap: 0.4rem; }
+.field > label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.entry-list {
+  display: grid;
+  gap: 0.35rem;
+  min-height: 0.5rem;
+  border-radius: var(--radius);
+}
+.entry-list.drop-active {
+  box-shadow: inset 0 0 0 2px var(--zap);
+  min-height: 2.2rem;
+}
+/* While a drag of this group is in progress, empty lists have to be visible
+   targets, not zero-height gaps. */
+body[class*="dnd-"] .entry-list { min-height: 2.2rem; outline: 1px dashed var(--bar); }
+
+.entry-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.35rem;
+  align-items: center;
+  border-radius: var(--radius);
+}
+.entry-row.dragging { opacity: 0.5; }
+.entry-row.drop-before { box-shadow: inset 0 3px 0 0 var(--zap); }
+.entry-row.drop-after { box-shadow: inset 0 -3px 0 0 var(--zap); }
+
+.entry-drag {
+  cursor: grab;
+  padding: 0 0.3rem;
+  color: var(--text-dim);
+  /* Only the grip suppresses touch gestures, so the page still scrolls. */
+  touch-action: none;
+  user-select: none;
+}
+
+.entry-input { width: 100%; }
+.entry-input.struck { text-decoration: line-through; color: var(--text-dim); }
+
+.entry-remove {
+  background: none;
+  border: var(--rule) solid transparent;
+  border-radius: var(--radius-pill);
+  width: 1.9rem;
+  height: 1.9rem;
+  cursor: pointer;
+  color: var(--danger);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+.entry-remove:hover { border-color: var(--danger); }
+
+.entry-add {
+  justify-self: start;
+  background: var(--pill);
+  border: var(--rule) solid var(--bar);
+  border-radius: var(--radius-pill);
+  padding: 0.25rem 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.entry-add:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ---------- Dialogs ---------- */
+.dialog, .help-dialog {
+  border: var(--rule-heavy) solid var(--bar);
+  border-radius: var(--radius);
+  background: linear-gradient(165deg, var(--panel-1), var(--panel-2));
+  color: var(--text);
+  padding: 1rem 1.1rem 1.1rem;
+  max-width: min(42rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 3rem);
+  box-shadow: var(--ink-shadow);
+}
+.dialog::backdrop, .help-dialog::backdrop { background: rgba(20, 6, 6, 0.55); }
+
+.dialog fieldset {
+  border: var(--rule) solid var(--bar);
+  border-radius: var(--radius);
+  margin: 0.8rem 0;
+  padding: 0.6rem 0.8rem;
+}
+.dialog legend {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  padding: 0 0.4rem;
+}
+.choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.3rem 0;
+  cursor: pointer;
+}
+.choice-text { display: grid; }
+.choice-text small { color: var(--text-dim); }
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.help-dialog { overflow: auto; }
+.help-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+}
+.help-head h2 { font-size: 1.1rem; text-transform: uppercase; }
+.help-close {
+  background: none;
+  border: var(--rule) solid var(--bar);
+  border-radius: var(--radius-pill);
+  width: 2rem; height: 2rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.help-body h3 {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  margin: 1rem 0 0.2rem;
+}
+/* Help texts may carry line breaks from a translation. */
+.help-body p { margin: 0; white-space: pre-line; }
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.2rem;
+  transform: translateX(-50%);
+  max-width: min(34rem, calc(100vw - 2rem));
+  background: var(--panel-1);
+  color: var(--text);
+  border: var(--rule-heavy) solid var(--bar);
+  border-radius: var(--radius);
+  box-shadow: var(--ink-shadow);
+  padding: 0.6rem 0.9rem;
+  z-index: 60;
+  animation: toast-in 160ms ease-out;
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, 6px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* ---------- Footer ---------- */
+.footer {
+  padding: 1rem clamp(0.75rem, 3vw, 2rem) 2rem;
+  max-width: 78rem;
+  margin: 0 auto;
+  font-size: 0.8rem;
+  color: var(--on-page);
+}
+.footer .disclaimer {
+  margin: 0.5rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  opacity: 0.9;
+}
+
+/* ---------- Narrow screens ---------- */
+/* A six-column grid is unusable on a phone, so each row becomes a stack with
+   the column name in front of its control. */
+@media (max-width: 45rem) {
+  .sheet-table,
+  .sheet-table thead,
+  .sheet-table tbody,
+  .sheet-table tr,
+  .sheet-table th,
+  .sheet-table td { display: block; }
+  .sheet-table thead { display: none; }
+  .sheet-table { border: 0; background: none; color: var(--text); }
+  .sheet-table tbody tr {
+    background: var(--bg-input);
+    border: var(--rule) solid var(--bar);
+    border-radius: var(--radius);
+    margin-bottom: 0.6rem;
+    padding: 0.4rem 0.6rem;
+  }
+  .sheet-table tbody tr:nth-child(even) { background: var(--bg-input); }
+  .sheet-table th,
+  .sheet-table td { border: 0; text-align: left; padding: 0.25rem 0; }
+  .sheet-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-dim);
+  }
+  .sheet-table .scenario-name { font-size: 1rem; white-space: normal; }
+  .chip-list { grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, .toast { animation: none !important; transition: none !important; }
+}
+
+/* ---------- Print ---------- */
+.print-only { display: none; }
+
+@media print {
+  /* A fourth token set: the printout is black on white regardless of the
+     screen theme, so a dark-mode session does not print a dark page. */
+  :root, :root[data-theme="light"], :root[data-theme="dark"] {
+    --page: #fff; --bar: #000; --brick: #fff;
+    --panel-1: #fff; --panel-2: #fff; --pill: #fff;
+    --check: #fff; --zap: #000; --ink: #000;
+    --bg-input: #fff; --panel-border: #000; --text-dim: #000;
+    --accent: #000; --accent-strong: #000; --accent-2: #000; --danger: #000;
+    --halftone: transparent; --hatch: transparent;
+    --ink-shadow: none;
+    --on-brick: #000; --on-page: #000; --on-zap: #000;
+    --on-danger: #000; --tick: #000; --title-shadow: transparent;
+  }
+
+  @page { margin: 12mm; }
+
+  body {
+    background: #fff;
+    color: #000;
+    font-size: 10pt;
+  }
+
+  .topbar, #app, .footer, .toast, .menu, dialog { display: none !important; }
+  .print-only { display: block; }
+
+  .print-head { margin-bottom: 6mm; }
+  .print-head h1 {
+    font-size: 15pt;
+    text-transform: uppercase;
+    text-shadow: none;
+    color: #000;
+  }
+  .print-meta { margin: 0.5mm 0; font-size: 9pt; }
+
+  .print-section { margin-bottom: 5mm; break-inside: avoid; }
+  .print-section h2 {
+    font-size: 11pt;
+    text-transform: uppercase;
+    border-bottom: 1pt solid #000;
+    margin-bottom: 1.5mm;
+    break-after: avoid;
+  }
+  .print-line { margin: 0.6mm 0; break-inside: avoid; }
+  .print-list { margin: 0.6mm 0 0; padding-left: 5mm; }
+  .print-list .struck { text-decoration: line-through; }
+
+  .print-disclaimer {
+    margin-top: 8mm;
+    font-size: 7.5pt;
+    line-height: 1.35;
+    border-top: 0.5pt solid #000;
+    padding-top: 2mm;
+  }
+}

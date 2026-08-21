@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # There is no build step, so a syntax error would only surface in the
+      # browser. This is the cheapest gate against shipping one.
+      - name: Syntax check every script
+        run: |
+          for f in core.js widgets.js i18n.js heroes.js campaigns/*.js test/*.js; do
+            echo "checking $f"
+            node --check "$f"
+          done
+
+      # Dictionary parity, campaign definitions, normalize() round-trips,
+      # the hero roster and the packaging rules. No browser needed, because the
+      # data half of the code never touches the DOM.
+      - name: Lints and data round-trip
+        run: node test/lint.js
+
+      # Drives the real page in headless Chrome: typing, the villain mutual
+      # exclusion, the progress counter, quarantine, import, share links and
+      # the print view. Chrome ships with the runner image.
+      - name: Browser self-test
+        run: node test/run-browser.js

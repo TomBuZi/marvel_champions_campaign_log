@@ -1,0 +1,17 @@
+# Lokale Claude-Code-Konfiguration
+.claude/
+
+# Exportierte Kampagnenbögen (Nutzerdaten, kein Quellcode).
+# Der /-Anker begrenzt das auf das Repo-Root, damit campaigns/*.js und
+# heroes.js nicht mit erfasst werden.
+/*.json
+
+# Referenzmaterial des Herausgebers: Der Bogen darf für den persönlichen
+# Gebrauch gedruckt oder kopiert werden — das deckt nicht, ihn hier auf einer
+# öffentlichen Seite erneut zu veröffentlichen.
+*.pdf
+
+# Betriebssystem- und Editor-Reste
+Thumbs.db
+.DS_Store
+*.swp

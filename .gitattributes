@@ -1,0 +1,7 @@
+# Keep the working tree as it is committed. Git would otherwise rewrite these
+# files to CRLF on checkout on Windows, which is pure churn for files that are
+# served verbatim by GitHub Pages.
+* text=auto eol=lf
+*.woff2 binary
+*.pdf binary
+*.png binary
