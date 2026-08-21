@@ -41,14 +41,18 @@
   }
 
   // ---- Checkbox -----------------------------------------------------------
-  /* cfg: { checked, label, tone?, onChange(next) }
+  /* cfg: { checked, label, tone?, disabled?, lockReason?, onChange(next) }
      `label` becomes the accessible name; pass the row and column together
      ("Art Museum Heist – Completed"), because a bare checkbox in a grid is
-     otherwise unnameable. */
+     otherwise unnameable. `disabled` keeps the mark visible but takes the
+     control out of reach, and `lockReason` says why on hover. */
   function checkbox(cfg) {
-    var box = el("input", "sheet-check" + (cfg.tone ? " tone-" + cfg.tone : ""),
-      { type: "checkbox", "aria-label": cfg.label, title: cfg.label });
+    var box = el("input", "sheet-check" + (cfg.tone ? " tone-" + cfg.tone : "") +
+      (cfg.disabled ? " is-locked" : ""),
+      { type: "checkbox", "aria-label": cfg.label,
+        title: cfg.disabled && cfg.lockReason ? cfg.lockReason : cfg.label });
     box.checked = !!cfg.checked;
+    box.disabled = !!cfg.disabled;
     box.addEventListener("change", function () { cfg.onChange(box.checked); });
     return box;
   }
@@ -164,19 +168,23 @@
 
   // ---- Progress row -------------------------------------------------------
   /* A row of N boxes acting as a 0..N counter. cfg:
-       { value, steps: [label], labelFor(i), onChange(next) }
+       { value, steps: [label], labelFor(i), disabled?, lockReason?, onChange(next) }
      Clicking a box sets the counter to that box; clicking the current top box
      lowers it by one, which is the only way back to zero. `steps` carries one
-     label per box, so the last box can read "Failed" instead of "3". */
+     label per box, so the last box can read "Failed" instead of "3".
+     `disabled` freezes the row: the marks stay exactly as they are and stay
+     legible, but the boxes cannot be operated and drop out of the tab order. */
   function progressRow(cfg) {
-    var wrap = el("div", "progress-row");
+    var wrap = el("div", "progress-row" + (cfg.disabled ? " is-locked" : ""));
     cfg.steps.forEach(function (stepLabel, i) {
       var n = i + 1;
       var box = el("button", "progress-box" + (n <= cfg.value ? " filled" : "") +
         (i === cfg.steps.length - 1 ? " last" : ""),
         { type: "button", "aria-label": cfg.labelFor(n),
-          title: cfg.labelFor(n), "aria-pressed": n <= cfg.value ? "true" : "false" });
+          title: cfg.disabled && cfg.lockReason ? cfg.lockReason : cfg.labelFor(n),
+          "aria-pressed": n <= cfg.value ? "true" : "false" });
       box.textContent = stepLabel;
+      box.disabled = !!cfg.disabled;
       box.addEventListener("click", function () {
         cfg.onChange(cfg.value === n ? n - 1 : n);
       });

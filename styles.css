@@ -507,6 +507,22 @@ button:focus-visible {
 .sheet-check.tone-danger:checked { background: var(--danger); }
 .sheet-check.tone-danger:checked::after { background: var(--on-danger); }
 
+/* Locked controls: "Completed" and "Failed" rule each other out, so one of them
+   freezes the other. The mark has to stay fully legible — it is still the
+   record of what happened — so the lock is shown by the cursor, a dashed
+   border and a slight fade, never by washing the tick out. */
+.sheet-check:disabled,
+.progress-box:disabled {
+  cursor: not-allowed;
+  border-style: dashed;
+  opacity: 0.75;
+}
+.progress-row.is-locked .progress-box.filled { opacity: 0.9; }
+
+/* A completed scenario is settled, like a failed one — the row reads as closed
+   without dimming it as far as a failure. */
+.sheet-table tr.is-completed .scenario-name { font-style: italic; }
+
 /* ---------- Progress counter ---------- */
 .progress-row {
   display: inline-flex;

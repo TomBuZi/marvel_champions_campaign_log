@@ -17,6 +17,7 @@
       }
 
       var CASE = new URLSearchParams(location.search).get("case") || "basic";
+      var PROGRESS_MAX_T = 3;   // third progress point = failed
 
       window.addEventListener("error", function (e) {
         lines.push("ERROR " + e.message + " @" + e.filename + ":" + e.lineno);
@@ -509,7 +510,125 @@
         }
       }
 
-      var cases = { basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, print: casePrint, "import": caseImport };
+      // ------------------------------------------------------------------ lock
+      // "Completed" and "Failed" are mutually exclusive and lock each other.
+      function caseLock() {
+        localStorage.clear();
+        pinLang("de");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          function rows() { return d.querySelectorAll("tbody tr"); }
+          function done(i) { return rows()[i].querySelector(".sheet-check"); }
+          function boxes(i) { return rows()[i].querySelectorAll(".progress-box"); }
+          function boxState(i) {
+            return Array.prototype.map.call(boxes(i), function (b) {
+              return (b.classList.contains("filled") ? "1" : "0") + (b.disabled ? "L" : "-");
+            }).join(" ");
+          }
+
+          // Nothing is locked on a fresh row.
+          log("fresh row: progress operable", !boxes(0)[0].disabled);
+          log("fresh row: completed operable", !done(0).disabled);
+
+          // Ticking Completed freezes the progress boxes but keeps the marks.
+          boxes(0)[1].click();                       // progress 2
+          log("progress set to 2 before locking", boxState(0) === "1- 1- 0-", boxState(0));
+          done(0).checked = true;
+          fire(done(0), "change");
+          log("completed freezes every progress box",
+            Array.prototype.every.call(boxes(0), function (b) { return b.disabled; }),
+            boxState(0));
+          log("frozen marks are kept",
+            boxes(0)[0].classList.contains("filled") &&
+            boxes(0)[1].classList.contains("filled") &&
+            !boxes(0)[2].classList.contains("filled"), boxState(0));
+          log("frozen boxes leave the tab order",
+            rows()[0].querySelectorAll(".progress-box:disabled").length === 3);
+          log("lock reason offered on hover",
+            /abgeschlossen/i.test(boxes(0)[0].title || ""), boxes(0)[0].title);
+          log("completed itself stays operable", !done(0).disabled);
+
+          // A click on a frozen box changes nothing.
+          boxes(0)[2].click();
+          log("clicking a frozen box does nothing", boxState(0) === "1L 1L 0L", boxState(0));
+
+          // Unticking Completed hands the counter back, unchanged.
+          done(0).checked = false;
+          fire(done(0), "change");
+          log("unticking completed unfreezes the counter", boxState(0) === "1- 1- 0-", boxState(0));
+
+          // The other direction: the third progress point locks Completed.
+          boxes(1)[2].click();                       // progress 3 -> failed
+          log("third point marks the row failed", rows()[1].classList.contains("is-failed"));
+          log("failed locks the completed box", done(1).disabled);
+          log("failed row keeps its progress operable", !boxes(1)[2].disabled);
+          log("lock reason names the failure",
+            /gescheitert/i.test(done(1).title || ""), done(1).title);
+          done(1).click();
+          log("clicking a locked completed box does nothing", !done(1).checked);
+          boxes(1)[2].click();                       // back to 2
+          log("taking a point back unlocks completed", !done(1).disabled);
+
+          // Neither state can be reached from the other, so both are never set
+          // at once through the UI.
+          done(2).checked = true;
+          fire(done(2), "change");
+          boxes(2)[2].click();                       // locked, so this is a no-op
+          log("row 3 is completed in the DOM", done(2).checked);
+          log("row 3 did not also become failed",
+            !rows()[2].classList.contains("is-failed") &&
+            !boxes(2)[2].classList.contains("filled"), boxState(2));
+          /* Saving is debounced, so read the store only after a flush —
+             otherwise this assertion passes on the state from before the
+             change, which is no assertion at all. */
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var s2 = JSON.parse(localStorage.getItem("mcclog:logs"));
+            var stored = s2[Object.keys(s2)[0]].state.scenarios[2];
+            log("the change reached storage", stored.completed === true, JSON.stringify(stored));
+            log("UI cannot produce completed AND failed",
+              !(stored.completed && stored.progress >= PROGRESS_MAX_T), JSON.stringify(stored));
+            finish();
+          }, 500);
+        });
+      }
+
+      // -------------------------------------------------- lock: conflicting log
+      /* A file or a hand-edited store can carry both flags at once. Freezing
+         both controls would leave that row unfixable, so the lock stands down
+         until the row is consistent again. */
+      function caseLockConflict() {
+        var conflicted = {
+          schemaVersion: 1, id: "conf-1", campaignId: "fear-no-evil", stateVersion: 1,
+          title: "Widerspruch", createdAt: "2026-04-01T00:00:00.000Z",
+          updatedAt: "2026-04-02T00:00:00.000Z",
+          state: {
+            players: [], removed: [], flags: {},
+            scenarios: [{ slug: "art-museum-heist", completed: true, villain: "", progress: 3 }],
+          },
+        };
+        seed({ "conf-1": conflicted }, "conf-1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var tr = d.querySelectorAll("tbody tr")[0];
+          var done = tr.querySelector(".sheet-check");
+          var boxes = tr.querySelectorAll(".progress-box");
+          log("conflicting row is kept as imported",
+            done.checked && boxes[2].classList.contains("filled"));
+          log("completed stays operable so the row can be fixed", !done.disabled);
+          log("progress stays operable so the row can be fixed",
+            !boxes[0].disabled && !boxes[2].disabled);
+          // Resolving it in either direction re-arms the lock.
+          done.checked = false;
+          fire(done, "change");
+          var d2 = d.querySelectorAll("tbody tr")[0];
+          log("clearing completed re-arms the lock",
+            d2.querySelector(".sheet-check").disabled);
+          finish();
+        });
+      }
+
+      var cases = { basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict };
       (cases[CASE] || caseBasic)();
     </script>
   </body>

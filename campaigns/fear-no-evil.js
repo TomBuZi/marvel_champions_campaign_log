@@ -27,15 +27,33 @@
      is derived from `progress`, never stored. */
   var PROGRESS_MAX = 3;
 
+  /* "Completed" and "Failed" are mutually exclusive outcomes, so each locks the
+     other out: ticking Completed freezes the progress boxes (the marks stay, but
+     they can no longer be operated), and a scenario on the third progress point
+     is failed, which locks the Completed box.
+
+     The lock is deliberately one-sided per row: it applies only while the row
+     is consistent. A log that arrives from an import or a hand-edited file with
+     BOTH set would otherwise be frozen solid with no way out, so in that case
+     both controls stay live until one of them is cleared. normalize() does not
+     silently pick a winner either — which of the two the player meant is not
+     ours to guess. */
+  function completedLocked(row) {
+    return row.progress >= PROGRESS_MAX && !row.completed;
+  }
+  function progressLocked(row) {
+    return row.completed && row.progress < PROGRESS_MAX;
+  }
+
   /* Scenario names. The German ones are provisional: there is no official
      German MC60 edition yet, so correct one line each once there is. Nothing
      migrates when they change, because only the slug is ever persisted. */
   var SCENARIOS = [
-    { slug: "art-museum-heist",  en: "Art Museum Heist",  de: "Raubzug im Kunstmuseum" },
+    { slug: "art-museum-heist",  en: "Art Museum Heist",  de: "Raub im Kunstmuseum" },
     { slug: "the-getaway",       en: "The Getaway",       de: "Die Flucht" },
     { slug: "protection-racket", en: "Protection Racket", de: "Schutzgelderpressung" },
     { slug: "the-raft-breakout", en: "The Raft Breakout", de: "Ausbruch aus dem Raft" },
-    { slug: "stop-the-presses",  en: "Stop the Presses!", de: "Stoppt die Druckerpressen!" },
+    { slug: "stop-the-presses",  en: "Stop the Presses!", de: "Stoppt die Druckpressen!" },
   ];
 
   /* Villain names stay English in both languages. That is the convention of the
@@ -291,7 +309,10 @@
     state.scenarios.forEach(function (row, i) {
       var def = SCENARIOS[i];
       var name = scenarioName(def, lang);
-      var tr = W.el("tr", row.progress >= PROGRESS_MAX ? "is-failed" : null);
+      var tr = W.el("tr", [
+        row.progress >= PROGRESS_MAX ? "is-failed" : "",
+        row.completed ? "is-completed" : "",
+      ].join(" ").trim() || null);
 
       var th = W.el("th", "scenario-name", { scope: "row", lang: scenarioLang(def, lang) });
       th.textContent = name;
@@ -301,7 +322,15 @@
       doneCell.appendChild(W.checkbox({
         checked: row.completed,
         label: name + " – " + t("colCompleted"),
-        onChange: function (next) { row.completed = next; ctx.save(); },
+        disabled: completedLocked(row),
+        lockReason: t("lockedByFailed"),
+        onChange: function (next) {
+          row.completed = next;
+          ctx.save();
+          /* Re-render: this toggle decides whether the progress boxes in this
+             row are frozen. */
+          ctx.rerender();
+        },
       }));
       tr.appendChild(doneCell);
 
@@ -333,6 +362,8 @@
             ? t("colFailed")
             : t("progressStep", String(n)));
         },
+        disabled: progressLocked(row),
+        lockReason: t("lockedByCompleted"),
         onChange: function (next) {
           row.progress = next;
           ctx.save();
@@ -499,8 +530,8 @@
     render: render,
     renderPrint: renderPrint,
 
-    helpDe: "Jede Runde werden zwei Szenarien gezogen, die weder abgeschlossen noch gescheitert sind; beide erhalten einen Fortschrittspunkt. Der dritte Punkt bedeutet: Das Szenario ist gescheitert. Deshalb sind „1“, „2“ und „Gescheitert“ ein Zähler und keine drei einzelnen Kästchen — ein Klick auf das jeweils oberste gefüllte Kästchen nimmt einen Punkt zurück. Jeder der fünf Schurken wird genau einem Szenario zugeordnet; ein gewählter Schurke verschwindet aus den übrigen Zeilen und wird in der Schurkenliste durchgestrichen.",
-    helpEn: "Each round two scenarios that are neither completed nor failed are drawn, and both take one progress point. The third point means the scenario has failed. So “1”, “2” and “Failed” are one counter rather than three separate boxes — clicking the topmost filled box takes a point back. Each of the five villains is assigned to exactly one scenario; a chosen villain disappears from the other rows and is struck through in the villain list.",
+    helpDe: "Jede Runde werden zwei Szenarien gezogen, die weder abgeschlossen noch gescheitert sind; beide erhalten einen Fortschrittspunkt. Der dritte Punkt bedeutet: Das Szenario ist gescheitert. Deshalb sind „1“, „2“ und „Gescheitert“ ein Zähler und keine drei einzelnen Kästchen — ein Klick auf das jeweils oberste gefüllte Kästchen nimmt einen Punkt zurück. „Abgeschlossen“ und „Gescheitert“ schließen sich aus: Ein abgeschlossenes Szenario friert seinen Fortschritt ein, ein gescheitertes sperrt den Abgeschlossen-Haken — die gesetzten Haken bleiben dabei sichtbar. Jeder der fünf Schurken wird genau einem Szenario zugeordnet; ein gewählter Schurke verschwindet aus den übrigen Zeilen und wird in der Schurkenliste durchgestrichen.",
+    helpEn: "Each round two scenarios that are neither completed nor failed are drawn, and both take one progress point. The third point means the scenario has failed. So “1”, “2” and “Failed” are one counter rather than three separate boxes — clicking the topmost filled box takes a point back. “Completed” and “Failed” are mutually exclusive: a completed scenario freezes its progress and a failed one locks the Completed box, with the existing marks left visible either way. Each of the five villains is assigned to exactly one scenario; a chosen villain disappears from the other rows and is struck through in the villain list.",
 
     i18n: {
       de: {
@@ -524,7 +555,9 @@
         colFailed: "Gescheitert",
         /* "%s" = Nummer des Fortschrittspunkts. */
         progressStep: "Fortschritt %s",
-        progressHint: "Fortschritt: „1“, „2“, „Gescheitert“ sind ein Zähler. Ein Klick setzt ihn auf dieses Kästchen; ein Klick auf das oberste gefüllte Kästchen nimmt einen Punkt zurück.",
+        progressHint: "Fortschritt: „1“, „2“, „Gescheitert“ sind ein Zähler. Ein Klick setzt ihn auf dieses Kästchen; ein Klick auf das oberste gefüllte Kästchen nimmt einen Punkt zurück. „Abgeschlossen“ und „Gescheitert“ schließen sich aus und sperren einander.",
+        lockedByCompleted: "Szenario ist abgeschlossen — der Fortschritt bleibt stehen und ist gesperrt. Zum Ändern zuerst „Abgeschlossen“ abwählen.",
+        lockedByFailed: "Szenario ist gescheitert — „Abgeschlossen“ ist gesperrt. Zum Ändern zuerst einen Fortschrittspunkt zurücknehmen.",
         villainPlaceholder: "— Schurke wählen —",
         /* "%s" = Szenarioname. */
         assignedTo: "Zugeordnet: %s",
@@ -553,7 +586,9 @@
         colProgress: "Progress",
         colFailed: "Failed",
         progressStep: "Progress %s",
-        progressHint: "Progress: “1”, “2” and “Failed” are one counter. A click sets it to that box; clicking the topmost filled box takes a point back.",
+        progressHint: "Progress: “1”, “2” and “Failed” are one counter. A click sets it to that box; clicking the topmost filled box takes a point back. “Completed” and “Failed” are mutually exclusive and lock each other out.",
+        lockedByCompleted: "Scenario is completed — the progress stays as it is and is locked. Untick “Completed” first to change it.",
+        lockedByFailed: "Scenario has failed — “Completed” is locked. Take a progress point back first to change it.",
         villainPlaceholder: "— choose a villain —",
         assignedTo: "Assigned to: %s",
 

@@ -17,7 +17,7 @@ const path = require("path");
 const http = require("http");
 
 const root = path.resolve(__dirname, "..");
-const CASES = ["basic", "quarantine", "share", "lang", "print", "import"];
+const CASES = ["basic", "quarantine", "share", "lang", "print", "import", "lock", "lockconflict"];
 const cases = process.argv.slice(2).length ? process.argv.slice(2) : CASES;
 const PORT = Number(process.env.PORT || 8139);
 /* The browser locale is pinned, because the app picks its language from

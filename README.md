@@ -37,6 +37,18 @@ dieses Kästchen; ein Klick auf das oberste gefüllte Kästchen nimmt einen Punk
 so kommt man auch wieder auf null. Gespeichert wird deshalb nur `progress: 0..3`;
 „gescheitert“ ist daraus abgeleitet und kein eigenes Feld.
 
+**„Abgeschlossen“ und „Gescheitert“ schließen sich aus** und sperren einander:
+Ein Haken bei „Abgeschlossen“ friert den Fortschritt ein — die gesetzten Kästchen
+bleiben sichtbar, sind aber nicht mehr bedienbar. Umgekehrt sperrt ein gescheitertes
+Szenario den Abgeschlossen-Haken. Wer es doch ändern will, nimmt zuerst das jeweils
+andere zurück; ein Tooltip sagt das an den gesperrten Kästchen auch.
+
+Die Sperre gilt nur, **solange die Zeile widerspruchsfrei ist**. Ein importierter oder
+handeditierter Bogen kann beides gesetzt haben — dann blieben beide Bedienelemente
+gesperrt und die Zeile wäre nicht mehr zu reparieren. In diesem Fall bleiben deshalb
+beide bedienbar, bis eines geklärt ist. `normalize()` wählt bewusst keinen Gewinner:
+welche der beiden Angaben gemeint war, ist nicht zu erraten.
+
 ### Erledigt-Markierung
 
 Eine Tilde `~` am Anfang eines Listeneintrags streicht ihn durch, ohne ihn zu löschen.
@@ -145,8 +157,9 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (83 Assertions)
-node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang | print | import
+node test/run-browser.js            # Selbsttest im echten Browser (107 Assertions)
+node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
+                                    #   print | import | lock | lockconflict
 BROWSER_LANG=de-DE node test/run-browser.js   # unter einer anderen Browser-Sprache
 ```
 
