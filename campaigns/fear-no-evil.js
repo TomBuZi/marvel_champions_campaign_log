@@ -79,6 +79,39 @@
   function scenarioLang(entry, lang) {
     return (lang === "de" && entry.de) ? null : "en";
   }
+  /* Scenarios still in play: neither completed nor failed. These are the ones a
+     round draws from. */
+  function openScenarios(state) {
+    return state.scenarios.filter(function (row) {
+      return !row.completed && row.progress < PROGRESS_MAX;
+    });
+  }
+
+  /* Advance one round. Two of the scenarios still in play each take a progress
+     point; if only one is left in play it takes both, since the round happens
+     either way. Returns the rows that were advanced, so the caller can say
+     which ones they were. */
+  function advanceRound(state) {
+    var open = openScenarios(state);
+    if (!open.length) return [];
+    if (open.length === 1) {
+      var only = open[0];
+      only.progress = Math.min(PROGRESS_MAX, only.progress + 2);
+      return [only];
+    }
+    /* Two drawn at random out of everything still in play — which is what the
+       campaign asks for, not the first two on the sheet. */
+    var pool = open.slice();
+    var drawn = [];
+    for (var i = 0; i < 2; i++) {
+      var pick = W.pickRandom(pool);
+      pool.splice(pool.indexOf(pick), 1);
+      pick.progress = Math.min(PROGRESS_MAX, pick.progress + 1);
+      drawn.push(pick);
+    }
+    return drawn;
+  }
+
   /* The villains not yet given to any scenario. Each is used exactly once, so
      this is what the randomiser draws from. */
   function unusedVillains(state) {
@@ -225,7 +258,9 @@
     });
 
     var section = panel("players", t("secPlayers"), addBtn);
-    var grid = W.el("div", "player-grid");
+    /* Drives the column count in styles.css, so the layout follows how many
+       players there are instead of how much room happens to be left. */
+    var grid = W.el("div", "player-grid", { "data-players": String(state.players.length) });
 
     /* One shared <datalist> of hero names for all the slots. The fields stay
        free text: the sheet is a fill-in field, and a hero the roster has not
@@ -352,7 +387,25 @@
   }
 
   function renderScenarios(t, lang, state, ctx) {
-    var section = panel("scenarios", t("secScenarios"));
+    var open = openScenarios(state);
+    var roundBtn = W.el("button", "btn btn-add", { type: "button" });
+    roundBtn.textContent = t("nextRound");
+    roundBtn.disabled = open.length === 0;
+    roundBtn.title = roundBtn.disabled ? t("nextRoundNone") : t("nextRoundHint");
+    roundBtn.addEventListener("click", function () {
+      var drawn = advanceRound(state);
+      if (!drawn.length) return;
+      var names = drawn.map(function (row) {
+        return scenarioName(SCENARIOS[state.scenarios.indexOf(row)], lang);
+      });
+      ctx.save();
+      ctx.toast(names.length === 1
+        ? t("nextRoundDrawnOne", names[0])
+        : t("nextRoundDrawn", names[0], names[1]), 5000);
+      ctx.rerender();
+    });
+
+    var section = panel("scenarios", t("secScenarios"), roundBtn);
 
     var hint = W.el("p", "hint");
     hint.textContent = t("progressHint");
@@ -633,8 +686,8 @@
     render: render,
     renderPrint: renderPrint,
 
-    helpDe: "Spieler werden einzeln hinzugefügt — von einem bis vier —, der Bogen zeigt also nur die, die wirklich mitspielen. Jede Runde werden zwei Szenarien gezogen, die weder abgeschlossen noch gescheitert sind; beide erhalten einen Fortschrittspunkt. Der dritte Punkt bedeutet: Das Szenario ist gescheitert. Deshalb sind „1“, „2“ und „Gescheitert“ ein Zähler und keine drei einzelnen Kästchen — ein Klick auf das jeweils oberste gefüllte Kästchen nimmt einen Punkt zurück. „Abgeschlossen“ und „Gescheitert“ schließen sich aus: Ein abgeschlossenes Szenario friert seinen Fortschritt ein, ein gescheitertes sperrt den Abgeschlossen-Haken — die gesetzten Haken bleiben dabei sichtbar. Jeder der fünf Schurken wird genau einem Szenario zugeordnet; ein gewählter Schurke verschwindet aus den übrigen Zeilen und wird in der Schurkenliste durchgestrichen. Der Würfel neben einem leeren Schurken-Feld lost einen der noch freien Schurken aus.",
-    helpEn: "Players are added one at a time, from one to four, so the sheet only shows the ones actually playing. Each round two scenarios that are neither completed nor failed are drawn, and both take one progress point. The third point means the scenario has failed. So “1”, “2” and “Failed” are one counter rather than three separate boxes — clicking the topmost filled box takes a point back. “Completed” and “Failed” are mutually exclusive: a completed scenario freezes its progress and a failed one locks the Completed box, with the existing marks left visible either way. Each of the five villains is assigned to exactly one scenario; a chosen villain disappears from the other rows and is struck through in the villain list. The die next to an empty villain field rolls one of the villains still free.",
+    helpDe: "Spieler werden einzeln hinzugefügt — von einem bis vier —, der Bogen zeigt also nur die, die wirklich mitspielen. Jede Runde werden zwei Szenarien gezogen, die weder abgeschlossen noch gescheitert sind; beide erhalten einen Fortschrittspunkt. „Nächste Runde“ macht genau das mit einem Klick und nennt anschließend die gezogenen Szenarien; ist nur noch eines im Spiel, bekommt es beide Punkte. Der dritte Punkt bedeutet: Das Szenario ist gescheitert. Deshalb sind „1“, „2“ und „Gescheitert“ ein Zähler und keine drei einzelnen Kästchen — ein Klick auf das jeweils oberste gefüllte Kästchen nimmt einen Punkt zurück. „Abgeschlossen“ und „Gescheitert“ schließen sich aus: Ein abgeschlossenes Szenario friert seinen Fortschritt ein, ein gescheitertes sperrt den Abgeschlossen-Haken — die gesetzten Haken bleiben dabei sichtbar. Jeder der fünf Schurken wird genau einem Szenario zugeordnet; ein gewählter Schurke verschwindet aus den übrigen Zeilen und wird in der Schurkenliste durchgestrichen. Der Würfel neben einem leeren Schurken-Feld lost einen der noch freien Schurken aus.",
+    helpEn: "Players are added one at a time, from one to four, so the sheet only shows the ones actually playing. Each round two scenarios that are neither completed nor failed are drawn, and both take one progress point. “Next round” does exactly that in one click and then names the scenarios it drew; if only one is still in play it takes both points. The third point means the scenario has failed. So “1”, “2” and “Failed” are one counter rather than three separate boxes — clicking the topmost filled box takes a point back. “Completed” and “Failed” are mutually exclusive: a completed scenario freezes its progress and a failed one locks the Completed box, with the existing marks left visible either way. Each of the five villains is assigned to exactly one scenario; a chosen villain disappears from the other rows and is struck through in the villain list. The die next to an empty villain field rolls one of the villains still free.",
 
     i18n: {
       de: {
@@ -663,6 +716,13 @@
         colFailed: "Gescheitert",
         /* "%s" = Nummer des Fortschrittspunkts. */
         progressStep: "Fortschritt %s",
+        nextRound: "Nächste Runde",
+        nextRoundHint: "Zieht zwei Szenarien, die noch im Spiel sind, und gibt jedem einen Fortschrittspunkt.",
+        nextRoundNone: "Kein Szenario mehr im Spiel.",
+        /* "%s" = die beiden gezogenen Szenarien. */
+        nextRoundDrawn: "Diese Runde: %s und %s — je ein Fortschrittspunkt.",
+        /* "%s" = das einzige noch offene Szenario. */
+        nextRoundDrawnOne: "Nur noch %s im Spiel — zwei Fortschrittspunkte.",
         progressHint: "Fortschritt: „1“, „2“, „Gescheitert“ sind ein Zähler. Ein Klick setzt ihn auf dieses Kästchen; ein Klick auf das oberste gefüllte Kästchen nimmt einen Punkt zurück. „Abgeschlossen“ und „Gescheitert“ schließen sich aus und sperren einander.",
         lockedByCompleted: "Szenario ist abgeschlossen — der Fortschritt bleibt stehen und ist gesperrt. Zum Ändern zuerst „Abgeschlossen“ abwählen.",
         lockedByFailed: "Szenario ist gescheitert — „Abgeschlossen“ ist gesperrt. Zum Ändern zuerst einen Fortschrittspunkt zurücknehmen.",
@@ -702,6 +762,11 @@
         colProgress: "Progress",
         colFailed: "Failed",
         progressStep: "Progress %s",
+        nextRound: "Next round",
+        nextRoundHint: "Draws two scenarios still in play and gives each one a progress point.",
+        nextRoundNone: "No scenario is still in play.",
+        nextRoundDrawn: "This round: %s and %s — one progress point each.",
+        nextRoundDrawnOne: "Only %s is still in play — two progress points.",
         progressHint: "Progress: “1”, “2” and “Failed” are one counter. A click sets it to that box; clicking the topmost filled box takes a point back. “Completed” and “Failed” are mutually exclusive and lock each other out.",
         lockedByCompleted: "Scenario is completed — the progress stays as it is and is locked. Untick “Completed” first to change it.",
         lockedByFailed: "Scenario has failed — “Completed” is locked. Take a progress point back first to change it.",

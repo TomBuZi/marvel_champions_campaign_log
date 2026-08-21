@@ -599,6 +599,10 @@
       },
       save: scheduleSave,
       rerender: renderCampaign,
+      /* For telling the player what an action just did — a bulk change like
+         "next round" is otherwise only visible if you already know where to
+         look. */
+      toast: showToast,
       w: W,
     };
   }

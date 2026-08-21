@@ -1004,7 +1004,178 @@
         });
       }
 
-      var cases = { players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict };
+      // ----------------------------------------------------------------- round
+      /* "Next round" gives a progress point to two scenarios still in play, or
+         both points to the last one left. Scenarios that are completed or
+         failed are out of play and must never be touched. */
+      function caseRound() {
+        localStorage.clear();
+        pinLang("de");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          function rows() { return d.querySelectorAll("tbody tr"); }
+          function btn() { return d.querySelector('[data-section="scenarios"] .btn-add'); }
+          function progress() {
+            return Array.prototype.map.call(rows(), function (r) {
+              return r.querySelectorAll(".progress-box.filled").length;
+            });
+          }
+          function total(p) { return p.reduce(function (a, b) { return a + b; }, 0); }
+          function toast() { return d.getElementById("toast").textContent; }
+
+          log("the button is offered on a fresh sheet", !!btn() && !btn().disabled);
+          log("everything starts at zero", total(progress()) === 0, JSON.stringify(progress()));
+
+          // One round: exactly two points, spread over two different rows.
+          btn().click();
+          var p1 = progress();
+          log("one round adds exactly two points", total(p1) === 2, JSON.stringify(p1));
+          log("spread over two different scenarios",
+            p1.filter(function (n) { return n === 1; }).length === 2, JSON.stringify(p1));
+          log("the toast names both", (toast().match(/ und /g) || []).length === 1, toast());
+
+          // Completed and failed rows are out of play.
+          var done = rows()[0].querySelector(".sheet-check");
+          done.checked = true;
+          fire(done, "change");
+          var completedBefore = progress()[0];
+          rows()[1].querySelectorAll(".progress-box")[2].click();   // row 2 -> failed
+          log("row 2 is failed", rows()[1].classList.contains("is-failed"));
+
+          for (var i = 0; i < 6; i++) btn().click();
+          log("a completed scenario never gains a point",
+            progress()[0] === completedBefore, progress()[0] + " vs " + completedBefore);
+          log("a failed scenario stays at three",
+            progress()[1] === 3, progress()[1]);
+
+          // Rounds keep going until nothing is in play; then the button locks.
+          var guard = 0;
+          while (!btn().disabled && guard++ < 30) btn().click();
+          log("rounds run out", btn().disabled, "after " + guard + " more clicks");
+          log("every remaining scenario ended up failed",
+            Array.prototype.every.call(rows(), function (r, i) {
+              return i === 0 || r.classList.contains("is-failed");
+            }), JSON.stringify(progress()));
+          log("the locked button says why",
+            /Kein Szenario/i.test(btn().title || ""), btn().title);
+          var frozen = JSON.stringify(progress());
+          btn().click();
+          log("clicking the locked button changes nothing",
+            JSON.stringify(progress()) === frozen, JSON.stringify(progress()));
+          finish();
+        });
+      }
+
+      // ------------------------------------------------------- round: last one
+      /* With a single scenario left in play it takes both points of the round. */
+      function caseRoundLast() {
+        var one = {
+          schemaVersion: 1, id: "one-1", campaignId: "fear-no-evil", stateVersion: 2,
+          title: "Endspurt", createdAt: "2026-06-01T00:00:00.000Z",
+          updatedAt: "2026-06-02T00:00:00.000Z",
+          state: {
+            players: [{ hero: "Daredevil", hp: 5 }],
+            scenarios: [
+              { slug: "art-museum-heist",  completed: true,  villain: "", progress: 1 },
+              { slug: "the-getaway",       completed: true,  villain: "", progress: 0 },
+              { slug: "protection-racket", completed: false, villain: "", progress: 3 },
+              { slug: "the-raft-breakout", completed: true,  villain: "", progress: 2 },
+              { slug: "stop-the-presses",  completed: false, villain: "", progress: 0 },
+            ],
+            removed: [], flags: {},
+          },
+        };
+        seed({ "one-1": one }, "one-1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          function rows() { return d.querySelectorAll("tbody tr"); }
+          function filled(i) { return rows()[i].querySelectorAll(".progress-box.filled").length; }
+          var btn = d.querySelector('[data-section="scenarios"] .btn-add');
+
+          log("only one scenario is still in play", !btn.disabled);
+          btn.click();
+          log("the last one in play takes both points", filled(4) === 2, filled(4));
+          log("the toast says it was the only one",
+            /Nur noch/i.test(d.getElementById("toast").textContent),
+            d.getElementById("toast").textContent);
+          log("nothing else moved",
+            filled(0) === 1 && filled(1) === 0 && filled(2) === 3 && filled(3) === 2,
+            [filled(0), filled(1), filled(2), filled(3)].join(","));
+
+          // The next round takes it to three, which fails it and ends the run.
+          d.querySelector('[data-section="scenarios"] .btn-add').click();
+          log("the round after that fails it",
+            rows()[4].classList.contains("is-failed") &&
+            rows()[4].querySelectorAll(".progress-box.filled").length === 3);
+          log("and the button locks",
+            d.querySelector('[data-section="scenarios"] .btn-add').disabled);
+
+          var w2 = w;
+          w2.dispatchEvent(new w2.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs"))["one-1"].state;
+            log("the rounds persisted",
+              st.scenarios[4].progress === 3, JSON.stringify(st.scenarios[4]));
+            log("progress never went past three",
+              st.scenarios.every(function (r) { return r.progress <= 3; }),
+              JSON.stringify(st.scenarios.map(function (r) { return r.progress; })));
+            finish();
+          }, 500);
+        });
+      }
+
+      // ------------------------------------------------------ round: the draw
+      /* The pair has to be drawn, not taken from the top of the sheet. */
+      function caseRoundSpread() {
+        localStorage.clear();
+        pinLang("de");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var pairs = {}, rounds = 20;
+
+          /* Every click re-renders the panel, so a node grabbed before the
+             click is detached afterwards and its state never changes again —
+             reading it in a loop condition spins forever. Re-query after each
+             single click, and cap the whole thing rather than trusting it. */
+          function resetAll() {
+            for (var guard = 0; guard < 40; guard++) {
+              var rs = d.querySelectorAll("tbody tr");
+              var clicked = false;
+              for (var i = 0; i < rs.length; i++) {
+                var n = rs[i].querySelectorAll(".progress-box.filled").length;
+                if (n) {
+                  rs[i].querySelectorAll(".progress-box")[n - 1].click();
+                  clicked = true;
+                  break;
+                }
+              }
+              if (!clicked) return true;
+            }
+            return false;
+          }
+          for (var n = 0; n < rounds; n++) {
+            var btn = d.querySelector('[data-section="scenarios"] .btn-add');
+            btn.click();
+            var hit = [];
+            Array.prototype.forEach.call(d.querySelectorAll("tbody tr"), function (r, i) {
+              if (r.querySelectorAll(".progress-box.filled").length) hit.push(i);
+            });
+            pairs[hit.join("+")] = (pairs[hit.join("+")] || 0) + 1;
+            if (!resetAll()) { log("reset ran away", false); return finish(); }
+          }
+          var distinct = Object.keys(pairs);
+          log("the pair is drawn, not taken from the top", distinct.length > 1,
+            rounds + " rounds -> " + JSON.stringify(pairs));
+          log("more than two scenarios were reached over time",
+            new Set(distinct.join("+").split("+")).size > 2, JSON.stringify(pairs));
+          log("every draw hit exactly two rows",
+            distinct.every(function (k) { return k.split("+").length === 2; }),
+            JSON.stringify(pairs));
+          finish();
+        });
+      }
+
+      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict };
       (cases[CASE] || caseBasic)();
     </script>
   </body>

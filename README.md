@@ -23,6 +23,8 @@ als jeweils eigenes Modul dazu — siehe [Eine Kampagne hinzufügen](#eine-kampa
 * **Schurken auslosen** — der Würfel neben einem leeren Schurken-Feld zieht einen der
   noch nicht zugeordneten Schurken. Steht schon einer im Feld, ist der Würfel gesperrt;
   ein Würfel überschreibt nie eine Wahl.
+* **„Nächste Runde"** — zieht zwei Szenarien, die noch im Spiel sind, und gibt jedem
+  einen Fortschrittspunkt. Ist nur noch eines im Spiel, bekommt es beide.
 * **Mehrere Durchläufe** parallel, mit Auswahl oben; die Kampagne wird beim Anlegen
   gewählt und bleibt danach fest.
 * **Automatisch gespeichert** im Speicher des Browsers — kein Server, kein Konto,
@@ -42,6 +44,14 @@ bedeutet, dass das Szenario gescheitert ist. In der App setzt ein Klick den Zäh
 dieses Kästchen; ein Klick auf das oberste gefüllte Kästchen nimmt einen Punkt zurück,
 so kommt man auch wieder auf null. Gespeichert wird deshalb nur `progress: 0..3`;
 „gescheitert“ ist daraus abgeleitet und kein eigenes Feld.
+
+„Nächste Runde" im Kopf der Szenarien-Tafel macht genau das, was die Regel beschreibt:
+Es **zieht** zwei der noch im Spiel befindlichen Szenarien — zufällig, nicht die obersten
+zwei — und erhöht deren Zähler um eins. Bleibt nur noch eines übrig, erhält es beide
+Punkte, denn die Runde findet ohnehin statt. Anschließend nennt eine Meldung die
+gezogenen Szenarien, sonst wäre eine Änderung an zwei Zeilen nur zu sehen, wenn man
+schon weiß, wo man hinschauen muss. Abgeschlossene und gescheiterte Szenarien sind aus
+dem Spiel und werden nie angefasst; ist keines mehr im Spiel, ist der Knopf gesperrt.
 
 **„Abgeschlossen“ und „Gescheitert“ schließen sich aus** und sperren einander:
 Ein Haken bei „Abgeschlossen“ friert den Fortschritt ein — die gesetzten Kästchen
@@ -67,6 +77,11 @@ die verbleibenden Karten neu durchnummeriert.
 
 Das Identitätsfeld ist Freitext mit Vorschlagsliste aus `heroes.js`; passt der Name auf
 einen bekannten Helden, erscheint daneben dessen aufgedruckter Startwert als Erinnerung.
+
+Das Spielerraster richtet sich nach der **Spielerzahl**, nicht nach der freien Breite:
+vier Spieler stehen in einer Reihe, solange dafür Platz ist, und darunter als 2 + 2 —
+nie als 3 + 1. (`auto-fit` entscheidet nach der Breite und bricht dann um; genau daher
+kam das 3 + 1.)
 
 ### Erledigt-Markierung
 
@@ -175,8 +190,8 @@ Version N.*
 3. `node test/lint.js` — die Definition, die Wörterbücher und die Idempotenz von
    `normalize()` werden dann automatisch mitgeprüft.
 
-`ctx` liefert `{ state, lang, t(key, …args), save(), rerender(), w }`; `w` ist die
-Widget-Sammlung aus `widgets.js`.
+`ctx` liefert `{ state, lang, t(key, …args), save(), rerender(), toast(msg), w }`;
+`w` ist die Widget-Sammlung aus `widgets.js`.
 
 **Harte Regel:** `emptyState`, `normalize` und `migrate` dürfen das DOM nicht berühren —
 weder beim Laden noch beim Aufruf. Nur dadurch kann `test/lint.js` sie kopflos
@@ -190,11 +205,12 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (178 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (201 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   print | import | lock | lockconflict |
                                     #   random | randomspread | appearance |
-                                    #   players | migrate
+                                    #   players | migrate |
+                                    #   round | roundlast | roundspread
 BROWSER_LANG=de-DE node test/run-browser.js   # unter einer anderen Browser-Sprache
 ```
 

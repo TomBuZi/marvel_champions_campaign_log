@@ -410,13 +410,30 @@ button:focus-visible {
 }
 
 /* ---------- Player cards ---------- */
+/* The column count follows the number of players, not the available width.
+   auto-fit decides how many tracks fit and then wraps, which put four players
+   as three plus one; here four players get one row of four, and a narrow screen
+   drops to two and two rather than to whatever happens to fit. */
 .player-grid {
   display: grid;
   gap: 0.75rem;
-  /* Capped rather than stretched to 1fr: with one or two players the cards
-     would otherwise pull two short fields across the whole panel. */
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 20rem));
   justify-content: start;
+  grid-template-columns: minmax(0, 21rem);
+}
+.player-grid[data-players="2"] { grid-template-columns: repeat(2, minmax(0, 21rem)); }
+.player-grid[data-players="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.player-grid[data-players="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+/* Two and two, rather than four squeezed or three plus one. The breakpoint is
+   where four cards stop being comfortable, not where they stop fitting. */
+@media (max-width: 68rem) {
+  .player-grid[data-players="3"],
+  .player-grid[data-players="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 34rem) {
+  .player-grid[data-players="2"],
+  .player-grid[data-players="3"],
+  .player-grid[data-players="4"] { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* Add-player button in the panel head. */
