@@ -205,7 +205,7 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (201 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (208 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   print | import | lock | lockconflict |
                                     #   random | randomspread | appearance |
@@ -287,6 +287,16 @@ Als Regel für dieses Repository:
    liegt nur lokal als Layout-Referenz. Sein Fußtext erlaubt „print or photocopy for
    personal use“ — das deckt nicht, ihn hier öffentlich weiterzuverbreiten. Wer ihn
    braucht, bekommt ihn beim Herausgeber.
+
+## Kontakt und Danke
+
+Fehler gefunden oder ein Änderungswunsch? **Tom@marvelchampionspodcast.de**
+
+Wer sich bedanken möchte: **https://ko-fi.com/mc_campaign_logs** — beides steht auch
+im Footer der Seite. Der Ko-fi-Link öffnet in einem neuen Tab und trägt
+`rel="noopener noreferrer"`.
+
+---
 
 ### Hinweise zu den Namen
 

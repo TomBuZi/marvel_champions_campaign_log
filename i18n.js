@@ -101,6 +101,11 @@ window.I18N = {
     helpLegalH: "Rechtliches",
     helpLegalP: "Inoffizielles Fan-Projekt. Wiedergegeben werden nur Namen und die Feldbezeichnungen des Bogens — keine Logos, Illustrationen oder Kartentexte.",
 
+    contactLead: "Fehler gefunden oder ein Wunsch?",
+    contactTitle: "Fehler melden oder einen Änderungswunsch schicken",
+    thanks: "Danke sagen",
+    thanksTitle: "Auf Ko-fi einen Kaffee spendieren (öffnet in einem neuen Tab)",
+
     disclaimer: "Dies ist ein inoffizielles, nicht kommerzielles Fan-Projekt. „Marvel Champions: Das Kartenspiel“ sowie alle zugehörigen Szenario-, Karten- und Produktnamen sind urheberrechtlich geschützt durch Fantasy Flight Games / Asmodee; alle Marvel-Charaktere, -Namen und -Logos sind Marken und © MARVEL. Diese Website wird von Fantasy Flight Games, Asmodee und Marvel weder produziert noch unterstützt oder befürwortet und steht in keiner Verbindung zu ihnen. Es werden keine offiziellen Logos, Artworks oder Kartentexte verwendet — die Optik ist lediglich mit eigenen Farben und Schriften nachempfunden.",
   },
 
@@ -191,6 +196,11 @@ window.I18N = {
     helpLangThemeP: "Language and light/dark live in the menu under “View” and are remembered for this browser. Without an explicit choice the theme follows the system setting.",
     helpLegalH: "Legal",
     helpLegalP: "Unofficial fan project. Only names and the field labels of the sheet are reproduced — no logos, artwork or card text.",
+
+    contactLead: "Found a bug or have a wish?",
+    contactTitle: "Report a bug or send a change request",
+    thanks: "Say thanks",
+    thanksTitle: "Buy a coffee on Ko-fi (opens in a new tab)",
 
     disclaimer: "This is an unofficial, non-commercial fan project. “Marvel Champions: The Card Game” and all associated scenario, card and product names are copyrighted by Fantasy Flight Games / Asmodee; all Marvel characters, names and logos are trademarks of and © MARVEL. This website is not produced, endorsed or supported by, nor affiliated with, Fantasy Flight Games, Asmodee or Marvel. No official logos, artwork or card text are used — the look is evoked with our own colours and typography only.",
   },

@@ -845,6 +845,33 @@
           log("native controls follow the dark theme",
             w.getComputedStyle(d.documentElement).colorScheme === "dark",
             w.getComputedStyle(d.documentElement).colorScheme);
+
+          /* The footer links sit directly on the page, where the generic link
+             colour would be dark red on orange. They have their own pill
+             treatment, so it is worth measuring rather than assuming. */
+          var mail = d.querySelector('.chip-link[href^="mailto:"]');
+          var kofi = d.querySelector(".chip-thanks");
+          log("the contact link is a mailto to the right address",
+            !!mail && mail.getAttribute("href") === "mailto:Tom@marvelchampionspodcast.de",
+            mail && mail.getAttribute("href"));
+          log("the address is visible, not only in the href",
+            /Tom@marvelchampionspodcast\.de/.test(mail.textContent), mail.textContent.trim());
+          log("the thank-you link points at Ko-fi",
+            !!kofi && kofi.getAttribute("href") === "https://ko-fi.com/mc_campaign_logs",
+            kofi && kofi.getAttribute("href"));
+          log("the external link opens safely",
+            kofi.getAttribute("target") === "_blank" &&
+            /noopener/.test(kofi.getAttribute("rel") || "") &&
+            /noreferrer/.test(kofi.getAttribute("rel") || ""),
+            kofi.getAttribute("rel"));
+          log("both links say what they are for",
+            !!mail.title && !!kofi.title, mail.title + " / " + kofi.title);
+          [["contact", mail], ["thanks", kofi]].forEach(function (pair) {
+            var st = w.getComputedStyle(pair[1]);
+            log(pair[0] + " link is readable on its pill",
+              contrast(st.color, st.backgroundColor) >= 4.5,
+              contrast(st.color, st.backgroundColor).toFixed(2) + ":1");
+          });
           finish();
         });
       }

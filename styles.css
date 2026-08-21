@@ -872,6 +872,46 @@ body[class*="dnd-"] .entry-list { min-height: 2.2rem; outline: 1px dashed var(--
   opacity: 0.9;
 }
 
+/* Contact and thank-you. These sit directly on the page, where the generic link
+   colour would be dark red on orange, so they get their own pill treatment in
+   the same inked style as the rest of the sheet. */
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  margin: 0.6rem 0 0;
+}
+
+.chip-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.7rem;
+  background: var(--panel-1);
+  color: var(--text);
+  border: var(--rule) solid var(--bar);
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+.chip-link:hover,
+.chip-link:focus-visible { background: var(--pill); }
+.chip-link:focus-visible { outline: 3px solid var(--zap); outline-offset: 2px; }
+/* The emoji carry no meaning of their own — the link text does — so they must
+   not inherit the bold weight or drift with the font size. */
+.chip-icon { font-weight: 400; font-size: 0.9em; line-height: 1; }
+
+/* The thank-you is the one invitation on the page, so it may use the accent. */
+.chip-thanks {
+  background: var(--zap-strong);
+  color: var(--on-zap);
+  border-color: var(--bar);
+}
+.chip-thanks:hover,
+.chip-thanks:focus-visible { background: var(--zap); }
+
 /* ---------- Narrow screens ---------- */
 /* A six-column grid is unusable on a phone, so each row becomes a stack with
    the column name in front of its control. */
@@ -939,6 +979,8 @@ body[class*="dnd-"] .entry-list { min-height: 2.2rem; outline: 1px dashed var(--
     font-size: 10pt;
   }
 
+  /* The footer goes with the rest of the chrome: the printout carries the
+     disclaimer of its own, and a mail address is not what a play sheet is for. */
   .topbar, #app, .footer, .toast, .menu, dialog { display: none !important; }
   .print-only { display: block; }
 
