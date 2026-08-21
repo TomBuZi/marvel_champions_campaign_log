@@ -413,8 +413,41 @@ button:focus-visible {
 .player-grid {
   display: grid;
   gap: 0.75rem;
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  /* Capped rather than stretched to 1fr: with one or two players the cards
+     would otherwise pull two short fields across the whole panel. */
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 20rem));
+  justify-content: start;
 }
+
+/* Add-player button in the panel head. */
+.btn-add {
+  border-radius: var(--radius-pill);
+  padding: 0.25rem 0.8rem;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.btn-add:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.player-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+/* Quieter than the die: removing a player is not something to invite. */
+.player-remove {
+  width: 1.6rem;
+  height: 1.6rem;
+  background: none;
+  border-color: transparent;
+  color: var(--danger);
+  font-size: 1.05rem;
+}
+.player-remove:hover:not(:disabled) {
+  background: none;
+  border-color: var(--danger);
+}
+.player-remove:disabled { border-color: transparent; opacity: 0.25; }
 
 .player-card {
   background: var(--bg-input);

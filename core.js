@@ -235,6 +235,10 @@
       if (typeof l.stateVersion === "number" && l.stateVersion > def.stateVersion) {
         quarantine[id] = "future-state"; return;
       }
+      /* Migrated in memory only: the stored blob is rewritten by the next
+         actual edit, so a visit that changes nothing leaves it as it was. That
+         keeps an older build on another device able to read it right up until
+         something really changes. */
       var n = normalizeLog(l, { keepTimestamps: true });
       if (n) { n.id = l.id; logs[id] = n; }
       else delete logs[id];

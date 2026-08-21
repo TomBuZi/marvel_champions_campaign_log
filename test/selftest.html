@@ -84,7 +84,12 @@
           var hint = d.querySelectorAll(".player-card .num-hint")[0];
           log("hero hint shows printed HP", hint.textContent.trim() === "/ 15", JSON.stringify(hint.textContent));
 
-          // Duplicate hero marking.
+          // Duplicate hero marking. A fresh sheet has one player, so the
+          // second card has to be added before there can be a clash.
+          d.querySelector('[data-section="players"] .btn-add').click();
+          log("a second player can be added",
+            d.querySelectorAll(".player-card").length === 2,
+            d.querySelectorAll(".player-card").length);
           var hero2 = d.querySelectorAll(".player-card .text-input")[1];
           hero2.value = "she-hulk";
           fire(hero2, "input");
@@ -655,7 +660,7 @@
         boot("", function (frame, w, d) {
           f0 = w;
           function rows() { return d.querySelectorAll("tbody tr"); }
-          function die(i) { return rows()[i].querySelector(".icon-btn"); }
+          function die(i) { return rows()[i].querySelector(".villain-die"); }
           function sel(i) { return rows()[i].querySelector(".pool-select"); }
           function chosen() {
             return Array.prototype.map.call(d.querySelectorAll(".pool-select"),
@@ -663,11 +668,10 @@
           }
           var ALL = ["bullseye", "electro", "hammerhead", "purple-man", "typhoid-mary"];
 
+          function dice() { return d.querySelectorAll(".villain-die"); }
           log("every die starts enabled",
-            Array.prototype.every.call(d.querySelectorAll(".icon-btn"),
-              function (b) { return !b.disabled; }));
-          log("there is one die per row", d.querySelectorAll(".icon-btn").length === 5,
-            d.querySelectorAll(".icon-btn").length);
+            Array.prototype.every.call(dice(), function (b) { return !b.disabled; }));
+          log("there is one die per row", dice().length === 5, dice().length);
           log("die carries an accessible name",
             /Kunstmuseum/.test(die(0).getAttribute("aria-label") || "") &&
             /auslos/i.test(die(0).getAttribute("aria-label") || ""),
@@ -706,8 +710,7 @@
           log("the draw covers the whole pool",
             ALL.every(function (v) { return all.indexOf(v) !== -1; }), JSON.stringify(all));
           log("every die disabled once nothing is left",
-            Array.prototype.every.call(d.querySelectorAll(".icon-btn"),
-              function (b) { return b.disabled; }));
+            Array.prototype.every.call(dice(), function (b) { return b.disabled; }));
 
           // Clearing a field hands its die back.
           sel(2).value = "";
@@ -741,7 +744,7 @@
           var seen = {}, rolls = 40;
           for (var i = 0; i < rolls; i++) {
             var row = d.querySelectorAll("tbody tr")[0];
-            row.querySelector(".icon-btn").click();
+            row.querySelector(".villain-die").click();
             var got = row.querySelector(".pool-select").value;
             seen[got] = (seen[got] || 0) + 1;
             // Clear it again so the next roll draws from the full pool.
@@ -761,7 +764,7 @@
             sels[i + 1].value = v;
             fire(sels[i + 1], "change");
           });
-          d.querySelectorAll("tbody tr")[0].querySelector(".icon-btn").click();
+          d.querySelectorAll("tbody tr")[0].querySelector(".villain-die").click();
           log("the draw only ever takes a free villain",
             d.querySelectorAll(".pool-select")[0].value === "typhoid-mary",
             d.querySelectorAll(".pool-select")[0].value);
@@ -846,7 +849,162 @@
         });
       }
 
-      var cases = { random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict };
+      // --------------------------------------------------------------- players
+      // One to four players, added as they join.
+      function casePlayers() {
+        localStorage.clear();
+        pinLang("de");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          function cards() { return d.querySelectorAll(".player-card"); }
+          function addBtn() { return d.querySelector('[data-section="players"] .btn-add'); }
+          function removeBtn(i) { return cards()[i].querySelector(".player-remove"); }
+          function hero(i) { return cards()[i].querySelector(".text-input"); }
+          function names() {
+            return Array.prototype.map.call(cards(), function (c) {
+              return c.querySelector(".player-name").textContent;
+            });
+          }
+
+          log("a fresh sheet starts with one player", cards().length === 1, cards().length);
+          log("the add button is offered", !!addBtn() && !addBtn().disabled);
+          log("the only player cannot be removed", removeBtn(0).disabled);
+          log("the disabled remove says why",
+            /letzte Spieler/i.test(removeBtn(0).title || ""), removeBtn(0).title);
+
+          hero(0).value = "Daredevil";
+          fire(hero(0), "input");
+
+          addBtn().click();
+          log("adding gives a second card", cards().length === 2, cards().length);
+          log("cards are numbered in order",
+            names().join(" | ") === "Spieler #1 | Spieler #2", names().join(" | "));
+          log("the first player keeps what was typed", hero(0).value === "Daredevil", hero(0).value);
+          log("the new card starts empty", hero(1).value === "", hero(1).value);
+          log("both can be removed now", !removeBtn(0).disabled && !removeBtn(1).disabled);
+
+          addBtn().click();
+          addBtn().click();
+          log("four players can be reached", cards().length === 4, cards().length);
+          log("the add button stops at four", addBtn().disabled);
+          log("the full add button says why",
+            /vier Spieler/i.test(addBtn().title || ""), addBtn().title);
+          addBtn().click();
+          log("clicking a disabled add button changes nothing", cards().length === 4, cards().length);
+
+          // Removing an empty card needs no confirmation.
+          w.confirm = function () { return false; };
+          removeBtn(3).click();
+          log("an empty card goes without asking", cards().length === 3, cards().length);
+
+          // Removing a filled card asks, and a refusal keeps it.
+          hero(2).value = "Echo";
+          fire(hero(2), "input");
+          removeBtn(2).click();
+          log("a filled card asks first", cards().length === 3, cards().length);
+          log("refusing keeps what was there", hero(2).value === "Echo", hero(2).value);
+          w.confirm = function () { return true; };
+          removeBtn(2).click();
+          log("confirming removes it", cards().length === 2, cards().length);
+
+          // Removing from the middle renumbers what is left.
+          hero(1).value = "Spider-Man * Peter Parker";
+          fire(hero(1), "input");
+          removeBtn(0).click();
+          log("removing the first promotes the second",
+            cards().length === 1 && hero(0).value === "Spider-Man * Peter Parker",
+            hero(0).value);
+          log("and it is numbered #1 again",
+            names().join("") === "Spieler #1", names().join(""));
+          log("down to one, it is protected again", removeBtn(0).disabled);
+
+          // The hit-point hint follows the card that survived.
+          log("the surviving card keeps its hint",
+            /10/.test(cards()[0].querySelector(".num-hint").textContent),
+            cards()[0].querySelector(".num-hint").textContent);
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var store = JSON.parse(localStorage.getItem("mcclog:logs"));
+            var st = store[Object.keys(store)[0]].state;
+            log("the player list persisted at its real length",
+              st.players.length === 1, JSON.stringify(st.players));
+            log("and holds the surviving hero",
+              st.players[0].hero === "Spider-Man * Peter Parker", st.players[0].hero);
+            finish();
+          }, 500);
+        });
+      }
+
+      // ------------------------------------------------------- migrate v1 -> v2
+      /* Version 1 sheets always carried four player entries. Opening one now has
+         to leave only the players who were actually on it, without losing them
+         and without renumbering the ones that stay. */
+      function caseMigrate() {
+        var v1 = {
+          schemaVersion: 1, id: "old-1", campaignId: "fear-no-evil", stateVersion: 1,
+          title: "Alter Bogen", createdAt: "2026-05-01T00:00:00.000Z",
+          updatedAt: "2026-05-02T00:00:00.000Z",
+          state: {
+            players: [
+              { hero: "Daredevil", hp: 8 }, { hero: "Echo", hp: 11 },
+              { hero: "", hp: null }, { hero: "", hp: null },
+            ],
+            scenarios: [{ slug: "the-getaway", completed: true, villain: "bullseye", progress: 1 }],
+            removed: ["Karen Page"],
+            flags: { trustEstablished: true, maryDefeated: false },
+          },
+        };
+        seed({ "old-1": v1 }, "old-1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var cards = d.querySelectorAll(".player-card");
+          log("the old sheet opens without a notice", d.getElementById("notice").hidden);
+          log("only the two real players are shown", cards.length === 2, cards.length);
+          log("their heroes survived",
+            cards[0].querySelector(".text-input").value === "Daredevil" &&
+            cards[1].querySelector(".text-input").value === "Echo");
+          log("their hit points survived",
+            cards[0].querySelector(".num-input").value === "8" &&
+            cards[1].querySelector(".num-input").value === "11");
+          log("the rest of the sheet came along",
+            d.querySelectorAll("tbody tr").length === 5 &&
+            d.querySelector(".entry-input").value === "Karen Page");
+          log("the add button is available again", !d.querySelector(".btn-add").disabled);
+
+          /* Migration happens on read; the stored blob is only rewritten by the
+             next actual edit. A visit that changes nothing therefore leaves it
+             exactly as it was, which is what keeps an older build on another
+             device able to read it until something really changes. */
+          var onLoad = JSON.parse(localStorage.getItem("mcclog:logs"))["old-1"];
+          log("a read-only visit leaves the stored sheet at version 1",
+            onLoad.stateVersion === 1, onLoad.stateVersion);
+          log("and leaves its four stored entries alone",
+            onLoad.state.players.length === 4, onLoad.state.players.length);
+
+          // The first edit writes it out in the current shape.
+          var hp = cards[0].querySelector(".num-input");
+          hp.value = "6";
+          fire(hp, "input");
+          fire(hp, "blur");
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var stored = JSON.parse(localStorage.getItem("mcclog:logs"))["old-1"];
+            log("an edit carries the stored sheet up to the current version",
+              stored.stateVersion === 2, stored.stateVersion);
+            log("and stores two players, not four",
+              stored.state.players.length === 2, JSON.stringify(stored.state.players));
+            log("the edit itself landed", stored.state.players[0].hp === 6, stored.state.players[0].hp);
+            log("nothing else was lost",
+              stored.state.players[1].hero === "Echo" &&
+              stored.state.removed.join() === "Karen Page" &&
+              stored.state.flags.trustEstablished === true);
+            finish();
+          }, 500);
+        });
+      }
+
+      var cases = { players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict };
       (cases[CASE] || caseBasic)();
     </script>
   </body>

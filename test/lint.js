@@ -154,10 +154,37 @@ for (const def of campaigns) {
     check(p + "progress clamped to 0..3",
       once.scenarios.every((s) => Number.isInteger(s.progress) && s.progress >= 0 && s.progress <= 3),
       JSON.stringify(once.scenarios.map((s) => s.progress)));
-    check(p + "player count fixed at 4", once.players.length === 4);
+    check(p + "player list capped at 4", once.players.length === 4, once.players.length);
+    check(p + "an empty player list still yields one player",
+      def.normalize({ players: [] }).players.length === 1);
+    check(p + "a single player stays single",
+      def.normalize({ players: [{ hero: "Echo" }] }).players.length === 1);
     check(p + "hp clamped and blanks stay null",
       once.players[0].hp === 99 && once.players[3].hp === null,
       JSON.stringify(once.players.map((x) => x.hp)));
+
+    /* Version 1 always carried four player entries; version 2 carries only the
+       players that exist. A stored sheet has to survive that. */
+    const mig = (players) => def.normalize(def.migrate({ players }, 1)).players;
+    const v1 = (heroes) => heroes.map((h) => ({ hero: h, hp: h ? 5 : null }));
+    check(p + "migration trims a solo sheet to one player",
+      mig(v1(["Daredevil", "", "", ""])).length === 1);
+    check(p + "migration keeps both players of a duo",
+      mig(v1(["Daredevil", "Echo", "", ""])).length === 2);
+    check(p + "migration keeps a full table",
+      mig(v1(["A", "B", "C", "D"])).length === 4);
+    check(p + "migration keeps a gap between filled players",
+      mig(v1(["A", "", "C", ""])).length === 3,
+      JSON.stringify(mig(v1(["A", "", "C", ""]))));
+    check(p + "migration never empties the sheet",
+      mig(v1(["", "", "", ""])).length === 1);
+    check(p + "migration keeps the hero names it carried",
+      mig(v1(["Daredevil", "Echo", "", ""])).map((x) => x.hero).join(",") === "Daredevil,Echo");
+    check(p + "migration is idempotent through normalize",
+      eq(def.normalize(def.migrate({ players: v1(["A", "", "", ""]) }, 1)),
+         def.normalize(def.normalize(def.migrate({ players: v1(["A", "", "", ""]) }, 1)))));
+    check(p + "migrate leaves a current state alone",
+      eq(def.normalize(def.migrate(JSON.parse(JSON.stringify(empty)), def.stateVersion)), empty));
     check(p + "flags are booleans",
       Object.values(once.flags).every((v) => typeof v === "boolean"));
     check(p + "list entries trimmed, blanks dropped",

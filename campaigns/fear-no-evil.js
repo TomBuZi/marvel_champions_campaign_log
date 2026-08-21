@@ -17,7 +17,10 @@
 
   var W = global.W;
 
-  var PLAYER_COUNT = 4;
+  /* One to four players: cards are added as people join, so the sheet only ever
+     shows as many as are actually playing. The paper sheet has to print four
+     places; a screen does not. */
+  var MAX_PLAYERS = 4;
   var HP_MAX = 99;
   var NAME_MAX = 60;
   /* Progress runs 0..3. Each round two scenarios that are neither completed nor
@@ -92,10 +95,9 @@
 
   // ---- Data ----------------------------------------------------------------
   function emptyState() {
-    var players = [];
-    for (var i = 0; i < PLAYER_COUNT; i++) players.push({ hero: "", hp: null });
     return {
-      players: players,
+      /* A fresh sheet starts with a single player; more are added as needed. */
+      players: [{ hero: "", hp: null }],
       scenarios: SCENARIOS.map(function (s) {
         return { slug: s.slug, completed: false, villain: "", progress: 0 };
       }),
@@ -111,11 +113,17 @@
     raw = (raw && typeof raw === "object") ? raw : {};
     var out = emptyState();
 
+    /* One to four, whatever arrived: a sheet with nobody on it has no meaning,
+       and more than four is not a thing the game does. */
     var players = Array.isArray(raw.players) ? raw.players : [];
-    for (var i = 0; i < PLAYER_COUNT; i++) {
+    var count = Math.min(MAX_PLAYERS, Math.max(1, players.length));
+    out.players = [];
+    for (var i = 0; i < count; i++) {
       var p = (players[i] && typeof players[i] === "object") ? players[i] : {};
-      out.players[i].hero = W.coerceText(p.hero, NAME_MAX);
-      out.players[i].hp = W.clampNumber(p.hp === "" ? null : p.hp, 0, HP_MAX);
+      out.players.push({
+        hero: W.coerceText(p.hero, NAME_MAX),
+        hp: W.clampNumber(p.hp === "" ? null : p.hp, 0, HP_MAX),
+      });
     }
 
     /* Scenarios are matched by slug, not by index: that survives a reordering
@@ -150,13 +158,34 @@
     return out;
   }
 
+  /* Carry an older sheet forward. Version 1 always held exactly four player
+     entries, most of them empty on a solo or two-player game; version 2 holds
+     only the players that exist. Trailing empties are dropped — one always
+     remains — while an empty card between two filled ones is kept, so the
+     numbering of the players who ARE on the sheet does not shift under them. */
+  function migrate(raw, fromVersion) {
+    raw = (raw && typeof raw === "object") ? raw : {};
+    if (fromVersion < 2 && Array.isArray(raw.players)) {
+      var players = raw.players.slice(0, MAX_PLAYERS);
+      var lastUsed = -1;
+      players.forEach(function (p, i) {
+        var filled = p && typeof p === "object" &&
+          (String(p.hero == null ? "" : p.hero).trim() !== "" || p.hp != null);
+        if (filled) lastUsed = i;
+      });
+      raw.players = players.slice(0, Math.max(1, lastUsed + 1));
+    }
+    return raw;
+  }
+
   // ---- Rendering -----------------------------------------------------------
-  function panel(id, heading) {
+  function panel(id, heading, action) {
     var section = W.el("section", "panel", { "data-section": id, "aria-labelledby": "h-" + id });
     var head = W.el("div", "panel-head");
     var h2 = W.el("h2", null, { id: "h-" + id });
     h2.textContent = heading;
     head.appendChild(h2);
+    if (action) head.appendChild(action);
     section.appendChild(head);
     return section;
   }
@@ -181,10 +210,24 @@
   }
 
   function renderPlayers(t, lang, state, ctx) {
-    var section = panel("players", t("secPlayers"));
+    /* Players are added as they join, not laid out as four fixed places: the
+       game is played by one to four, and three empty cards on a solo sheet are
+       just noise. The paper sheet has to print all four; we do not. */
+    var addBtn = W.el("button", "btn btn-add", { type: "button" });
+    addBtn.textContent = t("addPlayer");
+    addBtn.disabled = state.players.length >= MAX_PLAYERS;
+    addBtn.title = addBtn.disabled ? t("addPlayerFull") : t("addPlayer");
+    addBtn.addEventListener("click", function () {
+      if (state.players.length >= MAX_PLAYERS) return;
+      state.players.push({ hero: "", hp: null });
+      ctx.save();
+      ctx.rerender();
+    });
+
+    var section = panel("players", t("secPlayers"), addBtn);
     var grid = W.el("div", "player-grid");
 
-    /* One shared <datalist> of hero names for all four slots. The fields stay
+    /* One shared <datalist> of hero names for all the slots. The fields stay
        free text: the sheet is a fill-in field, and a hero the roster has not
        caught up with yet must remain typeable. */
     var heroes = global.HEROES || [];
@@ -194,12 +237,34 @@
     })));
 
     state.players.forEach(function (player, i) {
-      var card = W.el("div", "player-card");
+      var card = W.el("div", "player-card", { "data-player": String(i + 1) });
       var caption = t("playerRow", String(i + 1));
 
+      var head = W.el("div", "player-head");
       var idLabel = W.el("div", "player-name");
       idLabel.textContent = caption;
-      card.appendChild(idLabel);
+      head.appendChild(idLabel);
+
+      /* Removing the last player would leave a sheet with nobody on it, so that
+         one stays put. Anything else goes, with a confirmation when there is
+         something on the card to lose. */
+      var last = state.players.length <= 1;
+      var del = W.iconButton({
+        glyph: "×",
+        label: caption + " – " + t("removePlayer"),
+        disabled: last,
+        lockReason: t("removePlayerLast"),
+        onClick: function () {
+          var hasContent = !!player.hero.trim() || player.hp != null;
+          if (hasContent && !window.confirm(t("confirmRemovePlayer"))) return;
+          state.players.splice(i, 1);
+          ctx.save();
+          ctx.rerender();
+        },
+      });
+      del.classList.add("player-remove");
+      head.appendChild(del);
+      card.appendChild(head);
 
       var idRow = W.el("div", "player-field");
       var idText = W.el("label", "field-label");
@@ -244,7 +309,6 @@
         hint.textContent = h ? "/ " + h : "";
       }
 
-      card.setAttribute("data-player", String(i + 1));
       grid.appendChild(card);
     });
 
@@ -385,6 +449,7 @@
           : name + " – " + t("randomVillain");
       }
 
+      die.classList.add("villain-die");
       villainCell.appendChild(select);
       villainCell.appendChild(die);
       tr.appendChild(villainCell);
@@ -558,16 +623,18 @@
     /* No official German title: MC60 has not been released in German. */
     titleDe: "Fear No Evil",
     theme: "fne",
-    stateVersion: 1,
+    /* 2: players went from four fixed places to a list of one to four. */
+    stateVersion: 2,
     scenarioCount: SCENARIOS.length,
 
     emptyState: emptyState,
     normalize: normalize,
+    migrate: migrate,
     render: render,
     renderPrint: renderPrint,
 
-    helpDe: "Jede Runde werden zwei Szenarien gezogen, die weder abgeschlossen noch gescheitert sind; beide erhalten einen Fortschrittspunkt. Der dritte Punkt bedeutet: Das Szenario ist gescheitert. Deshalb sind „1“, „2“ und „Gescheitert“ ein Zähler und keine drei einzelnen Kästchen — ein Klick auf das jeweils oberste gefüllte Kästchen nimmt einen Punkt zurück. „Abgeschlossen“ und „Gescheitert“ schließen sich aus: Ein abgeschlossenes Szenario friert seinen Fortschritt ein, ein gescheitertes sperrt den Abgeschlossen-Haken — die gesetzten Haken bleiben dabei sichtbar. Jeder der fünf Schurken wird genau einem Szenario zugeordnet; ein gewählter Schurke verschwindet aus den übrigen Zeilen und wird in der Schurkenliste durchgestrichen. Der Würfel neben einem leeren Schurken-Feld lost einen der noch freien Schurken aus.",
-    helpEn: "Each round two scenarios that are neither completed nor failed are drawn, and both take one progress point. The third point means the scenario has failed. So “1”, “2” and “Failed” are one counter rather than three separate boxes — clicking the topmost filled box takes a point back. “Completed” and “Failed” are mutually exclusive: a completed scenario freezes its progress and a failed one locks the Completed box, with the existing marks left visible either way. Each of the five villains is assigned to exactly one scenario; a chosen villain disappears from the other rows and is struck through in the villain list. The die next to an empty villain field rolls one of the villains still free.",
+    helpDe: "Spieler werden einzeln hinzugefügt — von einem bis vier —, der Bogen zeigt also nur die, die wirklich mitspielen. Jede Runde werden zwei Szenarien gezogen, die weder abgeschlossen noch gescheitert sind; beide erhalten einen Fortschrittspunkt. Der dritte Punkt bedeutet: Das Szenario ist gescheitert. Deshalb sind „1“, „2“ und „Gescheitert“ ein Zähler und keine drei einzelnen Kästchen — ein Klick auf das jeweils oberste gefüllte Kästchen nimmt einen Punkt zurück. „Abgeschlossen“ und „Gescheitert“ schließen sich aus: Ein abgeschlossenes Szenario friert seinen Fortschritt ein, ein gescheitertes sperrt den Abgeschlossen-Haken — die gesetzten Haken bleiben dabei sichtbar. Jeder der fünf Schurken wird genau einem Szenario zugeordnet; ein gewählter Schurke verschwindet aus den übrigen Zeilen und wird in der Schurkenliste durchgestrichen. Der Würfel neben einem leeren Schurken-Feld lost einen der noch freien Schurken aus.",
+    helpEn: "Players are added one at a time, from one to four, so the sheet only shows the ones actually playing. Each round two scenarios that are neither completed nor failed are drawn, and both take one progress point. The third point means the scenario has failed. So “1”, “2” and “Failed” are one counter rather than three separate boxes — clicking the topmost filled box takes a point back. “Completed” and “Failed” are mutually exclusive: a completed scenario freezes its progress and a failed one locks the Completed box, with the existing marks left visible either way. Each of the five villains is assigned to exactly one scenario; a chosen villain disappears from the other rows and is struck through in the villain list. The die next to an empty villain field rolls one of the villains still free.",
 
     i18n: {
       de: {
@@ -582,6 +649,11 @@
         colIdentity: "Identität",
         colHp: "Verbleibende Trefferpunkte",
         identityPlaceholder: "Held …",
+        addPlayer: "+ Spieler",
+        addPlayerFull: "Mehr als vier Spieler kennt das Spiel nicht.",
+        removePlayer: "Spieler entfernen",
+        removePlayerLast: "Der letzte Spieler kann nicht entfernt werden.",
+        confirmRemovePlayer: "Diesen Spieler samt Eintragungen entfernen?",
         duplicateHero: "Dieser Held ist schon einem anderen Spieler zugeordnet.",
 
         colScenario: "Szenario",
@@ -617,6 +689,11 @@
         colIdentity: "Identity",
         colHp: "Remaining hit points",
         identityPlaceholder: "Hero …",
+        addPlayer: "+ Player",
+        addPlayerFull: "The game does not go beyond four players.",
+        removePlayer: "Remove player",
+        removePlayerLast: "The last player cannot be removed.",
+        confirmRemovePlayer: "Remove this player along with what is filled in?",
         duplicateHero: "This hero is already assigned to another player.",
 
         colScenario: "Scenario",

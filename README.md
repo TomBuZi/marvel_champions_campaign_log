@@ -14,9 +14,12 @@ als jeweils eigenes Modul dazu — siehe [Eine Kampagne hinzufügen](#eine-kampa
 
 ## Was die App kann
 
-* **Der ganze Bogen** — vier Spielerplätze mit Identität und verbleibenden Trefferpunkten,
+* **Der ganze Bogen** — Spielerplätze mit Identität und verbleibenden Trefferpunkten,
   die fünf Szenarien mit Schurken-Zuordnung und Fortschritt, die aus der Kampagne
   entfernten Verbündeten und Persona-Unterstützungen, und die beiden Kampagnen-Marken.
+* **Ein bis vier Spieler** — Karten werden hinzugefügt, wenn jemand mitspielt, statt
+  vier feste Plätze zu zeigen. Der gedruckte Bogen muss alle vier vorhalten; ein
+  Bildschirm nicht.
 * **Schurken auslosen** — der Würfel neben einem leeren Schurken-Feld zieht einen der
   noch nicht zugeordneten Schurken. Steht schon einer im Feld, ist der Würfel gesperrt;
   ein Würfel überschreibt nie eine Wahl.
@@ -55,6 +58,16 @@ gesperrt und die Zeile wäre nicht mehr zu reparieren. In diesem Fall bleiben de
 beide bedienbar, bis eines geklärt ist. `normalize()` wählt bewusst keinen Gewinner:
 welche der beiden Angaben gemeint war, ist nicht zu erraten.
 
+### Spieler
+
+„+ Spieler" legt eine weitere Karte an, bis vier erreicht sind; das × an einer Karte
+entfernt sie wieder. Die letzte Karte bleibt stehen — ein Bogen ohne Spieler hat keine
+Bedeutung. Steht auf einer Karte etwas, wird vor dem Entfernen gefragt. Danach werden
+die verbleibenden Karten neu durchnummeriert.
+
+Das Identitätsfeld ist Freitext mit Vorschlagsliste aus `heroes.js`; passt der Name auf
+einen bekannten Helden, erscheint daneben dessen aufgedruckter Startwert als Erinnerung.
+
 ### Erledigt-Markierung
 
 Eine Tilde `~` am Anfang eines Listeneintrags streicht ihn durch, ohne ihn zu löschen.
@@ -79,6 +92,20 @@ auf, und iOS-Safari leert ihn nach sieben Tagen ohne Besuch — genau der Rhythm
 Kampagne, die man alle paar Wochen weiterspielt. Die App bittet um dauerhaften Speicher
 (`navigator.storage.persist()`) und erinnert nach 14 Tagen an eine Sicherung, aber die
 verlässliche Kopie ist der JSON-Export.
+
+### Alte Bögen
+
+Jede Kampagne versioniert ihr eigenes State-Shape (`stateVersion`) und bringt bei
+Bedarf ein `migrate()` mit. Fear No Evil steht bei **2**: Version 1 hatte immer genau
+vier Spielereinträge, Version 2 nur die Spieler, die es gibt. Beim Öffnen eines alten
+Bogens werden die leeren Plätze am Ende weggelassen — mindestens einer bleibt —,
+während eine Lücke zwischen zwei gefüllten Karten erhalten bleibt, damit sich die
+Nummerierung der Spieler, die auf dem Bogen *sind*, nicht unter ihnen verschiebt.
+
+Migriert wird beim **Lesen**, geschrieben erst bei der nächsten echten Änderung. Ein
+Besuch, der nichts ändert, lässt den gespeicherten Bogen also unangetastet — womit ein
+älterer Build auf einem anderen Gerät ihn weiter lesen kann, bis sich wirklich etwas
+ändert.
 
 ### Bögen, die diese Version nicht lesen kann
 
@@ -163,10 +190,11 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (142 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (178 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   print | import | lock | lockconflict |
-                                    #   random | randomspread | appearance
+                                    #   random | randomspread | appearance |
+                                    #   players | migrate
 BROWSER_LANG=de-DE node test/run-browser.js   # unter einer anderen Browser-Sprache
 ```
 
