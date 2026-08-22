@@ -93,8 +93,14 @@ jobs:
           test -f "$DEST/index.html" || { echo "::error::no index.html in the copy"; FAIL=1; }
           test -f "$DEST/de/index.html" || { echo "::error::de/ stub missing"; FAIL=1; }
           test -f "$DEST/en/index.html" || { echo "::error::en/ stub missing"; FAIL=1; }
-          for f in $(grep -o '<script src="[^"]*"' "$DEST/index.html" | cut -d'"' -f2) \
-                   $(grep -o '<link rel="stylesheet" href="[^"]*"' "$DEST/index.html" | cut -d'"' -f2); do
+          # Two passes, because the two tags do not have the same shape: on a
+          # <script> the first quoted value IS the path, on a <link> it is
+          # rel="stylesheet" and the path only comes later. Cutting the second
+          # quoted field out of the link yielded the literal "stylesheet".
+          SCRIPTS=$(grep -o '<script src="[^"]*"' "$DEST/index.html" | cut -d'"' -f2)
+          SHEETS=$(grep -o '<link[^>]*rel="stylesheet"[^>]*>' "$DEST/index.html" \
+                     | grep -o 'href="[^"]*"' | cut -d'"' -f2)
+          for f in $SCRIPTS $SHEETS; do
             test -f "$DEST/$f" || { echo "::error::index.html references missing $f"; FAIL=1; }
           done
           exit $FAIL

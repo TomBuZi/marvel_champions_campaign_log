@@ -5,8 +5,10 @@ Eintippen statt ausdrucken: automatisch gespeichert, zweisprachig, teilbar, druc
 
 **Live:** https://tombuzi.github.io/marvel_champions_campaign_log/
 
-Umgesetzt ist zunächst die Kampagne **Fear No Evil (MC60)**. Weitere Kampagnen kommen
-als jeweils eigenes Modul dazu — siehe [Eine Kampagne hinzufügen](#eine-kampagne-hinzufügen).
+Umgesetzt sind die Kampagnen **Fear No Evil (MC60)** und
+**The Rise of Red Skull (MC10)**. Die Kampagne wird beim Anlegen eines Bogens gewählt
+und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
+[Eine Kampagne hinzufügen](#eine-kampagne-hinzufügen).
 
 > Inoffizielles Fan-Projekt. Siehe [Rechtliches](#rechtliches).
 
@@ -14,16 +16,25 @@ als jeweils eigenes Modul dazu — siehe [Eine Kampagne hinzufügen](#eine-kampa
 
 ## Was die App kann
 
-* **Der ganze Bogen** — Spielerplätze mit Identität und verbleibenden Trefferpunkten,
-  die fünf Szenarien mit Schurken-Zuordnung und Fortschritt, die aus der Kampagne
-  entfernten Verbündeten und Persona-Unterstützungen, und die beiden Kampagnen-Marken.
+* **Der ganze Bogen, je Kampagne der ihre.** Jedes Modul folgt seiner Vorlage Feld
+  für Feld, und die beiden Vorlagen sind sehr verschieden:
+  * *Fear No Evil (MC60)* — Spielerplätze mit Identität und verbleibenden
+    Trefferpunkten, die fünf Szenarien mit Schurken-Zuordnung und Fortschritt, die
+    aus der Kampagne entfernten Verbündeten und Persona-Unterstützungen, und die
+    beiden Kampagnen-Marken.
+  * *The Rise of Red Skull (MC10)* — je Spieler Identität, Trefferpunkte,
+    Verpflichtungen, Tech- und Basis-Verbesserung und gerettete Verbündete; dazu die
+    drei Felder, nach denen späteren Szenarien fragen, die entfernten Verbündeten und
+    ein Notizfeld. **Keine** Szenario-Tabelle, kein Fortschritt, kein Würfel — der
+    gedruckte MC10-Bogen hat das alles nicht, weil die fünf Szenarien in fester
+    Reihenfolge gespielt werden.
 * **Ein bis vier Spieler** — Karten werden hinzugefügt, wenn jemand mitspielt, statt
   vier feste Plätze zu zeigen. Der gedruckte Bogen muss alle vier vorhalten; ein
   Bildschirm nicht.
-* **Schurken auslosen** — der Würfel neben einem leeren Schurken-Feld zieht einen der
+* **Schurken auslosen** (MC60) — der Würfel neben einem leeren Schurken-Feld zieht einen der
   noch nicht zugeordneten Schurken. Steht schon einer im Feld, ist der Würfel gesperrt;
   ein Würfel überschreibt nie eine Wahl.
-* **„Nächste Runde"** — zieht zwei Szenarien, die noch im Spiel sind, und gibt jedem
+* **„Nächste Runde"** (MC60) — zieht zwei Szenarien, die noch im Spiel sind, und gibt jedem
   einen Fortschrittspunkt. Ist nur noch eines im Spiel, bekommt es beide.
 * **Mehrere Durchläufe** parallel, mit Auswahl oben; die Kampagne wird beim Anlegen
   gewählt und bleibt danach fest.
@@ -184,6 +195,7 @@ auch über `file://` und direkt aus dem Repo-Root über GitHub Pages.
 | `i18n.js` | `window.I18N = { de, en }` — nur Strings des Rahmens |
 | `heroes.js` | 68 Helden (Name, Trefferpunkte) als Vorschlagsliste für die Identitätsfelder |
 | `campaigns/fear-no-evil.js` | die Kampagne MC60: eigenes Datenmodell, eigenes Rendering, eigene Strings |
+| `campaigns/rise-of-red-skull.js` | die Kampagne MC10: folgt dem gedruckten Bogen strikt — Spielerbesitz, drei Szenariofelder, Notizen; bewusst ohne Szenario-Tabelle |
 | `test/lint.js` | Prüfungen ohne Browser: Wörterbücher, Kampagnendefinition, Datenmodell, Paketierung |
 | `test/selftest.html`, `test/run-browser.js` | Selbsttest, der die echte Seite in einem iframe fernsteuert |
 | `fonts/` | Exo 2 (OFL, selbst gehostet), `OFL.txt` daneben |
@@ -207,10 +219,10 @@ Version N.*
 
    ```js
    window.registerCampaign({
-     id: "rise-of-red-skull",   // stabil, wandert in jeden Bogen
-     code: "MC10",
+     id: "mutant-genesis",      // stabil, wandert in jeden Bogen
+     code: "MC24",
      titleEn: "…", titleDe: "…",
-     theme: "trors",            // -> <html data-campaign="trors">
+     theme: "mg",               // -> <html data-campaign="mg">
      stateVersion: 1,
      scenarioCount: 5,
      emptyState: function () {…},           // DOM-frei
@@ -226,7 +238,17 @@ Version N.*
 2. Das Skript in `index.html` **nach** `core.js` einhängen. Die Reihenfolge der
    Skripte ist die Reihenfolge in der Bogen-Auswahl und im Dialog „Neuer Bogen“.
 3. `node test/lint.js` — die Definition, die Wörterbücher und die Idempotenz von
-   `normalize()` werden dann automatisch mitgeprüft.
+   `normalize()` werden dann automatisch mitgeprüft, ebenso, dass `index.html` das
+   neue Skript wirklich lädt.
+4. Für einen `[data-campaign]`-Skin einen Farbblock in `styles.css` ergänzen. Achtung:
+   **vier** Blöcke, wie die Tokens darüber — ein einzelner `[data-campaign]`-Block ist
+   spezifischer als das bloße `:root` in der Dark-Media-Query und würde im Dunkelmodus
+   die helle Palette malen.
+
+Als Vorlagen dienen die beiden vorhandenen Module, und sie sind bewusst
+unterschiedlich: `campaigns/fear-no-evil.js` zeigt abgeleiteten Zustand, gegenseitige
+Sperren, eine Auslosung und ein `migrate()`; `campaigns/rise-of-red-skull.js` ist das
+schlanke Gegenstück — reine Eingabefelder, kein `migrate()`, keine erfundenen Felder.
 
 `ctx` liefert `{ state, lang, t(key, …args), save(), rerender(), toast(msg), w }`;
 `w` ist die Widget-Sammlung aus `widgets.js`.
@@ -243,12 +265,13 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (220 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (273 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   langpath | print | import | lock |
                                     #   lockconflict | random | randomspread |
                                     #   appearance | players | migrate |
-                                    #   round | roundlast | roundspread
+                                    #   round | roundlast | roundspread |
+                                    #   rrs | rrsdialog | rrsprint | rrslists
 BROWSER_LANG=de-DE node test/run-browser.js   # unter einer anderen Browser-Sprache
 ```
 
@@ -302,8 +325,8 @@ Verzeichnis wieder ab.
 
 ## Gestaltung
 
-Die Optik ist dem offiziellen MC60-Bogen nachempfunden, aber ausschließlich mit
-eigenen Mitteln: die Palette wurde aus dem PDF gemessen, die Schrift ist **Exo 2**
+Die Optik ist den offiziellen Bögen nachempfunden, aber ausschließlich mit
+eigenen Mitteln: die Paletten wurden aus den PDFs gemessen, die Schrift ist **Exo 2**
 (die Textschrift des Bogens, OFL-1.1, selbst gehostet in `fonts/`), und Halbtonraster,
 Schraffur, Tuschekonturen und die harten Versatzschatten sind CSS-Gradienten und
 Rahmen. Die Displayschrift des Bogens (Komika Title) ist nicht weiterverteilbar;
@@ -314,6 +337,19 @@ ausdrücklichen `[data-theme]`-Überschreibungen und noch einmal in `@media prin
 (dort alles schwarz auf weiß). Vordergrundfarben, die auf einer *festen* Fläche
 sitzen — Gelb, Warnrot, die Seitenfläche —, haben eigene `--on-*`-Tokens, weil das
 Theme sonst hell und dunkel gegeneinander verdreht.
+
+**Jede Kampagne bringt ihre eigene Palette mit**, gesetzt über
+`[data-campaign]` am `<html>`: MC60 ist comic-orange auf Dunkelrot, MC10 salbeigrün
+auf Tiefgrün mit Senfgelb — beides aus dem jeweiligen Bogen-PDF gemessen. Ein
+solcher Skin muss dieselben **vier** Blöcke spiegeln. Ein einzelner
+`[data-campaign]`-Block wäre spezifischer als das bloße `:root` in der
+Dark-Media-Query und würde im Dunkelmodus die helle Palette malen; umgekehrt muss
+der Print-Reset `[data-campaign][data-theme]` mitnennen, sonst druckt eine
+Dark-Mode-Sitzung die Kampagnenfarben statt Schwarz auf Weiß.
+
+Komponenten-CSS nennt nie eine Kampagnenfarbe, sondern nur die generischen Tokens.
+`test/lint.js` kann das nicht prüfen, deshalb steht es hier: wer eine Farbe direkt
+in eine Regel schreibt, macht sie für jede weitere Kampagne falsch.
 
 `color-scheme` ist pro Theme gesetzt, damit auch die Teile, die die Seite nicht selbst
 malt — das aufgeklappte `<select>`, die Zahlen-Spinner, Scrollbalken — dem Theme folgen

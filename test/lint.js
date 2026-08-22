@@ -190,6 +190,73 @@ for (const def of campaigns) {
     check(p + "list entries trimmed, blanks dropped",
       eq(once.removed, ["keep", "~struck", "42"]), JSON.stringify(once.removed));
   }
+
+  if (def.id === "rise-of-red-skull") {
+    /* The generic fixture above feeds `scenarios` and `flags`, which this sheet
+       does not have. They must land nowhere. */
+    check(p + "no scenarios key on this sheet", once.scenarios === undefined);
+    check(p + "no flags key on this sheet", once.flags === undefined);
+    check(p + "player list capped at 4", once.players.length === 4, once.players.length);
+    check(p + "an empty player list still yields one player",
+      def.normalize({ players: [] }).players.length === 1);
+    check(p + "list entries trimmed, blanks dropped",
+      eq(once.removed, ["keep", "~struck", "42"]), JSON.stringify(once.removed));
+    check(p + "counters stay null when nothing said otherwise",
+      once.experimentalWeapons === null && once.delayCounters === null);
+
+    /* An MC10-shaped filthy input: the fields the generic fixture knows nothing
+       about, each of them with the wrong type. */
+    const dirtyRrs = {
+      players: [
+        { hero: "  Captain America  ", hp: "500", obligations: "one\ntwo",
+          techUpgrade: 7, basicUpgrade: null,
+          rescuedAllies: ["  Agent 13  ", "", null, 3], engagedWithMinion: "true" },
+        "not even an object",
+      ],
+      experimentalWeapons: "12.7",
+      delayCounters: -5,
+      removed: 42,
+      notes: "  line one\rline two\u0007bad  ",
+      scenarios: [{ slug: "does-not-exist" }],
+      flags: { invented: true },
+      somethingUnknown: { nested: [1, 2, 3] },
+    };
+    const r1 = def.normalize(dirtyRrs);
+    check(p + "MC10 fixture is idempotent", eq(r1, def.normalize(r1)),
+      JSON.stringify(r1));
+    check(p + "hero trimmed, hp clamped",
+      r1.players[0].hero === "Captain America" && r1.players[0].hp === 99);
+    check(p + "a legacy newline string becomes a list",
+      eq(r1.players[0].obligations, ["one", "two"]),
+      JSON.stringify(r1.players[0].obligations));
+    check(p + "rescued allies coerced, blanks dropped",
+      eq(r1.players[0].rescuedAllies, ["Agent 13", "3"]),
+      JSON.stringify(r1.players[0].rescuedAllies));
+    check(p + "upgrades coerced to text",
+      r1.players[0].techUpgrade === "7" && r1.players[0].basicUpgrade === "");
+    check(p + "engaged flag is a real boolean",
+      r1.players[0].engagedWithMinion === true &&
+      r1.players[1].engagedWithMinion === false);
+    check(p + "counters rounded and clamped",
+      r1.experimentalWeapons === 13 && r1.delayCounters === 0,
+      r1.experimentalWeapons + "/" + r1.delayCounters);
+    /* Neither an array nor a string, so there is nothing to read as a list —
+       an empty one is the honest answer, not ["42"]. */
+    check(p + "a bare number yields no list at all", eq(r1.removed, []),
+      JSON.stringify(r1.removed));
+
+    /* The whole reason the notes carry their own coercion: W.coerceText would
+       strip the newline along with the other control characters, and every
+       paragraph would vanish on the next save. */
+    check(p + "notes keep the line break, lose the control character",
+      r1.notes === "line one\nline twobad", JSON.stringify(r1.notes));
+    const multiline = "first\nsecond\nthird";
+    check(p + "a multi-line note survives normalize unchanged",
+      def.normalize({ notes: multiline }).notes === multiline,
+      JSON.stringify(def.normalize({ notes: multiline }).notes));
+    check(p + "CRLF is reduced to one newline form",
+      def.normalize({ notes: "a\r\nb" }).notes === "a\nb");
+  }
 }
 
 // ------------------------------------------------------------------- roster
@@ -216,7 +283,46 @@ check("no absolute asset paths in index.html", absolute.length === 0, absolute.j
 check("every script referenced by index.html exists",
   [...html.matchAll(/<script src="([^"]+)"/g)]
     .every((m) => fs.existsSync(path.join(root, m[1]))));
+
+/* The other direction, and the one that was missing: lint discovers the
+   campaigns by reading the directory, the browser only ever runs what
+   index.html names. Without this a new campaign passes every check above and
+   still never loads on the page. */
+for (const def of campaigns) {
+  check("index.html loads campaigns/" + def.id + ".js",
+    html.includes('<script src="campaigns/' + def.id + '.js"'));
+}
 check("stylesheet exists", fs.existsSync(path.join(root, "styles.css")));
+
+/* applyLanguage() (core.js) translates by writing node.textContent, so a
+   data-i18n on an element that CONTAINS other elements deletes them. That is
+   how the new-log dialog lost its title input — silently, because the dialog
+   only becomes reachable once a second campaign is registered. The caption
+   belongs in a <span> of its own.
+
+   Walked by hand rather than matched with a regexp: the pattern needs a
+   backreference to the tag name, and that is easy to get subtly wrong here. */
+const MARKER = 'data-i18n="';
+const i18nWithChildren = [];
+for (let i = html.indexOf(MARKER); i !== -1; i = html.indexOf(MARKER, i + 1)) {
+  const keyStart = i + MARKER.length;
+  const key = html.slice(keyStart, html.indexOf('"', keyStart));
+  let j = html.lastIndexOf("<", i) + 1;
+  let name = "";
+  /* Everything up to the first whitespace, ">" or "/" is the tag name. */
+  while (j < html.length && html[j] > " " && html[j] !== ">" && html[j] !== "/") {
+    name += html[j];
+    j++;
+  }
+  const openEnd = html.indexOf(">", i);
+  const closeAt = html.indexOf("</" + name, openEnd);
+  if (openEnd === -1 || closeAt === -1) continue;         // void element, nothing to lose
+  if (html.slice(openEnd + 1, closeAt).indexOf("<") !== -1) {
+    i18nWithChildren.push(name + "[" + key + "]");
+  }
+}
+check("no data-i18n on an element with child elements",
+  i18nWithChildren.length === 0, i18nWithChildren.join(", "));
 
 /* /de/ and /en/ are pretty entry points: a real directory per language, because
    GitHub Pages cannot rewrite paths. Each one only forwards to index.html with

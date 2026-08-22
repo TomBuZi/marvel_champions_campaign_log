@@ -1,28 +1,69 @@
 <!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>seed</title></head><body>
 <script>
-localStorage.clear();
-var id = "seed-1";
-localStorage.setItem("mcclog:logs", JSON.stringify({ "seed-1": {
-  schemaVersion: 1, id: id, campaignId: "fear-no-evil", stateVersion: 2,
-  title: "Höllenküche, Runde 1", createdAt: "2026-08-01T18:00:00.000Z",
-  updatedAt: "2026-08-14T21:30:00.000Z",
-  state: {
-    players: [
-      { hero: "Daredevil", hp: 8 }, { hero: "Echo", hp: 11 },
-      { hero: "Spider-Man * Peter Parker", hp: 4 }
-    ],
-    scenarios: [
-      { slug: "art-museum-heist",  completed: true,  villain: "hammerhead",   progress: 1 },
-      { slug: "the-getaway",       completed: false, villain: "bullseye",     progress: 3 },
-      { slug: "protection-racket", completed: true,  villain: "purple-man",   progress: 2 },
-      { slug: "the-raft-breakout", completed: false, villain: "electro",      progress: 0 },
-      { slug: "stop-the-presses",  completed: false, villain: "typhoid-mary", progress: 1 }
-    ],
-    removed: ["~Foggy Nelson", "Karen Page", "Ben Urich"],
-    flags: { trustEstablished: true, maryDefeated: false }
+/* Legt einen ausgefüllten Beispielbogen an und springt in die App — für
+   Screenshots und den Druckvergleich. "?c=mc10" nimmt den MC10-Bogen, ohne
+   Angabe kommt MC60. */
+var q = new URLSearchParams(location.search);
+var which = q.get("c") === "mc10" ? "mc10" : "mc60";
+/* "?theme=dark" (oder light) nagelt das Theme fest — sonst folgt es dem System.
+   Gebraucht fuer den Druckvergleich: der Druck muss schwarz auf weiss sein,
+   auch aus einer Dark-Mode-Sitzung und auch mit einem Kampagnen-Skin. */
+var theme = q.get("theme");
+
+var logs = {
+  mc60: {
+    schemaVersion: 1, id: "seed-1", campaignId: "fear-no-evil", stateVersion: 2,
+    title: "Höllenküche, Runde 1", createdAt: "2026-08-01T18:00:00.000Z",
+    updatedAt: "2026-08-14T21:30:00.000Z",
+    state: {
+      players: [
+        { hero: "Daredevil", hp: 8 }, { hero: "Echo", hp: 11 },
+        { hero: "Spider-Man * Peter Parker", hp: 4 }
+      ],
+      scenarios: [
+        { slug: "art-museum-heist",  completed: true,  villain: "hammerhead",   progress: 1 },
+        { slug: "the-getaway",       completed: false, villain: "bullseye",     progress: 3 },
+        { slug: "protection-racket", completed: true,  villain: "purple-man",   progress: 2 },
+        { slug: "the-raft-breakout", completed: false, villain: "electro",      progress: 0 },
+        { slug: "stop-the-presses",  completed: false, villain: "typhoid-mary", progress: 1 }
+      ],
+      removed: ["~Foggy Nelson", "Karen Page", "Ben Urich"],
+      flags: { trustEstablished: true, maryDefeated: false }
+    }
+  },
+  mc10: {
+    schemaVersion: 1, id: "seed-2", campaignId: "rise-of-red-skull", stateVersion: 1,
+    title: "Roter Schädel, Durchgang 1", createdAt: "2026-08-02T18:00:00.000Z",
+    updatedAt: "2026-08-15T20:10:00.000Z",
+    state: {
+      players: [
+        { hero: "Captain America", hp: 9,
+          obligations: ["Personal Challenge"],
+          techUpgrade: "Ionic Man-Gun", basicUpgrade: "Combat Training",
+          rescuedAllies: ["Agent 13", "~Jimmy Jupiter"], engagedWithMinion: true },
+        { hero: "Black Widow", hp: 11,
+          obligations: ["Weapon Master", "Under Attack"],
+          techUpgrade: "Widow's Bite", basicUpgrade: "",
+          rescuedAllies: [], engagedWithMinion: false },
+        { hero: "Ms. Marvel", hp: 7,
+          obligations: [], techUpgrade: "", basicUpgrade: "Endurance",
+          rescuedAllies: ["Bruno Carrelli"], engagedWithMinion: true }
+      ],
+      experimentalWeapons: 2,
+      delayCounters: 3,
+      removed: ["~Nick Fury", "Maria Hill"],
+      notes: "Zola-Szenario zweimal verloren.\nBeim dritten Versuch mit Rückendeckung gewonnen."
+    }
   }
-}}));
-localStorage.setItem("mcclog:activeId", id);
+};
+
+var log = logs[which];
+localStorage.clear();
+var store = {};
+store[log.id] = log;
+localStorage.setItem("mcclog:logs", JSON.stringify(store));
+localStorage.setItem("mcclog:activeId", log.id);
 localStorage.setItem("mcclog:lang", "de");
+if (theme === "dark" || theme === "light") localStorage.setItem("mcclog:theme", theme);
 location.replace("../index.html");
 </script></body></html>
