@@ -201,19 +201,28 @@ for (const def of campaigns) {
       def.normalize({ players: [] }).players.length === 1);
     check(p + "list entries trimmed, blanks dropped",
       eq(once.removed, ["keep", "~struck", "42"]), JSON.stringify(once.removed));
-    check(p + "counters stay null when nothing said otherwise",
-      once.experimentalWeapons === null && once.delayCounters === null);
+    check(p + "the delay counter stays null when nothing said otherwise",
+      once.delayCounters === null, once.delayCounters);
 
-    /* An MC10-shaped filthy input: the fields the generic fixture knows nothing
-       about, each of them with the wrong type. */
+    /* Every card field on this sheet draws from a printed pool of four, so the
+       fixture is about slugs that are wrong rather than text that is dirty. */
     const dirtyRrs = {
       players: [
-        { hero: "  Captain America  ", hp: "500", obligations: "one\ntwo",
-          techUpgrade: 7, basicUpgrade: null,
-          rescuedAllies: ["  Agent 13  ", "", null, 3], engagedWithMinion: "true" },
+        { hero: "  Captain America  ", hp: "500",
+          obligations: ["martial-law", "not-a-card", "martial-law", 7, null],
+          techUpgrade: "laser-cannon",
+          basicUpgrade: "Combat Training",          // free text, not a slug
+          rescuedAllies: ["white-tiger", "elektra", "nope"],
+          engagedWithMinion: "true" },
+        { hero: "Black Widow",
+          obligations: ["martial-law"],             // same obligation: allowed
+          techUpgrade: "laser-cannon",              // same upgrade: not allowed
+          basicUpgrade: "basic-attack",
+          rescuedAllies: ["elektra", "shang-chi"],  // Elektra already taken
+          engagedWithMinion: 0 },
         "not even an object",
       ],
-      experimentalWeapons: "12.7",
+      experimentalWeapons: ["exo-suit", "laser-rifle", "exo-suit", "made-up"],
       delayCounters: -5,
       removed: 42,
       notes: "  line one\rline two\u0007bad  ",
@@ -222,26 +231,43 @@ for (const def of campaigns) {
       somethingUnknown: { nested: [1, 2, 3] },
     };
     const r1 = def.normalize(dirtyRrs);
-    check(p + "MC10 fixture is idempotent", eq(r1, def.normalize(r1)),
-      JSON.stringify(r1));
+    check(p + "MC10 fixture is idempotent", eq(r1, def.normalize(r1)), JSON.stringify(r1));
     check(p + "hero trimmed, hp clamped",
       r1.players[0].hero === "Captain America" && r1.players[0].hp === 99);
-    check(p + "a legacy newline string becomes a list",
-      eq(r1.players[0].obligations, ["one", "two"]),
+
+    /* Unknown slugs out, duplicates out, and the survivors in the pool's own
+       order — that ordering is what makes normalize a fixpoint. */
+    check(p + "obligations reduced to known cards",
+      eq(r1.players[0].obligations, ["martial-law"]),
       JSON.stringify(r1.players[0].obligations));
-    check(p + "rescued allies coerced, blanks dropped",
-      eq(r1.players[0].rescuedAllies, ["Agent 13", "3"]),
+    check(p + "two players may hold the SAME obligation",
+      r1.players[0].obligations.indexOf("martial-law") !== -1 &&
+      r1.players[1].obligations.indexOf("martial-law") !== -1);
+    check(p + "an unknown upgrade slug is cleared",
+      r1.players[0].basicUpgrade === "", r1.players[0].basicUpgrade);
+    check(p + "the same upgrade cannot go to two players",
+      r1.players[0].techUpgrade === "laser-cannon" && r1.players[1].techUpgrade === "",
+      JSON.stringify([r1.players[0].techUpgrade, r1.players[1].techUpgrade]));
+    check(p + "an upgrade the first player does not hold is left alone",
+      r1.players[1].basicUpgrade === "basic-attack", r1.players[1].basicUpgrade);
+    check(p + "rescued allies come back in pool order",
+      eq(r1.players[0].rescuedAllies, ["elektra", "white-tiger"]),
       JSON.stringify(r1.players[0].rescuedAllies));
-    check(p + "upgrades coerced to text",
-      r1.players[0].techUpgrade === "7" && r1.players[0].basicUpgrade === "");
+    check(p + "an ally already rescued by someone else is dropped",
+      eq(r1.players[1].rescuedAllies, ["shang-chi"]),
+      JSON.stringify(r1.players[1].rescuedAllies));
+    check(p + "but a player may hold several allies",
+      r1.players[0].rescuedAllies.length === 2);
     check(p + "engaged flag is a real boolean",
       r1.players[0].engagedWithMinion === true &&
-      r1.players[1].engagedWithMinion === false);
-    check(p + "counters rounded and clamped",
-      r1.experimentalWeapons === 13 && r1.delayCounters === 0,
-      r1.experimentalWeapons + "/" + r1.delayCounters);
+      r1.players[1].engagedWithMinion === false &&
+      r1.players[2].engagedWithMinion === false);
+    check(p + "experimental weapons deduped and in pool order",
+      eq(r1.experimentalWeapons, ["laser-rifle", "exo-suit"]),
+      JSON.stringify(r1.experimentalWeapons));
+    check(p + "the delay counter is clamped", r1.delayCounters === 0, r1.delayCounters);
     /* Neither an array nor a string, so there is nothing to read as a list —
-       an empty one is the honest answer, not ["42"]. */
+       an empty one is the honest answer. */
     check(p + "a bare number yields no list at all", eq(r1.removed, []),
       JSON.stringify(r1.removed));
 

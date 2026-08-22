@@ -1288,7 +1288,7 @@
 
       /* The MC10 sheet groups its fields into panels rather than a table, so
          the cases below address them through their section names. */
-      var SEC1_NUM = "[data-section=scenario-1] .num-input";
+      var SEC1_BOX = "[data-section=scenario-1] .flag .sheet-check";
       var SEC2_NUM = "[data-section=scenario-2] .num-input";
       var SEC4_BOX = "[data-section=scenario-4] .flag .sheet-check";
 
@@ -1353,55 +1353,75 @@
         });
       }
 
-      /* Every field of the MC10 sheet, typed and then read back out of storage. */
+      /* Every field of the MC10 sheet, set through the real controls and then
+         read back out of storage. */
       function caseRrs() {
         seed({ rrs1: rrsLog() }, "rrs1");
         boot("", function (frame, w, d) {
           f0 = w;
           var card = d.querySelectorAll(".player-card")[0];
-          var texts = card.querySelectorAll(".text-input");
-          log("the card carries identity plus both upgrades", texts.length === 3, texts.length);
 
-          texts[0].value = "Captain America";
-          fire(texts[0], "input");
-          /* Captain America prints 11, and the roster is the source of that. */
+          var hero = card.querySelector(".text-input");
+          log("identity is the only free-text field on the card",
+            card.querySelectorAll(".text-input").length === 1,
+            card.querySelectorAll(".text-input").length);
+          hero.value = "Captain America";
+          fire(hero, "input");
           log("the hit point hint follows the hero",
             /11/.test(card.querySelector(".num-hint").textContent),
             card.querySelector(".num-hint").textContent);
 
-          texts[1].value = "Ionic Man-Gun";
-          fire(texts[1], "input");
-          fire(texts[1], "blur");
-          texts[2].value = "Combat Training";
-          fire(texts[2], "input");
-          fire(texts[2], "blur");
-
           var hp = card.querySelector(".num-input");
-          hp.value = "11";
+          hp.value = "9";
           fire(hp, "input");
           fire(hp, "blur");
 
-          addEntry(d, "trors-p0-obligations", "Personal Challenge");
-          addEntry(d, "trors-p0-rescued", "~Agent 13");
-          addEntry(d, "trors-removed", "Nick Fury");
+          /* Obligations first, rescued allies second — the order they are
+             rendered in on the card. */
+          var rows = card.querySelectorAll(".flag-row");
+          log("two card sets per player, four boxes each",
+            rows.length === 2 && rows[0].querySelectorAll(".sheet-check").length === 4 &&
+            rows[1].querySelectorAll(".sheet-check").length === 4, rows.length);
+          log("the boxes carry the printed card names",
+            /Zola's Algorithm/.test(rows[0].textContent) &&
+            /Martial Law/.test(rows[0].textContent), rows[0].textContent);
+          log("the ally boxes carry their printed names",
+            /Moon Knight: Marc Spector/.test(rows[1].textContent) &&
+            /White Tiger: Angela Del Toro/.test(rows[1].textContent), rows[1].textContent);
+          tick(rows[0].querySelectorAll(".sheet-check")[2]);   // Martial Law
+          tick(rows[1].querySelectorAll(".sheet-check")[0]);   // Elektra
+          tick(rows[1].querySelectorAll(".sheet-check")[3]);   // White Tiger
 
-          var one = d.querySelector(SEC1_NUM);
-          one.value = "2";
-          fire(one, "input");
-          fire(one, "blur");
-          var two = d.querySelector(SEC2_NUM);
-          two.value = "120";
-          fire(two, "input");
-          fire(two, "blur");
-          log("a counter clamps to the sheet's range", two.value === "99", two.value);
+          var pools = card.querySelectorAll(".pool-select");
+          log("one dropdown each for the two upgrades", pools.length === 2, pools.length);
+          log("the tech pool lists all four cards plus the placeholder",
+            pools[0].options.length === 5, pools[0].options.length);
+          pools[0].value = "laser-cannon";
+          fire(pools[0], "change");
+          pools[1].value = "basic-attack";
+          fire(pools[1], "change");
+
+          var weapons = d.querySelectorAll(SEC1_BOX);
+          log("four experimental weapons to record", weapons.length === 4, weapons.length);
+          log("scenario 1 names the weapons, not a count",
+            /Laser Rifle/.test(d.querySelector("[data-section=scenario-1]").textContent));
+          tick(weapons[0]);   // Laser Rifle
+          tick(weapons[3]);   // Exo-Suit
+
+          var delay = d.querySelector(SEC2_NUM);
+          delay.value = "120";
+          fire(delay, "input");
+          fire(delay, "blur");
+          log("the delay counter clamps to the sheet's range", delay.value === "99", delay.value);
 
           var engaged = d.querySelectorAll(SEC4_BOX);
           log("one engaged box per player", engaged.length === 1, engaged.length);
           log("the engaged box names the hero",
-            /Captain America/.test(d.querySelector("[data-engaged-label]").textContent),
-            d.querySelector("[data-engaged-label]").textContent);
-          engaged[0].checked = true;
-          fire(engaged[0], "change");
+            /Captain America/.test(d.querySelector("[data-player-name]").textContent),
+            d.querySelector("[data-player-name]").textContent);
+          tick(engaged[0]);
+
+          addEntry(d, "trors-removed", "Nick Fury");
 
           var notes = d.querySelector(".notes-input");
           notes.value = "erste Zeile\nzweite Zeile";
@@ -1411,22 +1431,26 @@
           setTimeout(function () {
             var st = JSON.parse(localStorage.getItem("mcclog:logs")).rrs1.state;
             var p0 = st.players[0];
-            log("hero and hit points stored", p0.hero === "Captain America" && p0.hp === 11,
+            log("hero and hit points stored", p0.hero === "Captain America" && p0.hp === 9,
               JSON.stringify([p0.hero, p0.hp]));
-            log("both upgrades stored",
-              p0.techUpgrade === "Ionic Man-Gun" && p0.basicUpgrade === "Combat Training",
-              JSON.stringify([p0.techUpgrade, p0.basicUpgrade]));
-            log("obligations stored as a list",
-              JSON.stringify(p0.obligations) === JSON.stringify(["Personal Challenge"]),
+            log("the obligation stored as a slug",
+              JSON.stringify(p0.obligations) === JSON.stringify(["martial-law"]),
               JSON.stringify(p0.obligations));
-            log("rescued allies keep the strike marker",
-              JSON.stringify(p0.rescuedAllies) === JSON.stringify(["~Agent 13"]),
+            log("both upgrades stored as slugs",
+              p0.techUpgrade === "laser-cannon" && p0.basicUpgrade === "basic-attack",
+              JSON.stringify([p0.techUpgrade, p0.basicUpgrade]));
+            /* Ticked in the order Elektra, White Tiger — and Elektra comes
+               first in the pool, so the stored order matches either way. */
+            log("both rescued allies stored, in pool order",
+              JSON.stringify(p0.rescuedAllies) === JSON.stringify(["elektra", "white-tiger"]),
               JSON.stringify(p0.rescuedAllies));
             log("the engaged flag stored", p0.engagedWithMinion === true);
-            log("both counters stored",
-              st.experimentalWeapons === 2 && st.delayCounters === 99,
-              st.experimentalWeapons + "/" + st.delayCounters);
-            log("the campaign-wide removed list stored",
+            log("the recorded weapons stored in pool order",
+              JSON.stringify(st.experimentalWeapons) ===
+                JSON.stringify(["laser-rifle", "exo-suit"]),
+              JSON.stringify(st.experimentalWeapons));
+            log("the delay counter stored", st.delayCounters === 99, st.delayCounters);
+            log("the removed list stored",
               JSON.stringify(st.removed) === JSON.stringify(["Nick Fury"]),
               JSON.stringify(st.removed));
             /* The point of this sheet's own notes coercion: a paragraph break
@@ -1438,16 +1462,101 @@
         });
       }
 
+      /* The three different pool rules on one sheet. This is the case that
+         would catch an upgrade handed to two players, or an ally that stops
+         being exclusive. */
+      function caseRrsPools() {
+        var seeded = rrsLog();
+        seeded.state.players = [
+          rrsPlayer("Captain America", 11),
+          rrsPlayer("Black Widow", 9),
+        ];
+        seed({ rrs1: seeded }, "rrs1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          w.confirm = function () { return true; };
+          var cards = function () { return d.querySelectorAll(".player-card"); };
+          var techOf = function (i) { return cards()[i].querySelectorAll(".pool-select")[0]; };
+          var obligOf = function (i) { return cards()[i].querySelectorAll(".flag-row")[0]; };
+          var alliesOf = function (i) { return cards()[i].querySelectorAll(".flag-row")[1]; };
+          var optOf = function (sel, value) {
+            return Array.prototype.filter.call(sel.options, function (o) {
+              return o.value === value;
+            })[0];
+          };
+
+          /* --- Upgrades: one card, one player. --- */
+          log("nothing is locked to begin with", !optOf(techOf(1), "laser-cannon").disabled);
+          techOf(0).value = "laser-cannon";
+          fire(techOf(0), "change");
+          log("a chosen upgrade is disabled for the other player",
+            optOf(techOf(1), "laser-cannon").disabled === true);
+          log("but stays selectable for its own holder",
+            optOf(techOf(0), "laser-cannon").disabled === false);
+          techOf(0).value = "";
+          fire(techOf(0), "change");
+          log("clearing it hands it back", optOf(techOf(1), "laser-cannon").disabled === false);
+          techOf(0).value = "laser-cannon";
+          fire(techOf(0), "change");
+
+          /* --- Obligations: everyone has their own set. --- */
+          tick(obligOf(0).querySelectorAll(".sheet-check")[2]);
+          log("an obligation of one player locks nothing for the other",
+            obligOf(1).querySelectorAll(".sheet-check")[2].disabled === false);
+          tick(obligOf(1).querySelectorAll(".sheet-check")[2]);
+
+          /* --- Allies: one holder each, several per holder. --- */
+          tick(alliesOf(0).querySelectorAll(".sheet-check")[0]);   // Elektra
+          tick(alliesOf(0).querySelectorAll(".sheet-check")[2]);   // Shang-Chi
+          var elektraOfP2 = alliesOf(1).querySelectorAll(".sheet-check")[0];
+          log("an ally taken by one player locks for the other",
+            elektraOfP2.disabled === true);
+          log("the lock says who has it",
+            /Black Widow|Captain America/.test(elektraOfP2.title), elektraOfP2.title);
+          log("an untaken ally stays free for the other player",
+            alliesOf(1).querySelectorAll(".sheet-check")[1].disabled === false);
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).rrs1.state;
+            log("the upgrade sits on exactly one player",
+              st.players[0].techUpgrade === "laser-cannon" && st.players[1].techUpgrade === "",
+              JSON.stringify([st.players[0].techUpgrade, st.players[1].techUpgrade]));
+            log("both players hold the same obligation",
+              st.players[0].obligations[0] === "martial-law" &&
+              st.players[1].obligations[0] === "martial-law",
+              JSON.stringify([st.players[0].obligations, st.players[1].obligations]));
+            log("one player holds two allies, the other none",
+              st.players[0].rescuedAllies.length === 2 &&
+              st.players[1].rescuedAllies.length === 0,
+              JSON.stringify([st.players[0].rescuedAllies, st.players[1].rescuedAllies]));
+
+            /* Removing the holder has to give the whole pool back. */
+            d.querySelectorAll(".player-remove")[0].click();
+            log("removing a player frees their upgrade",
+              optOf(techOf(0), "laser-cannon").disabled === false);
+            log("and frees their allies",
+              alliesOf(0).querySelectorAll(".sheet-check")[0].disabled === false);
+            /* The hero sits in an <input value>, which textContent does not
+               reach — so ask the field, not the card. */
+            log("the survivor is the second player",
+              cards()[0].querySelector(".text-input").value === "Black Widow",
+              cards()[0].querySelector(".text-input").value);
+            finish();
+          }, 500);
+        });
+      }
+
       function caseRrsPrint() {
         var seeded = rrsLog();
         seeded.state.players = [
-          { hero: "Captain America", hp: 11, obligations: ["Personal Challenge"],
-            techUpgrade: "Ionic Man-Gun", basicUpgrade: "Combat Training",
-            rescuedAllies: ["~Agent 13"], engagedWithMinion: true },
+          { hero: "Captain America", hp: 11, obligations: ["martial-law"],
+            techUpgrade: "laser-cannon", basicUpgrade: "basic-attack",
+            rescuedAllies: ["elektra", "white-tiger"], engagedWithMinion: true },
           { hero: "Black Widow", hp: 9, obligations: [], techUpgrade: "",
             basicUpgrade: "", rescuedAllies: [], engagedWithMinion: false },
         ];
-        seeded.state.experimentalWeapons = 2;
+        seeded.state.experimentalWeapons = ["laser-rifle", "exo-suit"];
         seeded.state.delayCounters = 3;
         seeded.state.removed = ["~Nick Fury"];
         seeded.state.notes = "erste Zeile\nzweite Zeile";
@@ -1461,18 +1570,21 @@
           log("print names the campaign", /The Rise of Red Skull \(MC10\)/.test(text));
           log("print carries both heroes",
             /Captain America/.test(text) && /Black Widow/.test(text));
-          log("print carries the tech upgrade", /Ionic Man-Gun/.test(text));
-          log("print carries the basic upgrade", /Combat Training/.test(text));
-          log("print carries the obligations", /Personal Challenge/.test(text));
-          log("print carries the scenario 1 count", /Experimentalwaffen: 2/.test(text));
-          log("print carries the scenario 2 count", /Hauptplan: 3/.test(text));
+          log("print names the upgrades", /Laser Cannon/.test(text) &&
+            /Basic Attack Upgrade/.test(text));
+          log("print names the obligation", /Martial Law/.test(text));
+          log("print names both rescued allies",
+            /Elektra/.test(text) && /White Tiger: Angela Del Toro/.test(text));
+          /* Which weapons did NOT enter play matters too, so all four print. */
+          log("print ticks the recorded weapons", /\[x\] Laser Rifle/.test(text));
+          log("print leaves the others unticked", /\[ \] Energy Shield/.test(text));
+          log("print carries the delay counter", /Hauptplan: 3/.test(text));
           log("print ticks the engaged player",
             /\[x\] Spieler #1 . Captain America/.test(text));
           log("print leaves the other player unticked",
             /\[ \] Spieler #2 . Black Widow/.test(text));
-          log("print keeps the struck entries",
-            /Agent 13/.test(text) && /Nick Fury/.test(text));
-          log("print strikes them visually", !!pv.querySelector(".print-list .struck"));
+          log("print keeps the struck entry", /Nick Fury/.test(text));
+          log("print strikes it visually", !!pv.querySelector(".print-list .struck"));
           log("print hides the tilde", text.indexOf("~") === -1);
           log("print carries both note lines",
             /erste Zeile/.test(text) && /zweite Zeile/.test(text));
@@ -1483,71 +1595,6 @@
         });
       }
 
-      /* Nine string lists can share one of these sheets, and they all register
-         themselves in one table keyed by id. This is the case that would catch a
-         collision, or a registration left behind by a removed player. */
-      function caseRrsLists() {
-        var seeded = rrsLog();
-        seeded.state.players = [
-          { hero: "Captain America", hp: 11, obligations: [], techUpgrade: "",
-            basicUpgrade: "", rescuedAllies: [], engagedWithMinion: false },
-          { hero: "Black Widow", hp: 9, obligations: [], techUpgrade: "",
-            basicUpgrade: "", rescuedAllies: [], engagedWithMinion: false },
-        ];
-        seed({ rrs1: seeded }, "rrs1");
-        boot("", function (frame, w, d) {
-          f0 = w;
-          w.confirm = function () { return true; };
-          var listIds = function () {
-            return Array.prototype.map.call(d.querySelectorAll("[data-list-id]"),
-              function (n) { return n.getAttribute("data-list-id"); });
-          };
-          var ids = listIds();
-          log("five lists on a two-player sheet", ids.length === 5, JSON.stringify(ids));
-          log("every list id is unique", new Set(ids).size === ids.length, JSON.stringify(ids));
-
-          addEntry(d, "trors-p0-obligations", "erste Verpflichtung");
-          addEntry(d, "trors-p1-obligations", "zweite Verpflichtung");
-          addEntry(d, "trors-p1-rescued", "Agent 13");
-
-          w.dispatchEvent(new w.Event("pagehide"));
-          setTimeout(function () {
-            var st = JSON.parse(localStorage.getItem("mcclog:logs")).rrs1.state;
-            log("each entry landed on its own player",
-              JSON.stringify(st.players[0].obligations) === JSON.stringify(["erste Verpflichtung"]) &&
-              JSON.stringify(st.players[1].obligations) === JSON.stringify(["zweite Verpflichtung"]) &&
-              JSON.stringify(st.players[1].rescuedAllies) === JSON.stringify(["Agent 13"]),
-              JSON.stringify(st.players));
-
-            /* Remove player 1. The survivor becomes index 0, so every list id
-               shifts — a registration left over from before would now point at
-               an array nobody owns. */
-            d.querySelectorAll(".player-remove")[0].click();
-            addEntry(d, "trors-p0-rescued", "nach dem Entfernen");
-            w.dispatchEvent(new w.Event("pagehide"));
-            setTimeout(function () {
-              var st2 = JSON.parse(localStorage.getItem("mcclog:logs")).rrs1.state;
-              log("removing a player leaves one behind", st2.players.length === 1,
-                st2.players.length);
-              log("the survivor is the second player",
-                st2.players[0].hero === "Black Widow", st2.players[0].hero);
-              log("it kept its own obligation",
-                JSON.stringify(st2.players[0].obligations) ===
-                  JSON.stringify(["zweite Verpflichtung"]),
-                JSON.stringify(st2.players[0].obligations));
-              log("a new entry lands on the survivor, not on a ghost",
-                JSON.stringify(st2.players[0].rescuedAllies) ===
-                  JSON.stringify(["Agent 13", "nach dem Entfernen"]),
-                JSON.stringify(st2.players[0].rescuedAllies));
-              log("no list of the removed player is left in the document",
-                listIds().indexOf("trors-p1-obligations") === -1,
-                JSON.stringify(listIds()));
-              finish();
-            }, 500);
-          }, 500);
-        });
-      }
-
       /* A bare MC10 log with one empty player — the shape emptyState() makes. */
       function rrsLog() {
         return {
@@ -1555,11 +1602,20 @@
           title: "The Rise of Red Skull",
           createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-02T00:00:00.000Z",
           state: {
-            players: [{ hero: "", hp: null, obligations: [], techUpgrade: "",
-                        basicUpgrade: "", rescuedAllies: [], engagedWithMinion: false }],
-            experimentalWeapons: null, delayCounters: null, removed: [], notes: "",
+            players: [rrsPlayer("", null)],
+            experimentalWeapons: [], delayCounters: null, removed: [], notes: "",
           },
         };
+      }
+      function rrsPlayer(hero, hp) {
+        return { hero: hero, hp: hp, obligations: [], techUpgrade: "",
+                 basicUpgrade: "", rescuedAllies: [], engagedWithMinion: false };
+      }
+
+      /* Tick a checkbox the way a click would: the widget listens for change. */
+      function tick(box) {
+        box.checked = true;
+        fire(box, "change");
       }
 
       /* Add one entry to the list with this id: press its own add button, then
@@ -1574,7 +1630,7 @@
         fire(input, "blur");
       }
 
-      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrslists: caseRrsLists };
+      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools };
       (cases[CASE] || caseBasic)();
     </script>
   </body>

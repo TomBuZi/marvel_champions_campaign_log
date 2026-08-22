@@ -24,10 +24,22 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     beiden Kampagnen-Marken.
   * *The Rise of Red Skull (MC10)* — je Spieler Identität, Trefferpunkte,
     Verpflichtungen, Tech- und Basis-Verbesserung und gerettete Verbündete; dazu die
-    drei Felder, nach denen späteren Szenarien fragen, die entfernten Verbündeten und
+    drei Felder, nach denen spätere Szenarien fragen, die entfernten Verbündeten und
     ein Notizfeld. **Keine** Szenario-Tabelle, kein Fortschritt, kein Würfel — der
     gedruckte MC10-Bogen hat das alles nicht, weil die fünf Szenarien in fester
     Reihenfolge gespielt werden.
+* **Karten statt Freitext** (MC10) — wo auf Papier eine leere Zeile steht, stehen hier
+  die tatsächlichen Karten. Jedes dieser Felder hat genau vier gedruckte
+  Möglichkeiten, und jedes trägt seine eigene Regel aus der Kampagne:
+  * *Verpflichtungen* — jeder Spieler hat seinen eigenen Satz aller vier, zwei
+    Spieler können also dieselbe haben.
+  * *Tech- und Basis-Verbesserung* — jede Karte gibt es einmal in der Kampagne, eine
+    gewählte verschwindet daher aus den Feldern der anderen Spieler.
+  * *Gerettete Verbündete* — auch jeder nur einmal, aber ein Spieler kann mehrere
+    haben; deshalb Kästchen statt Auswahlfeld, und bei den übrigen Spielern gesperrt
+    statt verschwunden, mit dem Namen des Besitzers als Sperrgrund.
+  * *Experimentalwaffen* — der Bogen will die Namen, nicht die Anzahl: Szenario 2
+    mischt genau die aufgeschriebenen wieder ins Begegnungsdeck.
 * **Ein bis vier Spieler** — Karten werden hinzugefügt, wenn jemand mitspielt, statt
   vier feste Plätze zu zeigen. Der gedruckte Bogen muss alle vier vorhalten; ein
   Bildschirm nicht.
@@ -195,7 +207,7 @@ auch über `file://` und direkt aus dem Repo-Root über GitHub Pages.
 | `i18n.js` | `window.I18N = { de, en }` — nur Strings des Rahmens |
 | `heroes.js` | 68 Helden (Name, Trefferpunkte) als Vorschlagsliste für die Identitätsfelder |
 | `campaigns/fear-no-evil.js` | die Kampagne MC60: eigenes Datenmodell, eigenes Rendering, eigene Strings |
-| `campaigns/rise-of-red-skull.js` | die Kampagne MC10: folgt dem gedruckten Bogen strikt — Spielerbesitz, drei Szenariofelder, Notizen; bewusst ohne Szenario-Tabelle |
+| `campaigns/rise-of-red-skull.js` | die Kampagne MC10: feste Kartenpools mit ihren Eindeutigkeitsregeln, drei Szenariofelder, Notizen; bewusst ohne Szenario-Tabelle |
 | `test/lint.js` | Prüfungen ohne Browser: Wörterbücher, Kampagnendefinition, Datenmodell, Paketierung |
 | `test/selftest.html`, `test/run-browser.js` | Selbsttest, der die echte Seite in einem iframe fernsteuert |
 | `fonts/` | Exo 2 (OFL, selbst gehostet), `OFL.txt` daneben |
@@ -265,18 +277,20 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (273 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (288 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   langpath | print | import | lock |
                                     #   lockconflict | random | randomspread |
                                     #   appearance | players | migrate |
                                     #   round | roundlast | roundspread |
-                                    #   rrs | rrsdialog | rrsprint | rrslists
+                                    #   rrs | rrsdialog | rrsprint | rrspools
 BROWSER_LANG=de-DE node test/run-browser.js   # unter einer anderen Browser-Sprache
 ```
 
 `test/seed.html` legt einen ausgefüllten Beispielbogen an und springt in die App —
-praktisch für Screenshots und für den Druckvergleich.
+praktisch für Screenshots und für den Druckvergleich. `?c=mc10` nimmt den MC10-Bogen
+statt MC60, `?theme=dark` nagelt zusätzlich das Theme fest; letzteres braucht man, um
+zu prüfen, dass der Druck auch aus einer Dark-Mode-Sitzung schwarz auf weiß bleibt.
 
 Der Selbsttest sucht Edge oder Chrome selbst; mit `BROWSER=/pfad/zum/chrome` lässt sich
 das überschreiben. Findet er keinen, bricht er mit Code 2 ab und sagt ausdrücklich,
