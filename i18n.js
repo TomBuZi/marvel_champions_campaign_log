@@ -97,7 +97,7 @@ window.I18N = {
     helpPrintH: "Drucken",
     helpPrintP: "„Drucken“ erzeugt eine reine Textfassung des aktiven Bogens in Schwarzweiß. Gedruckt wird nicht die Bildschirmansicht, damit nichts abgeschnitten wird.",
     helpLangThemeH: "Sprache und Design",
-    helpLangThemeP: "Sprache und hell/dunkel stehen im Menü unter „Ansicht“ und bleiben für diesen Browser gespeichert. Ohne eigene Wahl folgt das Design der Systemeinstellung.",
+    helpLangThemeP: "Sprache und hell/dunkel stehen im Menü unter „Ansicht“ und bleiben für diesen Browser gespeichert. Ohne eigene Wahl folgt die Sprache dem Browser und das Design der Systemeinstellung. Ein Link kann die Sprache mitbringen: „/de/“ oder „/en/“ am Ende der Adresse — oder „?lang=de“ bzw. „?lang=en“ — stellt sie beim Aufrufen ein und merkt sie sich.",
     helpLegalH: "Rechtliches",
     helpLegalP: "Inoffizielles Fan-Projekt. Wiedergegeben werden nur Namen und die Feldbezeichnungen des Bogens — keine Logos, Illustrationen oder Kartentexte.",
 
@@ -193,7 +193,7 @@ window.I18N = {
     helpPrintH: "Printing",
     helpPrintP: "“Print” builds a plain black-and-white text version of the active log. The screen view is not printed, so nothing gets clipped.",
     helpLangThemeH: "Language and theme",
-    helpLangThemeP: "Language and light/dark live in the menu under “View” and are remembered for this browser. Without an explicit choice the theme follows the system setting.",
+    helpLangThemeP: "Language and light/dark live in the menu under “View” and are remembered for this browser. Without an explicit choice the language follows the browser and the theme follows the system setting. A link can carry the language along: “/de/” or “/en/” at the end of the address — or “?lang=de” / “?lang=en” — sets it on arrival and is remembered.",
     helpLegalH: "Legal",
     helpLegalP: "Unofficial fan project. Only names and the field labels of the sheet are reproduced — no logos, artwork or card text.",
 

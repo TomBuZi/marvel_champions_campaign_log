@@ -205,6 +205,20 @@
   }
 
   // ---- Persistence ---------------------------------------------------------
+  /* An explicit language in the address: "?lang=de" or "?lang=en".
+
+     This is where the /de/ and /en/ directories send the browser, and it lets a
+     link decide the language of a first visit instead of the browser's own
+     setting. Anything other than de or en is ignored rather than read as
+     German: a typo in a link must not overrule what this browser has stored.
+
+     Only location.search is looked at. The fragment already belongs to a shared
+     log ("#log=...") and stays that one thing. */
+  function langFromUrl() {
+    var v = (new URLSearchParams(location.search).get("lang") || "").toLowerCase();
+    return v === "de" || v === "en" ? v : null;
+  }
+
   function loadStorage() {
     try {
       var raw = localStorage.getItem(STORE_LOGS);
@@ -245,8 +259,14 @@
     });
 
     activeId = localStorage.getItem(STORE_ACTIVE);
-    lang = localStorage.getItem(STORE_LANG) ||
+    var urlLang = langFromUrl();
+    lang = urlLang || localStorage.getItem(STORE_LANG) ||
       ((navigator.language || "de").toLowerCase().indexOf("en") === 0 ? "en" : "de");
+    /* Taken over like a click on the toggle, so the next visit without the
+       parameter stays in that language. Only that one key is written: a full
+       saveStorage() during boot would also write back every log in its migrated
+       shape, and following a link is not an edit. */
+    if (urlLang) saveLang();
     var storedTheme = localStorage.getItem(STORE_THEME);
     theme = (storedTheme === "light" || storedTheme === "dark") ? storedTheme : null;
   }
@@ -255,6 +275,11 @@
     saveStorage();
     showToast(tr().savedNotice);
   }, 350);
+
+  /* The language on its own, for the paths where no log has changed. */
+  function saveLang() {
+    try { localStorage.setItem(STORE_LANG, lang); } catch (e) { /* quota or private mode */ }
+  }
 
   function saveStorage() {
     /* Everything is written in full below, so a queued persist has nothing left

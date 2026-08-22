@@ -327,22 +327,102 @@
           log("campaign skin hook set",
             d.documentElement.getAttribute("data-campaign") === "fne");
 
-          /* With no stored preference the language follows the browser. Derive
-             the expectation from navigator.language instead of hardcoding one,
-             so this passes on a German and an English machine alike — the
-             assumption that broke this suite in CI. */
+          /* "?lang=" in the address — what the /de/ and /en/ entry points
+             redirect to. It has to beat a stored preference, otherwise the link
+             does nothing on the one device that has used the app before, and it
+             has to be remembered so the next visit without it stays put. */
           var logs = localStorage.getItem("mcclog:logs");
           localStorage.clear();
           localStorage.setItem("mcclog:logs", logs);
-          boot("", function (frame2, w2, d2) {
-            var expected = (w2.navigator.language || "de").toLowerCase().indexOf("en") === 0
-              ? "en" : "de";
-            log("auto-detected language follows the browser",
-              d2.documentElement.lang === expected,
-              "navigator.language=" + w2.navigator.language +
-              " expected=" + expected + " got=" + d2.documentElement.lang);
-            log("auto-detected language is one of de/en",
-              ["de", "en"].indexOf(d2.documentElement.lang) !== -1);
+          pinLang("de");
+          boot("?lang=en", function (frameQ, wQ, dQ) {
+            log("?lang= beats the stored preference",
+              dQ.documentElement.lang === "en", dQ.documentElement.lang);
+            log("?lang= is taken over as the choice",
+              localStorage.getItem("mcclog:lang") === "en",
+              localStorage.getItem("mcclog:lang"));
+            log("English heading from the link alone",
+              /Player Information/.test(dQ.getElementById("campaign").textContent));
+
+            /* A language this app does not have must not silently mean German:
+               the stored preference stays in charge. */
+            pinLang("de");
+            boot("?lang=fr", function (frameX, wX, dX) {
+              log("unknown ?lang= ignored",
+                dX.documentElement.lang === "de", dX.documentElement.lang);
+              log("unknown ?lang= leaves the stored choice alone",
+                localStorage.getItem("mcclog:lang") === "de",
+                localStorage.getItem("mcclog:lang"));
+
+              /* With no stored preference the language follows the browser.
+                 Derive the expectation from navigator.language instead of
+                 hardcoding one, so this passes on a German and an English
+                 machine alike — the assumption that broke this suite in CI. */
+              localStorage.clear();
+              localStorage.setItem("mcclog:logs", logs);
+              boot("", function (frame2, w2, d2) {
+                var expected = (w2.navigator.language || "de").toLowerCase().indexOf("en") === 0
+                  ? "en" : "de";
+                log("auto-detected language follows the browser",
+                  d2.documentElement.lang === expected,
+                  "navigator.language=" + w2.navigator.language +
+                  " expected=" + expected + " got=" + d2.documentElement.lang);
+                log("auto-detected language is one of de/en",
+                  ["de", "en"].indexOf(d2.documentElement.lang) !== -1);
+                finish();
+              });
+            });
+          });
+        });
+      }
+
+      // -------------------------------------------------------- language paths
+      /* Like boot(), but through the redirecting /de/ and /en/ entry points: the
+         frame navigates a second time, so one "load" event proves nothing — poll
+         until the app itself is in there. */
+      function bootVia(src, then) {
+        var f = document.createElement("iframe");
+        f.style.cssText = "width:1200px;height:900px";
+        f.src = src;
+        var waited = 0;
+        function poll() {
+          var d = f.contentDocument;
+          var panel = d && d.getElementById("campaign");
+          if (panel && panel.textContent.trim().length > 0) {
+            then(f, f.contentWindow, d);
+            return;
+          }
+          waited += 60;
+          if (waited > 2000) {
+            log(src + " reaches the app", false, "still waiting after " + waited + " ms");
+            finish();
+            return;
+          }
+          setTimeout(poll, 60);
+        }
+        document.body.appendChild(f);
+        setTimeout(poll, 60);
+      }
+
+      function caseLangPath() {
+        localStorage.clear();
+        pinLang("de");
+        bootVia("../en/index.html", function (frame, w, d) {
+          f0 = w;
+          log("/en/ lands on the app",
+            /\/index\.html$/.test(w.location.pathname), w.location.pathname);
+          log("/en/ arrives with ?lang=en", w.location.search === "?lang=en", w.location.search);
+          log("/en/ shows English despite a stored German",
+            d.documentElement.lang === "en", d.documentElement.lang);
+          log("/en/ renders the English sheet",
+            /Player Information/.test(d.getElementById("campaign").textContent));
+
+          bootVia("../de/index.html", function (frame2, w2, d2) {
+            log("/de/ arrives with ?lang=de", w2.location.search === "?lang=de", w2.location.search);
+            log("/de/ shows German despite the English just stored",
+              d2.documentElement.lang === "de", d2.documentElement.lang);
+            log("/de/ renders the German sheet",
+              /Spieler-Informationen/.test(d2.getElementById("campaign").textContent));
             finish();
           });
         });
@@ -1202,7 +1282,7 @@
         });
       }
 
-      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict };
+      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict };
       (cases[CASE] || caseBasic)();
     </script>
   </body>

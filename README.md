@@ -32,7 +32,8 @@ als jeweils eigenes Modul dazu — siehe [Eine Kampagne hinzufügen](#eine-kampa
 * **Export / Import** als JSON, und **Link teilen**: der komplette Bogen steckt
   komprimiert in der Adresse.
 * **Druckansicht** als reine Textfassung in Schwarzweiß, damit nichts abgeschnitten wird.
-* **Deutsch und Englisch**, hell und dunkel, beides umschaltbar und gespeichert.
+* **Deutsch und Englisch**, hell und dunkel, beides umschaltbar und gespeichert —
+  die Sprache lässt sich auch über die Adresse vorgeben (`…/de/`, `…/en/`).
 * Läuft auch offline und direkt von der Festplatte (`file://`).
 
 ### Fortschritt, „1“, „2“, „Gescheitert“
@@ -87,6 +88,39 @@ kam das 3 + 1.)
 
 Eine Tilde `~` am Anfang eines Listeneintrags streicht ihn durch, ohne ihn zu löschen.
 Beim Hineinklicken erscheint der Rohtext wieder.
+
+### Sprache über die Adresse
+
+Wer einen Link weitergibt, kann die Sprache mitgeben:
+
+| Adresse | Wirkung |
+|---|---|
+| `…/marvel_champions_campaign_log/de/` | öffnet auf Deutsch |
+| `…/marvel_champions_campaign_log/en/` | öffnet auf Englisch |
+| `…/index.html?lang=de` (bzw. `en`) | dasselbe, ohne den Umweg über das Verzeichnis |
+
+`?lang=` gilt als **ausdrückliche Wahl**: sie schlägt eine gespeicherte Einstellung und
+wird selbst gespeichert — der nächste Besuch ohne Parameter bleibt also dabei. Ein
+unbekannter Wert (`?lang=fr`) wird ignoriert und lässt die gespeicherte Sprache in Ruhe;
+ein Tippfehler im Link soll sie nicht überschreiben. Beim Übernehmen wird nur der
+Sprach-Schlüssel geschrieben, nicht der ganze Speicher: einem Link zu folgen ist keine
+Änderung an einem Bogen, und ein voller `saveStorage()` beim Start würde jeden Bogen in
+migrierter Form zurückschreiben (siehe [Alte Bögen](#alte-bögen)).
+
+`de/` und `en/` sind **echte Verzeichnisse mit je einer `index.html`** — GitHub Pages
+kennt keine Rewrites, ein Pfad ohne Datei dahinter ist ein 404. Die beiden Dateien
+enthalten keine Kopie der App, sondern nur die Weiterleitung auf `../index.html?lang=…`;
+der Seitenrahmen bleibt an einer Stelle. `test/lint.js` prüft das mit: sobald in einem
+der Stubs ein `<script src>` oder ein Stylesheet auftaucht, schlägt die Prüfung fehl.
+
+Das Ziel nennt `index.html` ausdrücklich, damit es auch über `file://` funktioniert —
+dort ist eine Verzeichnisadresse ein Listing, keine Seite. `location.replace` nimmt ein
+angehängtes `#log=…` mit und hinterlässt keinen zusätzlichen Schritt im Verlauf.
+
+Am Pfad hängt nur die Sprache, nicht die Daten: `localStorage` gehört zum **Origin**,
+nicht zum Verzeichnis — ein Bogen, der unter `/en/` angelegt wurde, ist unter `/`
+derselbe. Der Share-Link trägt die Sprache umgekehrt nicht mit: er transportiert einen
+Bogen, keine Ansicht, und der Empfänger bleibt bei seiner eigenen Sprache.
 
 ---
 
@@ -143,6 +177,7 @@ auch über `file://` und direkt aus dem Repo-Root über GitHub Pages.
 | Datei | Aufgabe |
 |---|---|
 | `index.html` | Rahmen: Topbar, Menü, Dialoge, Hinweisbereich, Druckcontainer. Enthält kein Markup einer bestimmten Kampagne. |
+| `de/index.html`, `en/index.html` | die Adressen `…/de/` und `…/en/`: keine Kopie der App, nur eine Weiterleitung auf `../index.html?lang=…` |
 | `styles.css` | Design-Tokens (hell / dunkel / Druck), Comic-Optik, Tabelle samt Schmalvariante, Listen, Menü, Dialoge |
 | `core.js` | Speichern, mehrere Bögen, Quarantäne, Export/Import, Share-Link, Druck, Sprache, Theme, Kampagnen-Registry |
 | `widgets.js` | wiederverwendbare Bausteine: Checkbox, Zahlenfeld, Textfeld, Auswahl mit Ausschluss, Fortschrittszähler, Icon-Button, String-Liste mit Drag&Drop — jeweils mit optionalem gesperrten Zustand |
@@ -205,11 +240,11 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (208 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (220 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
-                                    #   print | import | lock | lockconflict |
-                                    #   random | randomspread | appearance |
-                                    #   players | migrate |
+                                    #   langpath | print | import | lock |
+                                    #   lockconflict | random | randomspread |
+                                    #   appearance | players | migrate |
                                     #   round | roundlast | roundspread
 BROWSER_LANG=de-DE node test/run-browser.js   # unter einer anderen Browser-Sprache
 ```

@@ -17,7 +17,7 @@ const path = require("path");
 const http = require("http");
 
 const root = path.resolve(__dirname, "..");
-const CASES = ["basic", "quarantine", "share", "lang", "print", "import",
+const CASES = ["basic", "quarantine", "share", "lang", "langpath", "print", "import",
                "lock", "lockconflict", "random", "randomspread", "appearance",
                "players", "migrate", "round", "roundlast", "roundspread"];
 const cases = process.argv.slice(2).length ? process.argv.slice(2) : CASES;

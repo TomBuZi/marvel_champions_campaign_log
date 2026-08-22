@@ -217,6 +217,26 @@ check("every script referenced by index.html exists",
   [...html.matchAll(/<script src="([^"]+)"/g)]
     .every((m) => fs.existsSync(path.join(root, m[1]))));
 check("stylesheet exists", fs.existsSync(path.join(root, "styles.css")));
+
+/* /de/ and /en/ are pretty entry points: a real directory per language, because
+   GitHub Pages cannot rewrite paths. Each one only forwards to index.html with
+   ?lang=<code> — a stub that ever grew a <script src> or a stylesheet would be
+   a second copy of the app shell, and the two would drift apart. */
+for (const code of ["de", "en"]) {
+  const rel = code + "/index.html";
+  const p = "language entry point /" + code + "/: ";
+  if (!fs.existsSync(path.join(root, rel))) {
+    check(p + "exists", false, rel);
+    continue;
+  }
+  const stub = read(rel);
+  check(p + "exists", true);
+  check(p + "forwards to the app with ?lang=" + code,
+    stub.includes("../index.html?lang=" + code));
+  check(p + "carries no copy of the app", !/<script src=|<link rel="stylesheet"/.test(stub));
+  const abs = [...stub.matchAll(/(?:src|href)="(\/[^"]*)"/g)].map((m) => m[1]);
+  check(p + "no absolute paths", abs.length === 0, abs.join(","));
+}
 check(".nojekyll present", fs.existsSync(path.join(root, ".nojekyll")));
 check("every font referenced by styles.css exists",
   [...read("styles.css").matchAll(/url\("(fonts\/[^"]+)"\)/g)]
