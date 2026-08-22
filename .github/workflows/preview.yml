@@ -1,0 +1,191 @@
+# Branch preview on GitHub Pages, without touching production.
+#
+# Pages keeps serving main / root exactly as before. A push to a branch named
+# preview/<name> mirrors that branch's committed tree into preview/<name>/ on
+# main, reachable at
+#   https://tombuzi.github.io/marvel_champions_campaign_log/preview/<name>/
+# on the SAME origin as production — which is the point: the stored sheets and
+# existing "#log=" share links can be tested against the preview build without
+# copying anything. Deleting the branch (including GitHub's delete-after-merge)
+# removes the directory again.
+#
+# No loop: this workflow pushes to main, but its own push trigger is preview/**
+# only, so it can never retrigger itself. The push runs with the default
+# GITHUB_TOKEN, which starts no further workflows — ci.yml stays quiet on the
+# mirror commit. That is also why the Pages build is requested explicitly over
+# the REST API instead of relying on the internal pages-build-deployment run.
+
+name: Pages preview
+
+on:
+  push:
+    branches: ["preview/**"]
+  delete:
+  workflow_dispatch:
+
+permissions:
+  contents: write   # push the mirror / cleanup commit to main
+  pages: write      # POST /repos/{repo}/pages/builds
+
+# Serialise mirror and cleanup runs so two of them never race on main.
+concurrency:
+  group: pages-preview
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Derive the preview name from the branch
+        id: meta
+        run: |
+          BRANCH="${GITHUB_REF_NAME}"
+          NAME="${BRANCH#preview/}"
+          # A single-level kebab-case slug. This rejects preview/a/b, dots,
+          # uppercase and anything URL- or path-hostile, which makes the
+          # destination preview/$NAME/ structurally inescapable.
+          if [ "$NAME" = "$BRANCH" ] || ! printf '%s\n' "$NAME" | grep -Eq '^[a-z0-9][a-z0-9-]*$'; then
+            echo "::error::branch '$BRANCH' is not preview/<kebab-case-name>; refusing to mirror"
+            exit 1
+          fi
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Fetch the branch tree (committed files only)
+        run: |
+          git fetch --depth=1 origin "refs/heads/${{ steps.meta.outputs.branch }}"
+          mkdir -p "$RUNNER_TEMP/branch-tree"
+          # git archive yields exactly the committed tree: no .git, no ignored
+          # files — and it lands outside the working tree.
+          git archive FETCH_HEAD | tar -x -C "$RUNNER_TEMP/branch-tree"
+
+      - name: Mirror into preview/<name>/
+        run: |
+          DEST="preview/${{ steps.meta.outputs.name }}"
+          mkdir -p "$DEST"
+          # An exclude list, not an include list: a forgotten include list
+          # produces a silently incomplete preview, which is exactly what makes
+          # it worthless. 'preview/' itself has to go, or merging main back into
+          # the branch would nest the preview one level deeper every round.
+          # '*.pdf' is not negotiable — see the reasoning in .gitignore.
+          rsync -a --delete --delete-excluded \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='.claude/' \
+            --exclude='test/' \
+            --exclude='preview/' \
+            --exclude='README.md' \
+            --exclude='.gitignore' \
+            --exclude='.gitattributes' \
+            --exclude='*.pdf' \
+            "$RUNNER_TEMP/branch-tree/" "$DEST/"
+
+      - name: Assert the copy is complete
+        run: |
+          DEST="preview/${{ steps.meta.outputs.name }}"
+          FAIL=0
+          test -f "$DEST/index.html" || { echo "::error::no index.html in the copy"; FAIL=1; }
+          test -f "$DEST/de/index.html" || { echo "::error::de/ stub missing"; FAIL=1; }
+          test -f "$DEST/en/index.html" || { echo "::error::en/ stub missing"; FAIL=1; }
+          for f in $(grep -o '<script src="[^"]*"' "$DEST/index.html" | cut -d'"' -f2) \
+                   $(grep -o '<link rel="stylesheet" href="[^"]*"' "$DEST/index.html" | cut -d'"' -f2); do
+            test -f "$DEST/$f" || { echo "::error::index.html references missing $f"; FAIL=1; }
+          done
+          exit $FAIL
+
+      - name: Commit — preview/<name>/ only, nothing else
+        id: commit
+        run: |
+          DEST="preview/${{ steps.meta.outputs.name }}"
+          git add -- "$DEST"
+          # The hard guarantee for production: even a bug in the copy steps
+          # cannot produce a commit that touches index.html, core.js,
+          # styles.css, de/, en/ or campaigns/ at the repo root.
+          STRAY=$(git diff --cached --name-only | grep -v '^preview/' || true)
+          if [ -n "$STRAY" ]; then
+            echo "::error::mirror staged files outside preview/: $STRAY"
+            exit 1
+          fi
+          if git diff --cached --quiet; then
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            echo "branch tree identical to the published preview — nothing to do"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          SHORT=$(git rev-parse --short FETCH_HEAD)
+          git commit -m "Preview: ${{ steps.meta.outputs.branch }} @ $SHORT -> $DEST/"
+          # Retry loop for the small race with a human push to main; the
+          # concurrency group above covers the race between two runs.
+          for i in 1 2 3; do
+            git push origin HEAD:main && break
+            git pull --rebase origin main
+          done
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Request a Pages rebuild
+        if: steps.commit.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds"
+
+  cleanup:
+    # The delete event has no branch filter, hence the job-level guard.
+    if: >-
+      github.event_name == 'delete' &&
+      github.event.ref_type == 'branch' &&
+      startsWith(github.event.ref, 'preview/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Derive the preview name from the deleted branch
+        id: meta
+        env:
+          DELETED_REF: ${{ github.event.ref }}
+        run: |
+          NAME="${DELETED_REF#preview/}"
+          if ! printf '%s\n' "$NAME" | grep -Eq '^[a-z0-9][a-z0-9-]*$'; then
+            echo "::error::deleted branch '$DELETED_REF' yields no safe preview name"
+            exit 1
+          fi
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Remove preview/<name>/ and push
+        id: rmcommit
+        run: |
+          DEST="preview/${{ steps.meta.outputs.name }}"
+          if [ ! -d "$DEST" ]; then
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            echo "no $DEST/ on main — nothing to clean up"
+            exit 0
+          fi
+          git rm -r --quiet -- "$DEST"
+          STRAY=$(git diff --cached --name-only | grep -v '^preview/' || true)
+          if [ -n "$STRAY" ]; then
+            echo "::error::cleanup staged files outside preview/: $STRAY"
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Preview: remove $DEST/ (branch deleted)"
+          for i in 1 2 3; do
+            git push origin HEAD:main && break
+            git pull --rebase origin main
+          done
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Request a Pages rebuild
+        if: steps.rmcommit.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds"

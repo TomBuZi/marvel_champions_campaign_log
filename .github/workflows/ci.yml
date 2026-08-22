@@ -2,7 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # preview/** branches are published by preview.yml on every push, so
+    # every published preview state gets the same gate as main. Changes
+    # under preview/ on main ARE those mirror commits — none of the checks
+    # below reads anything there, so running them again is pure waste.
+    branches: [main, "preview/**"]
+    paths-ignore: ["preview/**"]
   pull_request:
   workflow_dispatch:
 

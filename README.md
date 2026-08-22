@@ -187,6 +187,9 @@ auch über `file://` und direkt aus dem Repo-Root über GitHub Pages.
 | `test/lint.js` | Prüfungen ohne Browser: Wörterbücher, Kampagnendefinition, Datenmodell, Paketierung |
 | `test/selftest.html`, `test/run-browser.js` | Selbsttest, der die echte Seite in einem iframe fernsteuert |
 | `fonts/` | Exo 2 (OFL, selbst gehostet), `OFL.txt` daneben |
+| `.github/workflows/ci.yml` | die Prüfungen bei jedem Push |
+| `.github/workflows/preview.yml` | spiegelt einen `preview/<name>`-Branch nach `preview/<name>/` auf `main` |
+| `preview/` | von Actions verwaltete Branch-Vorschauen — **nie von Hand anfassen** |
 
 ### Warum ein Modul pro Kampagne
 
@@ -265,7 +268,35 @@ nicht-deutschen Locale, damit dieselbe Annahme nicht wieder durchrutscht. Die
 Auto-Erkennung selbst wird gegen `navigator.language` geprüft, nicht gegen eine
 festverdrahtete Sprache.
 
-CI (`.github/workflows/ci.yml`) fährt alle drei Schritte bei jedem Push.
+CI (`.github/workflows/ci.yml`) fährt alle drei Schritte bei jedem Push auf `main`
+und auf `preview/**`-Branches. Änderungen unter `preview/` auf `main` — also die
+Spiegel-Commits der Vorschau — lösen sie nicht aus: keine der Prüfungen liest dort
+etwas.
+
+### Branch-Vorschau auf GitHub Pages
+
+Ein Branch namens `preview/<name>` wird von `.github/workflows/preview.yml` bei jedem
+Push nach `preview/<name>/` auf `main` gespiegelt und ist damit unter
+`…/marvel_champions_campaign_log/preview/<name>/` erreichbar — dieselbe Seite,
+derselbe Origin, der Betrieb im Root bleibt unberührt. Der Workflow committet
+ausschließlich unterhalb von `preview/` und bricht ab, sobald er dabei einen Pfad
+außerhalb anfassen würde.
+
+Derselbe Origin ist Absicht: die gespeicherten Bögen und alte `#log=`-Links lassen
+sich direkt gegen den Vorschau-Build testen. Einen alten Share-Link prüft man, indem
+man alles ab dem `#` hinter die Vorschau-Adresse hängt — das Payload enthält keinen
+Pfad und keine Sprache.
+
+Das heißt aber auch: **die Vorschau schreibt in denselben `localStorage`.** Deshalb
+vor dem Testen alle Bögen als JSON exportieren. Ein Bogen einer Kampagne, die es nur
+in der Vorschau gibt, erscheint im Betrieb mit ⚠ als nicht lesbar — das ist die
+Quarantäne und kein Fehler (siehe [Bögen, die diese Version nicht lesen
+kann](#bögen-die-diese-version-nicht-lesen-kann)). In der Vorschau erzeugte
+Share-Links nicht weitergeben: sie zeigen in ein Verzeichnis, das mit dem Branch
+wieder verschwindet.
+
+Wird der Branch gelöscht — auch automatisch nach dem Merge —, räumt der Workflow das
+Verzeichnis wieder ab.
 
 ---
 
