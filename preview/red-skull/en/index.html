@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Marvel Champions – Campaign Log</title>
+    <link rel="canonical" href="../index.html" />
+    <!-- A pretty entry point: /en/ opens the app in English.
+
+         GitHub Pages serves static files and cannot rewrite paths, so the
+         "path" is a real directory whose index sends the browser on to the one
+         and only index.html with ?lang=en. Deliberately NOT a copy of the
+         app shell: a second topbar, menu and set of dialogs would drift apart
+         within a release.
+
+         The target names index.html explicitly, so this works from file:// too,
+         where a directory URL is a listing rather than a page. replace() keeps
+         a shared "#log=..." fragment and leaves no extra step in the back
+         history; the refresh below is for whatever does not run scripts, such
+         as crawlers and link previews. -->
+    <script>
+      location.replace("../index.html?lang=en" + location.hash);
+    </script>
+    <noscript>
+      <meta http-equiv="refresh" content="0; url=../index.html?lang=en" />
+    </noscript>
+  </head>
+  <body>
+    <p><a href="../index.html?lang=en">Marvel Champions – Campaign Log</a></p>
+  </body>
+</html>
