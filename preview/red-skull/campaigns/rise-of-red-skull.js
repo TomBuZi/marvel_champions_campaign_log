@@ -1,14 +1,18 @@
 /* Marvel Champions — "The Rise of Red Skull" (MC10) campaign log.
 
-   Mirrors the official MC10 campaign log sheet field for field, and that sheet
-   is a very different animal from MC60's: it has no scenario table, no
-   completed/failed tracking, no villain list. The five scenarios (Crossbones,
-   Absorbing Man, Taskmaster, Zola, Red Skull) are played in a fixed order, so
-   the printed log only records what carries FORWARD between them — what each
-   player owns, and three results that later scenarios ask about.
+   Follows the official MC10 campaign log sheet, and that sheet is a very
+   different animal from MC60's: it has no scenario table, no completed/failed
+   tracking, no villain list. The five scenarios (Crossbones, Absorbing Man,
+   Taskmaster, Zola, Red Skull) are played in a fixed order, so the printed log
+   only records what carries FORWARD between them — what each player owns, and
+   three results that later scenarios ask about. There is therefore no progress
+   counter, no "next round" button and no randomiser here. Those absences are
+   the sheet, not an omission.
 
-   That is why there is no progress counter, no "next round" button and no
-   randomiser here. Their absence is the sheet, not an omission.
+   Where the sheet has a blank line, this has the actual card list. Every one of
+   these fields draws from a fixed set of four printed cards, so writing a name
+   by hand could only introduce a typo. The pools also carry the campaign's own
+   rules about who may hold what — see POOLS below.
 
    emptyState() and normalize() must not touch the DOM — not at load time and
    not when called. CI exercises them headlessly to prove that normalize() is
@@ -26,10 +30,213 @@
   var MAX_PLAYERS = 4;
   var HP_MAX = 99;
   var NAME_MAX = 60;
-  /* The two scenario counters. Nothing in the campaign approaches 99; the cap
-     is there so a hand-edited file cannot put a nonsense number on the sheet. */
   var COUNT_MAX = 99;
   var NOTES_MAX = 4000;
+
+  /* ---- POOLS ---------------------------------------------------------------
+     Card names stay English in both languages, the same convention the MC60
+     module follows for its villains. The German edition does translate these,
+     but the printed German wording could not be verified — correct one line
+     each once it can. Nothing migrates when a name changes, because only the
+     slug is ever persisted.
+
+     Each pool carries a different rule, taken from the campaign:
+
+       Experimental Weapons  campaign-wide; which of the four entered play
+       Tech Upgrade          one per player, each card to at most one player
+       Basic Upgrade         one per player, each card to at most one player
+       Obligations           per player; every player may hold every one
+       Rescued Allies        each ally to at most one player, who may hold several
+
+     The four Tech Upgrades, the four Basic Upgrades and the four Obligations
+     are named in the official MC10 rulebook. The Experimental Weapons are the
+     four cards of that encounter set, and the rescuable allies are the four
+     captives of Zola's scenario. */
+
+  /* Scenario 1: "Record the name of each EXPERIMENTAL attachment that entered
+     the game in the campaign log." Scenario 2 onwards shuffles the recorded
+     ones back into the encounter deck, which is why it is the names that
+     matter and not a count. */
+  var EXPERIMENTAL_WEAPONS = [
+    { slug: "laser-rifle",     name: "Laser Rifle" },
+    { slug: "energy-shield",   name: "Energy Shield" },
+    { slug: "power-gauntlets", name: "Power Gauntlets" },
+    { slug: "exo-suit",        name: "Exo-Suit" },
+  ];
+
+  var TECH_UPGRADES = [
+    { slug: "adrenal-stims",        name: "Adrenal Stims" },
+    { slug: "tactical-scanner",     name: "Tactical Scanner" },
+    { slug: "emergency-teleporter", name: "Emergency Teleporter" },
+    { slug: "laser-cannon",         name: "Laser Cannon" },
+  ];
+
+  /* These really are the printed names: the Condition upgrades in the campaign
+     set are called "Basic <stat> Upgrade", and flip to an "Improved" side. */
+  var BASIC_UPGRADES = [
+    { slug: "basic-thwart",   name: "Basic Thwart Upgrade" },
+    { slug: "basic-attack",   name: "Basic Attack Upgrade" },
+    { slug: "basic-defense",  name: "Basic Defense Upgrade" },
+    { slug: "basic-recovery", name: "Basic Recovery Upgrade" },
+  ];
+
+  /* Every player is dealt their own copy of the same four, so unlike the
+     upgrades these are not shared out — two players can both carry Martial
+     Law. */
+  var OBLIGATIONS = [
+    { slug: "zolas-algorithm",      name: "Zola's Algorithm" },
+    { slug: "medical-emergency",    name: "Medical Emergency" },
+    { slug: "martial-law",          name: "Martial Law" },
+    { slug: "anti-hero-propaganda", name: "Anti-Hero Propaganda" },
+  ];
+
+  var RESCUABLE_ALLIES = [
+    { slug: "elektra",     name: "Elektra" },
+    { slug: "moon-knight", name: "Moon Knight: Marc Spector" },
+    { slug: "shang-chi",   name: "Shang-Chi" },
+    { slug: "white-tiger", name: "White Tiger: Angela Del Toro" },
+  ];
+
+  function inPool(pool, slug) {
+    for (var i = 0; i < pool.length; i++) if (pool[i].slug === slug) return pool[i];
+    return null;
+  }
+  function poolName(pool, slug) {
+    var entry = inPool(pool, slug);
+    return entry ? entry.name : null;
+  }
+  function poolIndex(pool, slug) {
+    for (var i = 0; i < pool.length; i++) if (pool[i].slug === slug) return i;
+    return pool.length;
+  }
+
+  /* The recognised slugs of `raw`, in the pool's own order and without
+     duplicates. Canonical output is what makes normalize() a fixpoint: the
+     same set always comes back in the same order, so a second pass and a JSON
+     round-trip both change nothing. */
+  function pickSlugs(raw, pool) {
+    var wanted = {};
+    (Array.isArray(raw) ? raw : []).forEach(function (v) {
+      if (typeof v === "string") wanted[v] = true;
+    });
+    return pool.filter(function (e) { return wanted[e.slug]; })
+      .map(function (e) { return e.slug; });
+  }
+
+  /* Which player holds this card, or -1. Serves both the exclusion in the UI
+     and the reason shown on a locked control. */
+  function holderOf(state, key, slug) {
+    for (var i = 0; i < state.players.length; i++) {
+      var v = state.players[i][key];
+      if (Array.isArray(v) ? v.indexOf(slug) !== -1 : v === slug) return i;
+    }
+    return -1;
+  }
+
+  /* "Player #1" on its own, or "Player #1 – Captain America" once there is a
+     name to say. Used wherever a control has to say whose it is. */
+  function playerLabel(t, player, i) {
+    var caption = t("playerRow", String(i + 1));
+    var hero = String(player.hero || "").trim();
+    return hero ? caption + " – " + hero : caption;
+  }
+
+  // ---- Data ----------------------------------------------------------------
+  function emptyState() {
+    return {
+      /* A fresh sheet starts with a single player; more are added as needed. */
+      players: [newPlayer()],
+      /* Scenario 1: which Experimental Weapons entered play. */
+      experimentalWeapons: [],
+      /* Scenario 2: delay counters left on the main scheme. */
+      delayCounters: null,
+      /* Scenario 4: allies removed from the campaign. Free text, because what
+         leaves is not limited to the four rescuable ones. */
+      removed: [],
+      notes: "",
+    };
+  }
+
+  function newPlayer() {
+    return {
+      hero: "",
+      hp: null,
+      obligations: [],
+      techUpgrade: "",
+      basicUpgrade: "",
+      rescuedAllies: [],
+      /* Scenario 4: was this player engaged with a minion at the end?
+         The paper sheet has one line to write names on; the app already knows
+         who is playing. The flag lives ON the player rather than in a parallel
+         list, so adding or removing a player can never shift the flags out
+         from under the names. */
+      engagedWithMinion: false,
+    };
+  }
+
+  /* Never throws. Starts from emptyState() and overlays only what it
+     recognises, so a hand-edited file, a foreign export or a truncated share
+     link cannot produce an invalid sheet. Fields this sheet does not have —
+     MC60's `scenarios` and `flags`, say — are simply never read, which is how
+     they get dropped. */
+  function normalize(raw) {
+    raw = (raw && typeof raw === "object") ? raw : {};
+    var out = emptyState();
+
+    /* One to four, whatever arrived: a sheet with nobody on it has no meaning,
+       and more than four is not a thing the game does. */
+    var players = Array.isArray(raw.players) ? raw.players : [];
+    var count = Math.min(MAX_PLAYERS, Math.max(1, players.length));
+    out.players = [];
+    for (var i = 0; i < count; i++) {
+      var p = (players[i] && typeof players[i] === "object") ? players[i] : {};
+      out.players.push({
+        hero: W.coerceText(p.hero, NAME_MAX),
+        hp: W.clampNumber(p.hp === "" ? null : p.hp, 0, HP_MAX),
+        /* No cross-player rule here: every player has their own copy of all
+           four obligations, so only duplicates within one player are wrong. */
+        obligations: pickSlugs(p.obligations, OBLIGATIONS),
+        techUpgrade: inPool(TECH_UPGRADES, p.techUpgrade) ? p.techUpgrade : "",
+        basicUpgrade: inPool(BASIC_UPGRADES, p.basicUpgrade) ? p.basicUpgrade : "",
+        rescuedAllies: pickSlugs(p.rescuedAllies, RESCUABLE_ALLIES),
+        engagedWithMinion: W.coerceBool(p.engagedWithMinion),
+      });
+    }
+
+    /* Each upgrade card and each rescuable ally exists once in the campaign, so
+       it can belong to at most one player. First occurrence in player order
+       wins and later ones are dropped — which of them was meant is not ours to
+       guess, and the alternative is a sheet that cannot legally be played. */
+    dropRepeats(out.players, "techUpgrade");
+    dropRepeats(out.players, "basicUpgrade");
+    dropRepeats(out.players, "rescuedAllies");
+
+    out.experimentalWeapons = pickSlugs(raw.experimentalWeapons, EXPERIMENTAL_WEAPONS);
+    out.delayCounters = W.clampNumber(raw.delayCounters, 0, COUNT_MAX);
+    out.removed = W.coerceStringList(raw.removed, { split: true, trim: true });
+    out.notes = coerceNotes(raw.notes);
+
+    return out;
+  }
+
+  /* Enforce "at most one player holds this card", over a single-value field or
+     a list field, in player order. */
+  function dropRepeats(players, key) {
+    var seen = {};
+    players.forEach(function (p) {
+      if (Array.isArray(p[key])) {
+        p[key] = p[key].filter(function (slug) {
+          if (seen[slug]) return false;
+          seen[slug] = true;
+          return true;
+        });
+        return;
+      }
+      if (!p[key]) return;
+      if (seen[p[key]]) p[key] = "";
+      else seen[p[key]] = true;
+    });
+  }
 
   /* Drop the control characters, keep the newline. Written as a loop over the
      char codes rather than a regexp character class: such a class has to spell
@@ -63,82 +270,6 @@
     return s.trim().slice(0, NOTES_MAX).trim();
   }
 
-  /* "Player #1" on its own, or "Player #1 – Captain America" once there is a
-     name to say. Used for the scenario 4 checkboxes and in the printout, where
-     a bare number would not tell anyone who was meant. */
-  function playerLabel(t, player, i) {
-    var caption = t("playerRow", String(i + 1));
-    var hero = String(player.hero || "").trim();
-    return hero ? caption + " – " + hero : caption;
-  }
-
-  // ---- Data ----------------------------------------------------------------
-  function emptyState() {
-    return {
-      /* A fresh sheet starts with a single player; more are added as needed. */
-      players: [newPlayer()],
-      /* Scenario 1: Experimental Weapons added to the encounter deck. */
-      experimentalWeapons: null,
-      /* Scenario 2: delay counters left on the main scheme. */
-      delayCounters: null,
-      /* Scenario 4: allies removed from the campaign. */
-      removed: [],
-      notes: "",
-    };
-  }
-
-  function newPlayer() {
-    return {
-      hero: "",
-      hp: null,
-      obligations: [],
-      techUpgrade: "",
-      basicUpgrade: "",
-      rescuedAllies: [],
-      /* Scenario 4: was this player engaged with a minion at the end?
-         The paper sheet has one line to write names on; the app already knows
-         who is playing, so this is a flag per player instead. It lives ON the
-         player rather than in a parallel list, so adding or removing a player
-         can never shift the flags out from under the names. */
-      engagedWithMinion: false,
-    };
-  }
-
-  /* Never throws. Starts from emptyState() and overlays only what it
-     recognises, so a hand-edited file, a foreign export or a truncated share
-     link cannot produce an invalid sheet. Fields this sheet does not have —
-     MC60's `scenarios` and `flags`, say — are simply never read, which is how
-     they get dropped. */
-  function normalize(raw) {
-    raw = (raw && typeof raw === "object") ? raw : {};
-    var out = emptyState();
-
-    /* One to four, whatever arrived: a sheet with nobody on it has no meaning,
-       and more than four is not a thing the game does. */
-    var players = Array.isArray(raw.players) ? raw.players : [];
-    var count = Math.min(MAX_PLAYERS, Math.max(1, players.length));
-    out.players = [];
-    for (var i = 0; i < count; i++) {
-      var p = (players[i] && typeof players[i] === "object") ? players[i] : {};
-      out.players.push({
-        hero: W.coerceText(p.hero, NAME_MAX),
-        hp: W.clampNumber(p.hp === "" ? null : p.hp, 0, HP_MAX),
-        obligations: W.coerceStringList(p.obligations, { split: true, trim: true }),
-        techUpgrade: W.coerceText(p.techUpgrade, NAME_MAX),
-        basicUpgrade: W.coerceText(p.basicUpgrade, NAME_MAX),
-        rescuedAllies: W.coerceStringList(p.rescuedAllies, { split: true, trim: true }),
-        engagedWithMinion: W.coerceBool(p.engagedWithMinion),
-      });
-    }
-
-    out.experimentalWeapons = W.clampNumber(raw.experimentalWeapons, 0, COUNT_MAX);
-    out.delayCounters = W.clampNumber(raw.delayCounters, 0, COUNT_MAX);
-    out.removed = W.coerceStringList(raw.removed, { split: true, trim: true });
-    out.notes = coerceNotes(raw.notes);
-
-    return out;
-  }
-
   /* No migrate(): stateVersion is 1, so there is no older shape in the wild
      yet. The first change to the shape above has to bring one with it — see
      the check in test/lint.js. */
@@ -165,22 +296,48 @@
     return row;
   }
 
+  /* A caption plus a row of named checkboxes — the shape every card set on this
+     sheet takes. `attrs(entry)` decorates each box so a caller with a
+     cross-player rule can find its boxes again without a re-render. */
+  function checkRow(labelText, pool, cfg) {
+    var wrap = W.el("div", "player-field");
+    var caption = W.el("p", "field-label");
+    caption.textContent = labelText;
+    wrap.appendChild(caption);
+
+    var row = W.el("div", "flag-row");
+    pool.forEach(function (entry) {
+      var flag = W.el("label", "flag");
+      var text = W.el("span", null, { lang: "en" });
+      text.textContent = entry.name;
+      flag.appendChild(text);
+      flag.appendChild(W.checkbox({
+        checked: cfg.isOn(entry),
+        label: cfg.labelFor(entry),
+        disabled: cfg.isLocked ? cfg.isLocked(entry) : false,
+        lockReason: cfg.lockReason ? cfg.lockReason(entry) : null,
+        onChange: function (next) { cfg.onChange(entry, next); },
+      }));
+      if (cfg.attrs) {
+        var extra = cfg.attrs(entry);
+        Object.keys(extra).forEach(function (k) { flag.setAttribute(k, extra[k]); });
+      }
+      row.appendChild(flag);
+    });
+    wrap.appendChild(row);
+    return wrap;
+  }
+
   function render(root, ctx) {
     var t = ctx.t, lang = ctx.lang, state = ctx.state;
 
-    /* DOM order follows the paper sheet, so reading order and print output do
-       too. Nothing sits side by side here — unlike MC60, this sheet has no
-       second column to pair with the players. */
     root.appendChild(renderPlayers(t, lang, state, ctx));
-    /* Scenario 1 and 2 hold a single number each and sit side by side on a wide
-       screen (see .scenario-row in styles.css), which is how they are printed;
-       they stay in this order in the DOM, so reading order and print output
-       follow the paper sheet. */
+    /* Scenario 1 and 2 sit side by side on a wide screen (see .scenario-row in
+       styles.css), which is how they are printed; they stay in this order in
+       the DOM, so reading order and print output follow the paper sheet. */
     var row = W.el("div", "scenario-row");
-    row.appendChild(renderCounter(t, ctx, "scenario-1", t("secScenario1"),
-      t("lblExperimentalWeapons"), "experimentalWeapons"));
-    row.appendChild(renderCounter(t, ctx, "scenario-2", t("secScenario2"),
-      t("lblDelayCounters"), "delayCounters"));
+    row.appendChild(renderScenario1(t, state, ctx));
+    row.appendChild(renderScenario2(t, state, ctx));
     root.appendChild(row);
     root.appendChild(renderScenario4(t, state, ctx));
     root.appendChild(renderNotes(t, state, ctx));
@@ -203,14 +360,20 @@
        players there are instead of how much room happens to be left. */
     var grid = W.el("div", "player-grid", { "data-players": String(state.players.length) });
 
-    /* One shared <datalist> of hero names for all the slots. The fields stay
-       free text: the sheet is a fill-in field, and a hero the roster has not
-       caught up with yet must remain typeable. */
+    /* One shared <datalist> of hero names for all the slots. The identity field
+       stays free text: the sheet is a fill-in field, and a hero the roster has
+       not caught up with yet must remain typeable. The card fields below are
+       not free text — those pools are printed and finite. */
     var heroes = global.HEROES || [];
     var listId = "hero-suggestions";
     grid.appendChild(W.dataList(listId, heroes.map(function (h) {
       return (lang === "de" && h.de) ? h.de : h.en;
     })));
+
+    /* Collected across all the cards so each upgrade pool can grey out what
+       another player already holds, in place and without a re-render. */
+    var techSelects = [];
+    var basicSelects = [];
 
     state.players.forEach(function (player, i) {
       var card = W.el("div", "player-card", { "data-player": String(i + 1) });
@@ -223,8 +386,8 @@
 
       /* Removing the last player would leave a sheet with nobody on it, so that
          one stays put. Anything else goes, with a confirmation when there is
-         something on the card to lose — and on this sheet a card holds far more
-         than a name and a number, so the check has to look at all of it. */
+         something on the card to lose — and a card here holds far more than a
+         name and a number, so the check has to look at all of it. */
       var last = state.players.length <= 1;
       var del = W.iconButton({
         glyph: "×",
@@ -235,10 +398,9 @@
           if (playerHasContent(player) && !window.confirm(t("confirmRemovePlayer"))) return;
           state.players.splice(i, 1);
           ctx.save();
-          /* Must be a full rerender, never a partial redraw: the list widgets
-             register themselves by id, and core.js clears that registry on
-             every render. A partial redraw would leave the removed player's
-             lists registered and able to receive a drop. */
+          /* A full re-render, never a partial redraw: the cards below shift up,
+             and every pool has to be recomputed against the players that are
+             left. */
           ctx.rerender();
         },
       });
@@ -257,10 +419,10 @@
           ctx.save();
           updateHpHint();
           markDuplicates();
-          /* The scenario 4 checkboxes name the players, so they follow along.
+          /* Several controls elsewhere name their player, so they follow along.
              Rewritten in place rather than by re-rendering, which would take
              the focus out of the field being typed in. */
-          paintEngagedLabels(t, state);
+          paintPlayerNames(t, state);
         },
       });
       card.appendChild(fieldRow(t("colIdentity"), heroInput));
@@ -274,32 +436,71 @@
       });
       card.appendChild(fieldRow(t("colHp"), hpField));
 
-      /* The four things a player carries through the campaign. Obligations and
-         rescued allies accumulate, so they are lists; the two upgrades are one
-         line each, exactly as printed. */
-      card.appendChild(playerList(t, ctx, i, "obligations", t("lblObligations"),
-        function () { return player.obligations; }));
+      /* Obligations: every player has their own copy of all four, so there is
+         nothing to share out and nothing to lock. */
+      card.appendChild(checkRow(t("lblObligations"), OBLIGATIONS, {
+        isOn: function (o) { return player.obligations.indexOf(o.slug) !== -1; },
+        labelFor: function (o) { return playerLabel(t, player, i) + " – " + o.name; },
+        onChange: function (o, on) {
+          toggleSlug(player.obligations, OBLIGATIONS, o.slug, on);
+          ctx.save();
+        },
+      }));
 
-      var tech = W.textField({
+      var tech = W.poolSelect({
         value: player.techUpgrade,
         label: caption + " – " + t("lblTechUpgrade"),
-        placeholder: t("cardNamePlaceholder"),
-        maxLength: NAME_MAX,
-        onChange: function (next) { player.techUpgrade = next; ctx.save(); },
+        placeholder: t("upgradePlaceholder"),
+        options: TECH_UPGRADES.map(function (u) {
+          return { value: u.slug, label: u.name, lang: "en" };
+        }),
+        onChange: function (next) {
+          player.techUpgrade = next;
+          ctx.save();
+          W.syncUnique(techSelects);
+        },
       });
+      techSelects.push(tech);
       card.appendChild(fieldRow(t("lblTechUpgrade"), tech));
 
-      var basic = W.textField({
+      var basic = W.poolSelect({
         value: player.basicUpgrade,
         label: caption + " – " + t("lblBasicUpgrade"),
-        placeholder: t("cardNamePlaceholder"),
-        maxLength: NAME_MAX,
-        onChange: function (next) { player.basicUpgrade = next; ctx.save(); },
+        placeholder: t("upgradePlaceholder"),
+        options: BASIC_UPGRADES.map(function (u) {
+          return { value: u.slug, label: u.name, lang: "en" };
+        }),
+        onChange: function (next) {
+          player.basicUpgrade = next;
+          ctx.save();
+          W.syncUnique(basicSelects);
+        },
       });
+      basicSelects.push(basic);
       card.appendChild(fieldRow(t("lblBasicUpgrade"), basic));
 
-      card.appendChild(playerList(t, ctx, i, "rescued", t("lblRescuedAllies"),
-        function () { return player.rescuedAllies; }));
+      /* Rescued allies: each ally goes to at most one player, but a player may
+         hold several — so boxes rather than a dropdown, and on the other
+         players they lock instead of disappearing. */
+      card.appendChild(checkRow(t("lblRescuedAllies"), RESCUABLE_ALLIES, {
+        isOn: function (a) { return player.rescuedAllies.indexOf(a.slug) !== -1; },
+        labelFor: function (a) { return playerLabel(t, player, i) + " – " + a.name; },
+        isLocked: function (a) {
+          var at = holderOf(state, "rescuedAllies", a.slug);
+          return at !== -1 && at !== i;
+        },
+        lockReason: function (a) {
+          var at = holderOf(state, "rescuedAllies", a.slug);
+          return at === -1 ? null
+            : t("allyTakenBy", playerLabel(t, state.players[at], at));
+        },
+        attrs: function (a) { return { "data-ally": a.slug, "data-ally-player": String(i) }; },
+        onChange: function (a, on) {
+          toggleSlug(player.rescuedAllies, RESCUABLE_ALLIES, a.slug, on);
+          ctx.save();
+          paintAllyLocks(t, state);
+        },
+      }));
 
       /* The hero's printed starting hit points, as a reminder of what full
          health was. Rewritten in place rather than by re-rendering the panel,
@@ -333,39 +534,29 @@
     markDuplicates();
 
     section.appendChild(grid);
+    /* Last, so both pools start out showing what is already taken. */
+    W.syncUnique(techSelects);
+    W.syncUnique(basicSelects);
     return section;
+  }
+
+  /* Add or remove one slug, keeping the list in the pool's order so it matches
+     what normalize() would produce. */
+  function toggleSlug(list, pool, slug, on) {
+    var at = list.indexOf(slug);
+    if (on && at === -1) {
+      list.push(slug);
+      list.sort(function (a, b) { return poolIndex(pool, a) - poolIndex(pool, b); });
+    } else if (!on && at !== -1) {
+      list.splice(at, 1);
+    }
   }
 
   function playerHasContent(player) {
     return !!player.hero.trim() || player.hp != null ||
       player.obligations.length > 0 || player.rescuedAllies.length > 0 ||
-      !!player.techUpgrade.trim() || !!player.basicUpgrade.trim() ||
+      !!player.techUpgrade || !!player.basicUpgrade ||
       player.engagedWithMinion;
-  }
-
-  /* One of a player's two lists. The ids carry the player index so the widget
-     registry keeps them apart within a render pass; `group` is the id itself,
-     which means entries cannot be dragged out of the list they belong to.
-     That is on purpose: no rule in the campaign moves an obligation from one
-     player to another, and an accidental cross-drop would quietly rewrite two
-     players' cards at once. */
-  function playerList(t, ctx, index, kind, labelText, getArray) {
-    var id = "trors-p" + index + "-" + kind;
-    var field = W.stringList({
-      listId: id,
-      group: id,
-      getArray: getArray,
-      placeholder: t("cardNamePlaceholder"),
-      addLabel: t("addEntry"),
-      removeLabel: t("removeEntry"),
-      removeConfirm: t("confirmRemoveEntry"),
-      dragLabel: t("dragReorder"),
-      label: labelText,
-      multiline: false,
-    });
-    var row = W.el("div", "player-field");
-    row.appendChild(field);
-    return row;
   }
 
   /* Printed starting hit points for a typed hero name, or null. Matched
@@ -384,45 +575,57 @@
     return null;
   }
 
-  /* Scenario 1 and scenario 2 each record a single number, so they share one
-     renderer. Written in place: nothing else on the sheet depends on it. */
-  function renderCounter(t, ctx, id, heading, labelText, key) {
-    var section = panel(id, heading);
-    var field = W.numberField({
-      value: ctx.state[key],
+  function renderScenario1(t, state, ctx) {
+    var section = panel("scenario-1", t("secScenario1"));
+    section.appendChild(checkRow(t("lblExperimentalWeapons"), EXPERIMENTAL_WEAPONS, {
+      isOn: function (w) { return state.experimentalWeapons.indexOf(w.slug) !== -1; },
+      labelFor: function (w) { return t("lblExperimentalWeapons") + " – " + w.name; },
+      onChange: function (w, on) {
+        toggleSlug(state.experimentalWeapons, EXPERIMENTAL_WEAPONS, w.slug, on);
+        ctx.save();
+      },
+    }));
+    return section;
+  }
+
+  function renderScenario2(t, state, ctx) {
+    var section = panel("scenario-2", t("secScenario2"));
+    section.appendChild(fieldRow(t("lblDelayCounters"), W.numberField({
+      value: state.delayCounters,
       min: 0, max: COUNT_MAX,
-      label: labelText,
-      onChange: function (next) { ctx.state[key] = next; ctx.save(); },
-    });
-    section.appendChild(fieldRow(labelText, field));
+      label: t("lblDelayCounters"),
+      onChange: function (next) { state.delayCounters = next; ctx.save(); },
+    })));
     return section;
   }
 
   function renderScenario4(t, state, ctx) {
     var section = panel("scenario-4", t("secScenario4"));
 
-    var engagedLabel = W.el("p", "field-label");
-    engagedLabel.textContent = t("lblEngaged");
-    section.appendChild(engagedLabel);
-
+    var engaged = W.el("div", "player-field");
+    var caption = W.el("p", "field-label");
+    caption.textContent = t("lblEngaged");
+    engaged.appendChild(caption);
     var row = W.el("div", "flag-row");
     state.players.forEach(function (player, i) {
-      var wrap = W.el("label", "flag");
-      var text = W.el("span", null, { "data-engaged-label": String(i) });
+      var flag = W.el("label", "flag");
+      var text = W.el("span", null, { "data-player-name": String(i) });
       text.textContent = playerLabel(t, player, i);
-      wrap.appendChild(text);
-      wrap.appendChild(W.checkbox({
+      flag.appendChild(text);
+      flag.appendChild(W.checkbox({
         checked: player.engagedWithMinion,
         label: playerLabel(t, player, i) + " – " + t("lblEngaged"),
-        /* No rerender: unlike MC60's Completed box this flag locks nothing. */
+        /* No re-render: unlike MC60's Completed box this flag locks nothing. */
         onChange: function (next) { player.engagedWithMinion = next; ctx.save(); },
       }));
-      row.appendChild(wrap);
+      row.appendChild(flag);
     });
-    section.appendChild(row);
+    engaged.appendChild(row);
+    section.appendChild(engaged);
 
     /* On the paper sheet this list sits inside the scenario 4 box, so it does
-       here too rather than becoming a panel of its own. */
+       here too rather than becoming a panel of its own. Free text, because what
+       leaves the campaign is not limited to the four rescuable allies. */
     section.appendChild(W.stringList({
       listId: "trors-removed",
       group: "trors-removed",
@@ -439,14 +642,32 @@
     return section;
   }
 
-  /* Keeps the scenario 4 checkbox captions in step with the identity fields
+  /* Keeps every caption that names a player in step with the identity fields,
      without re-rendering anything. Looked up in the document, like MC60's
-     villain chips, because the caller is inside another panel. */
-  function paintEngagedLabels(t, state) {
-    document.querySelectorAll("[data-engaged-label]").forEach(function (node) {
-      var i = parseInt(node.getAttribute("data-engaged-label"), 10);
+     villain chips, because the callers sit in other panels. */
+  function paintPlayerNames(t, state) {
+    document.querySelectorAll("[data-player-name]").forEach(function (node) {
+      var i = parseInt(node.getAttribute("data-player-name"), 10);
       var player = state.players[i];
       if (player) node.textContent = playerLabel(t, player, i);
+    });
+  }
+
+  /* An ally belongs to at most one player, so everyone else's box for it locks.
+     Repainted in place from whichever box changed. */
+  function paintAllyLocks(t, state) {
+    document.querySelectorAll("[data-ally]").forEach(function (flag) {
+      var slug = flag.getAttribute("data-ally");
+      var mine = parseInt(flag.getAttribute("data-ally-player"), 10);
+      var at = holderOf(state, "rescuedAllies", slug);
+      var locked = at !== -1 && at !== mine;
+      var box = flag.querySelector(".sheet-check");
+      if (!box) return;
+      box.disabled = locked;
+      box.classList.toggle("is-locked", locked);
+      box.title = locked
+        ? t("allyTakenBy", playerLabel(t, state.players[at], at))
+        : box.getAttribute("aria-label");
     });
   }
 
@@ -470,7 +691,7 @@
     ta.addEventListener("input", function () {
       state.notes = ta.value;
       W.autoGrow(ta);
-      /* In place — a rerender here would drop the focus on every keystroke. */
+      /* In place — a re-render here would drop the focus on every keystroke. */
       ctx.save();
     });
     ta.addEventListener("blur", function () {
@@ -503,15 +724,22 @@
       printLine(players, t("playerRow", String(i + 1)) + ": " +
         (p.hero || "—") + " · " + t("colHp") + ": " +
         (p.hp == null ? "—" : String(p.hp)));
-      if (p.techUpgrade) printLine(players, "  " + t("lblTechUpgrade") + ": " + p.techUpgrade);
-      if (p.basicUpgrade) printLine(players, "  " + t("lblBasicUpgrade") + ": " + p.basicUpgrade);
-      printList(players, p.obligations, t("lblObligations"));
-      printList(players, p.rescuedAllies, t("lblRescuedAllies"));
+      printLine(players, "  " + t("lblTechUpgrade") + ": " +
+        (poolName(TECH_UPGRADES, p.techUpgrade) || "—"));
+      printLine(players, "  " + t("lblBasicUpgrade") + ": " +
+        (poolName(BASIC_UPGRADES, p.basicUpgrade) || "—"));
+      printNames(players, p.obligations, OBLIGATIONS, t("lblObligations"));
+      printNames(players, p.rescuedAllies, RESCUABLE_ALLIES, t("lblRescuedAllies"));
     });
 
+    /* Every weapon on its own line with a box: which ones did NOT enter play
+       matters as much as which did, because scenario 2 shuffles in exactly the
+       recorded ones. */
     var one = printSection(root, t("secScenario1"));
-    printLine(one, t("lblExperimentalWeapons") + ": " +
-      (state.experimentalWeapons == null ? "—" : String(state.experimentalWeapons)));
+    printLine(one, t("lblExperimentalWeapons") + ":");
+    EXPERIMENTAL_WEAPONS.forEach(function (w) {
+      printLine(one, (state.experimentalWeapons.indexOf(w.slug) !== -1 ? "[x] " : "[ ] ") + w.name);
+    });
 
     var two = printSection(root, t("secScenario2"));
     printLine(two, t("lblDelayCounters") + ": " +
@@ -522,7 +750,17 @@
     state.players.forEach(function (p, i) {
       printLine(four, (p.engagedWithMinion ? "[x] " : "[ ] ") + playerLabel(t, p, i));
     });
-    printList(four, state.removed, t("secRemoved"));
+    if (state.removed.length) {
+      printLine(four, t("secRemoved") + ":");
+      var ul = W.el("ul", "print-list");
+      state.removed.forEach(function (entry) {
+        var s = W.splitStrike(entry);
+        var li = W.el("li", s.struck ? "struck" : null);
+        li.textContent = s.text;
+        ul.appendChild(li);
+      });
+      four.appendChild(ul);
+    }
 
     if (state.notes) {
       var notes = printSection(root, t("secNotes"));
@@ -548,18 +786,12 @@
     return line;
   }
 
-  /* A heading plus the entries, or nothing at all when the list is empty. */
-  function printList(parent, entries, heading) {
-    if (!entries.length) return;
-    printLine(parent, heading + ":");
-    var ul = W.el("ul", "print-list");
-    entries.forEach(function (entry) {
-      var s = W.splitStrike(entry);
-      var li = W.el("li", s.struck ? "struck" : null);
-      li.textContent = s.text;
-      ul.appendChild(li);
-    });
-    parent.appendChild(ul);
+  /* A heading plus the chosen card names, or nothing at all when none are. */
+  function printNames(parent, slugs, pool, heading) {
+    if (!slugs.length) return;
+    printLine(parent, "  " + heading + ": " + slugs.map(function (slug) {
+      return poolName(pool, slug);
+    }).join(", "));
   }
 
   // ---- Registration --------------------------------------------------------
@@ -581,14 +813,16 @@
     render: render,
     renderPrint: renderPrint,
 
-    helpDe: "Der MC10-Bogen folgt dem gedruckten Original Feld für Feld — und das heißt vor allem: es gibt hier bewusst keine Szenario-Tabelle, kein „Abgeschlossen“, kein „Gescheitert“ und keinen Würfel. Die fünf Szenarien (Crossbones, Absorbing Man, Taskmaster, Zola, Red Skull) werden in fester Reihenfolge gespielt, deshalb hält der Bogen nur fest, was von einem Szenario ins nächste mitgeht. Spieler werden einzeln hinzugefügt — von einem bis vier —, der Bogen zeigt also nur die, die wirklich mitspielen. Jede Spielerkarte trägt neben Identität und Trefferpunkten die vier Sammelfelder des Originals: Verpflichtungen und gerettete Verbündete als Listen, weil davon über die Kampagne mehrere zusammenkommen, Tech- und Basis-Upgrade als je eine Zeile, genau wie gedruckt. Dazu die drei Ergebnisse, nach denen späteren Szenarien fragen: die Zahl der Experimentalwaffen im Begegnungsdeck nach Szenario 1, die Verzögerungsmarker auf dem Hauptplan nach Szenario 2 und nach Szenario 4, welche Spieler mit Handlangern im Gefecht waren — auf Papier eine Zeile zum Hineinschreiben, hier ein Häkchen pro Spieler, weil die App die Mitspieler ohnehin kennt. Die aus der Kampagne entfernten Verbündeten stehen wie im Original im Szenario-4-Kasten. Alles übrige nimmt das Notizfeld auf; ein „~“ am Anfang eines Listeneintrags streicht ihn durch.",
-    helpEn: "The MC10 sheet follows the printed original field for field, and that above all means what is deliberately absent: no scenario table, no “completed”, no “failed”, no die. The five scenarios (Crossbones, Absorbing Man, Taskmaster, Zola, Red Skull) are played in a fixed order, so the log only records what carries forward from one to the next. Players are added one at a time, from one to four, so the sheet only shows the ones actually playing. Besides identity and hit points, each player card carries the four collecting fields of the original: obligations and rescued allies as lists, because several of each accumulate over the campaign, and the tech and basic upgrade as one line each, exactly as printed. Then the three results later scenarios ask about: how many Experimental Weapons went into the encounter deck after scenario 1, the delay counters left on the main scheme after scenario 2, and after scenario 4 which players were engaged with minions — one line to write names on, on paper; here a checkbox per player, since the app already knows who is playing. The allies removed from the campaign sit inside the scenario 4 box, as they do on the sheet. Everything else goes in Notes; a leading “~” strikes a list entry through.",
+    helpDe: "Der MC10-Bogen folgt dem gedruckten Original — und das heißt vor allem: es gibt hier bewusst keine Szenario-Tabelle, kein „Abgeschlossen“, kein „Gescheitert“ und keinen Würfel. Die fünf Szenarien (Crossbones, Absorbing Man, Taskmaster, Zola, Red Skull) werden in fester Reihenfolge gespielt, deshalb hält der Bogen nur fest, was von einem Szenario ins nächste mitgeht. Wo auf Papier eine leere Zeile steht, stehen hier die tatsächlichen Karten — jedes dieser Felder hat genau vier gedruckte Möglichkeiten, und jedes trägt seine eigene Regel. Verpflichtungen: Jeder Spieler hat seinen eigenen Satz aller vier, zwei Spieler können also dieselbe haben. Tech- und Basis-Verbesserung: Jede Karte gibt es einmal in der Kampagne, eine gewählte verschwindet daher aus den Feldern der anderen Spieler. Gerettete Verbündete: Auch jeder nur einmal, aber ein Spieler kann mehrere haben — deshalb Kästchen statt Auswahlfeld, und bei den übrigen Spielern sind sie gesperrt statt verschwunden; der Sperrgrund nennt, wer ihn hat. Dazu die drei Ergebnisse, nach denen spätere Szenarien fragen: welche Experimentalwaffen nach Szenario 1 ins Begegnungsdeck gewandert sind — der Bogen will die Namen, nicht die Anzahl, weil Szenario 2 genau die wieder einmischt —, die Verzögerungsmarker auf dem Hauptplan nach Szenario 2, und nach Szenario 4, welche Spieler mit Handlangern im Gefecht waren; auf Papier eine Zeile zum Hineinschreiben, hier ein Häkchen pro Spieler, weil die App die Mitspieler ohnehin kennt. Die aus der Kampagne entfernten Verbündeten bleiben Freitext, weil dort mehr landen kann als die vier rettbaren. Alles übrige nimmt das Notizfeld auf; ein „~“ am Anfang eines Listeneintrags streicht ihn durch.",
+    helpEn: "The MC10 sheet follows the printed original, and that above all means what is deliberately absent: no scenario table, no “completed”, no “failed”, no die. The five scenarios (Crossbones, Absorbing Man, Taskmaster, Zola, Red Skull) are played in a fixed order, so the log only records what carries forward from one to the next. Where the paper has a blank line, this has the actual cards — each of those fields has exactly four printed possibilities, and each carries its own rule. Obligations: every player has their own set of all four, so two players can hold the same one. Tech and Basic Upgrade: each card exists once in the campaign, so choosing one removes it from the other players' fields. Rescued Allies: also one holder each, but a player may hold several — hence boxes rather than a dropdown, and on the other players they lock rather than disappear, naming who holds them. Then the three results later scenarios ask about: which Experimental Weapons went into the encounter deck after scenario 1 — the sheet wants the names, not a count, because scenario 2 shuffles exactly those back in — the delay counters left on the main scheme after scenario 2, and after scenario 4 which players were engaged with minions; one line to write names on, on paper, here a checkbox per player, since the app already knows who is playing. The allies removed from the campaign stay free text, because more than the four rescuable ones can end up there. Everything else goes in Notes; a leading “~” strikes a list entry through.",
 
     /* Deutsche Feldnamen: MC10 ist auf Deutsch erschienen, aber die genaue
        Beschriftung des gedruckten deutschen Bogens ließ sich nicht belegen. Die
        mit „zu bestätigen“ markierten Zeilen bitte gegen den Bogen abgleichen
        und je eine Zeile korrigieren. Es migriert nichts, wenn sie sich ändern —
-       persistiert werden nur Feldschlüssel, nie Beschriftungen. */
+       persistiert werden nur Feldschlüssel, nie Beschriftungen. Für die
+       Kartennamen gilt dasselbe wie für die MC60-Schurken: sie bleiben
+       englisch. */
     i18n: {
       de: {
         secPlayers: "Spieler-Informationen",
@@ -616,8 +850,11 @@
         /* Zu bestätigen: Wortlaut der deutschen Ausgabe. */
         lblBasicUpgrade: "Basis-Verbesserung",
         lblRescuedAllies: "Gerettete Verbündete",
+        upgradePlaceholder: "— Verbesserung wählen —",
+        /* "%s" = der Spieler, der den Verbündeten schon hat. */
+        allyTakenBy: "Schon zugeordnet: %s",
 
-        /* Zu bestätigen: deutscher Kartenname der „Experimental Weapons“. */
+        /* Zu bestätigen: deutscher Kartentyp der „Experimental Weapons“. */
         lblExperimentalWeapons: "Dem Begegnungsdeck hinzugefügte Experimentalwaffen",
         lblDelayCounters: "Verzögerungsmarker auf dem Hauptplan",
         lblEngaged: "Spieler im Gefecht mit Handlangern",
@@ -648,6 +885,8 @@
         lblTechUpgrade: "Tech Upgrade",
         lblBasicUpgrade: "Basic Upgrade",
         lblRescuedAllies: "Rescued Allies",
+        upgradePlaceholder: "— choose an upgrade —",
+        allyTakenBy: "Already assigned to: %s",
 
         lblExperimentalWeapons: "Experimental Weapons added to encounter deck",
         lblDelayCounters: "Number of delay counters on main scheme",
