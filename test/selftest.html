@@ -486,12 +486,18 @@
         f.onload = function () { setTimeout(start, 120); };
         document.body.appendChild(f);
 
-        /* FileReader is asynchronous, so wait for the store to actually change
-           instead of guessing a delay — a fixed sleep made assertions read the
-           state from before the import. */
-        function drop(obj, then) {
+        /* FileReader is asynchronous, so wait for the store instead of guessing
+           a delay — a fixed sleep made assertions read the state from before
+           the import.
+
+           `ready(store)` has to name what THIS drop is waiting for. Waiting for
+           "the store changed at all" is not enough: saving is debounced by
+           350ms, so a write left over from the previous step can land inside
+           the window, and the callback then runs before the file has even been
+           parsed. That made CI fail intermittently on a later assertion, which
+           is a miserable place to learn about it. */
+        function drop(obj, ready, then) {
           var w = f.contentWindow, d = f.contentDocument;
-          var before = localStorage.getItem("mcclog:logs");
           var file = new w.File([JSON.stringify(obj, null, 2)], "log.json", { type: "application/json" });
           var dt = new w.DataTransfer();
           dt.items.add(file);
@@ -500,7 +506,16 @@
           input.dispatchEvent(new w.Event("change", { bubbles: true }));
           var waited = 0;
           (function poll() {
-            if (localStorage.getItem("mcclog:logs") !== before || waited > 3000) return then();
+            var store;
+            try { store = JSON.parse(localStorage.getItem("mcclog:logs") || "{}"); }
+            catch (e) { store = {}; }
+            if (ready(store)) return then();
+            if (waited > 3000) {
+              /* Fail here rather than letting the next assertion report
+                 something confusing: not settling is its own bug. */
+              log("import settled within 3s", false, Object.keys(store).join(","));
+              return then();
+            }
             waited += 25;
             setTimeout(poll, 25);
           })();
@@ -528,7 +543,8 @@
           var startingIds = Object.keys(JSON.parse(localStorage.getItem("mcclog:logs")));
 
           // 1) A brand-new log is added alongside the one that already exists.
-          drop(mk("imp-1", "Aus der Datei"), function () {
+          drop(mk("imp-1", "Aus der Datei"),
+            function (s) { return !!s["imp-1"]; }, function () {
             var store = JSON.parse(localStorage.getItem("mcclog:logs"));
             log("new log imported", !!store["imp-1"], Object.keys(store).join(","));
             log("existing log untouched", !!store[startingIds[0]]);
@@ -539,8 +555,14 @@
               localStorage.getItem("mcclog:activeId") === "imp-1");
 
             // 2) Same GUID -> updates in place rather than duplicating.
+            /* Same id, so the id being present says nothing — wait for the
+               content that only this import brings. */
             drop(mk("imp-1", "Aus der Datei", { state: {
               players: [{ hero: "Daredevil", hp: 9 }], scenarios: [], removed: [], flags: {} } }),
+              function (s) {
+                return !!s["imp-1"] && s["imp-1"].state.players[0] &&
+                  s["imp-1"].state.players[0].hero === "Daredevil";
+              },
               function () {
                 var s2 = JSON.parse(localStorage.getItem("mcclog:logs"));
                 log("same GUID updates in place", Object.keys(s2).length === 2, Object.keys(s2).length);
@@ -549,7 +571,8 @@
                   s2["imp-1"].state.players[0].hero);
 
                 // 3) Same title, different GUID, confirmed -> replaces it.
-                drop(mk("imp-2", "Aus der Datei"), function () {
+                drop(mk("imp-2", "Aus der Datei"),
+                  function (s) { return !!s["imp-2"] && !s["imp-1"]; }, function () {
                   var s3 = JSON.parse(localStorage.getItem("mcclog:logs"));
                   log("same title accepted replaces the old log",
                     !s3["imp-1"] && !!s3["imp-2"] && Object.keys(s3).length === 2,
@@ -557,7 +580,8 @@
 
                   // 4) Same title, declined -> kept side by side.
                   answer = false;
-                  drop(mk("imp-3", "Aus der Datei"), function () {
+                  drop(mk("imp-3", "Aus der Datei"),
+                    function (s) { return !!s["imp-3"]; }, function () {
                     var s4 = JSON.parse(localStorage.getItem("mcclog:logs"));
                     log("same title declined keeps both",
                       !!s4["imp-2"] && !!s4["imp-3"], Object.keys(s4).join(","));
@@ -567,7 +591,7 @@
                     var alien = mk("imp-4", "Fremde Kampagne", { campaignId: "mutant-genesis" });
                     alien.somethingWeDoNotKnow = 7;
                     var alienJson = JSON.stringify(alien);
-                    drop(alien, function () {
+                    drop(alien, function (s) { return !!s["imp-4"]; }, function () {
                       var s5 = JSON.parse(localStorage.getItem("mcclog:logs"));
                       log("unknown-campaign import kept", !!s5["imp-4"]);
                       log("unknown-campaign blob byte-identical",
