@@ -509,6 +509,15 @@ button:focus-visible {
   margin: -0.2rem 0 0.8rem;
 }
 
+/* More than one control in a panel head: .panel-head itself is a
+   space-between row, so the controls need a row of their own to sit in. */
+.panel-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
+
 .panel-head h2 {
   font-size: 0.95rem;
   text-transform: uppercase;

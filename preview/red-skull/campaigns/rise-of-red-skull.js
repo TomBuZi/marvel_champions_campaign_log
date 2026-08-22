@@ -14,6 +14,13 @@
    by hand could only introduce a typo. The pools also carry the campaign's own
    rules about who may hold what — see POOLS below.
 
+   The campaign is played at standard or expert level, and two of the sheet's
+   fields exist only at expert level: the remaining hit points ("While playing
+   The Rise of Red Skull campaign at the expert level, each player must record
+   their remaining hit points in the campaign log") and the obligations, which
+   come out of the Expert Campaign Set. A standard game therefore hides both
+   rather than asking for them. Hides, not clears — see `expert` below.
+
    emptyState() and normalize() must not touch the DOM — not at load time and
    not when called. CI exercises them headlessly to prove that normalize() is
    idempotent and that a fresh state round-trips unchanged.
@@ -143,6 +150,10 @@
   // ---- Data ----------------------------------------------------------------
   function emptyState() {
     return {
+      /* Standard or expert level. Only the display follows this: switching back
+         to standard HIDES the hit points and the obligations, it does not clear
+         them, so a sheet toggled by accident loses nothing. */
+      expert: false,
       /* A fresh sheet starts with a single player; more are added as needed. */
       players: [newPlayer()],
       /* Scenario 1: which Experimental Weapons entered play. */
@@ -180,6 +191,8 @@
   function normalize(raw) {
     raw = (raw && typeof raw === "object") ? raw : {};
     var out = emptyState();
+
+    out.expert = W.coerceBool(raw.expert);
 
     /* One to four, whatever arrived: a sheet with nobody on it has no meaning,
        and more than four is not a thing the game does. */
@@ -319,7 +332,29 @@
       ctx.rerender();
     });
 
-    var section = panel("players", t("secPlayers"), addBtn);
+    /* The expert switch sits here rather than in a panel of its own: both
+       fields it governs are in these cards, so the cause is next to what it
+       reveals. A re-render, because fields appear and disappear. */
+    var expertFlag = W.el("label", "flag");
+    var expertText = W.el("span");
+    expertText.textContent = t("lblExpert");
+    expertFlag.appendChild(expertText);
+    expertFlag.appendChild(W.checkbox({
+      checked: state.expert,
+      label: t("lblExpert"),
+      onChange: function (next) {
+        state.expert = next;
+        ctx.save();
+        ctx.rerender();
+      },
+    }));
+    expertFlag.title = t("expertHint");
+
+    var actions = W.el("div", "panel-actions");
+    actions.appendChild(expertFlag);
+    actions.appendChild(addBtn);
+
+    var section = panel("players", t("secPlayers"), actions);
     /* Drives the column count in styles.css, so the layout follows how many
        players there are instead of how much room happens to be left. */
     var grid = W.el("div", "player-grid", { "data-players": String(state.players.length) });
@@ -391,25 +426,33 @@
       });
       card.appendChild(fieldRow(t("colIdentity"), heroInput));
 
-      var hpField = W.numberField({
-        value: player.hp,
-        min: 0, max: HP_MAX,
-        label: caption + " – " + t("colHp"),
-        hint: startingHealth(player.hero, lang),
-        onChange: function (next) { player.hp = next; ctx.save(); },
-      });
-      card.appendChild(fieldRow(t("colHp"), hpField));
+      /* Expert only: the remaining hit points carry over into the next
+         scenario, which is a rule the standard campaign does not have. */
+      var hpField = null;
+      if (state.expert) {
+        hpField = W.numberField({
+          value: player.hp,
+          min: 0, max: HP_MAX,
+          label: caption + " – " + t("colHp"),
+          hint: startingHealth(player.hero, lang),
+          onChange: function (next) { player.hp = next; ctx.save(); },
+        });
+        card.appendChild(fieldRow(t("colHp"), hpField));
+      }
 
-      /* Obligations: every player has their own copy of all four, so there is
-         nothing to share out and nothing to lock. */
-      card.appendChild(checkRow(t("lblObligations"), OBLIGATIONS, {
-        isOn: function (o) { return player.obligations.indexOf(o.slug) !== -1; },
-        labelFor: function (o) { return playerLabel(t, player, i) + " – " + o.name; },
-        onChange: function (o, on) {
-          toggleSlug(player.obligations, OBLIGATIONS, o.slug, on);
-          ctx.save();
-        },
-      }));
+      /* Expert only as well: the obligations come out of the Expert Campaign
+         Set. Every player has their own copy of all four, so unlike the
+         upgrades there is nothing to share out and nothing to lock. */
+      if (state.expert) {
+        card.appendChild(checkRow(t("lblObligations"), OBLIGATIONS, {
+          isOn: function (o) { return player.obligations.indexOf(o.slug) !== -1; },
+          labelFor: function (o) { return playerLabel(t, player, i) + " – " + o.name; },
+          onChange: function (o, on) {
+            toggleSlug(player.obligations, OBLIGATIONS, o.slug, on);
+            ctx.save();
+          },
+        }));
+      }
 
       var tech = W.poolSelect({
         value: player.techUpgrade,
@@ -470,6 +513,7 @@
          health was. Rewritten in place rather than by re-rendering the panel,
          which would take the focus out of the field being typed in. */
       function updateHpHint() {
+        if (!hpField) return;               // standard level: no such field
         var hint = hpField.querySelector(".num-hint");
         var h = startingHealth(player.hero, lang);
         hint.textContent = h ? "/ " + h : "";
@@ -516,6 +560,8 @@
     }
   }
 
+  /* Counts the expert-only fields even at standard level: they are hidden,
+     not gone, and removing a player would still throw them away. */
   function playerHasContent(player) {
     return !!player.hero.trim() || player.hp != null ||
       player.obligations.length > 0 || player.rescuedAllies.length > 0 ||
@@ -642,16 +688,24 @@
     var t = ctx.t, state = ctx.state;
 
     var players = printSection(root, t("secPlayers"));
+    /* First, because it decides what the rest of this section even means. */
+    printLine(players, (state.expert ? "[x] " : "[ ] ") + t("lblExpert"));
     state.players.forEach(function (p, i) {
       if (!playerHasContent(p)) return;
-      printLine(players, t("playerRow", String(i + 1)) + ": " +
-        (p.hero || "—") + " · " + t("colHp") + ": " +
-        (p.hp == null ? "—" : String(p.hp)));
+      var line = t("playerRow", String(i + 1)) + ": " + (p.hero || "—");
+      if (state.expert) {
+        line += " · " + t("colHp") + ": " + (p.hp == null ? "—" : String(p.hp));
+      }
+      printLine(players, line);
       printLine(players, "  " + t("lblTechUpgrade") + ": " +
         (poolName(TECH_UPGRADES, p.techUpgrade) || "—"));
       printLine(players, "  " + t("lblBasicUpgrade") + ": " +
         (poolName(BASIC_UPGRADES, p.basicUpgrade) || "—"));
-      printNames(players, p.obligations, OBLIGATIONS, t("lblObligations"));
+      /* The hidden fields stay out of the printout too, so a standard sheet
+         does not print rules it is not playing. */
+      if (state.expert) {
+        printNames(players, p.obligations, OBLIGATIONS, t("lblObligations"));
+      }
       printNames(players, p.rescuedAllies, RESCUABLE_ALLIES, t("lblRescuedAllies"));
     });
 
@@ -730,8 +784,8 @@
     render: render,
     renderPrint: renderPrint,
 
-    helpDe: "Der MC10-Bogen folgt dem gedruckten Original — und das heißt vor allem: es gibt hier bewusst keine Szenario-Tabelle, kein „Abgeschlossen“, kein „Gescheitert“ und keinen Würfel. Die fünf Szenarien (Crossbones, Absorbing Man, Taskmaster, Zola, Red Skull) werden in fester Reihenfolge gespielt, deshalb hält der Bogen nur fest, was von einem Szenario ins nächste mitgeht. Wo auf Papier eine leere Zeile steht, stehen hier die tatsächlichen Karten — jedes dieser Felder hat genau vier gedruckte Möglichkeiten, und jedes trägt seine eigene Regel. Verpflichtungen: Jeder Spieler hat seinen eigenen Satz aller vier, zwei Spieler können also dieselbe haben. Tech- und Basis-Verbesserung: Jede Karte gibt es einmal in der Kampagne, eine gewählte verschwindet daher aus den Feldern der anderen Spieler. Gerettete Verbündete: Auch jeder nur einmal, aber ein Spieler kann mehrere haben — deshalb Kästchen statt Auswahlfeld, und bei den übrigen Spielern sind sie gesperrt statt verschwunden; der Sperrgrund nennt, wer ihn hat. Dazu die drei Ergebnisse, nach denen spätere Szenarien fragen: welche Experimentalwaffen nach Szenario 1 ins Begegnungsdeck gewandert sind — der Bogen will die Namen, nicht die Anzahl, weil Szenario 2 genau die wieder einmischt —, die Verzögerungsmarker auf dem Hauptplan nach Szenario 2, und nach Szenario 4, welche Spieler mit Handlangern im Gefecht waren; auf Papier eine Zeile zum Hineinschreiben, hier ein Häkchen pro Spieler, weil die App die Mitspieler ohnehin kennt. Die aus der Kampagne entfernten Verbündeten bleiben Freitext, weil dort mehr landen kann als die vier rettbaren; ein „~“ am Anfang eines Listeneintrags streicht ihn durch.",
-    helpEn: "The MC10 sheet follows the printed original, and that above all means what is deliberately absent: no scenario table, no “completed”, no “failed”, no die. The five scenarios (Crossbones, Absorbing Man, Taskmaster, Zola, Red Skull) are played in a fixed order, so the log only records what carries forward from one to the next. Where the paper has a blank line, this has the actual cards — each of those fields has exactly four printed possibilities, and each carries its own rule. Obligations: every player has their own set of all four, so two players can hold the same one. Tech and Basic Upgrade: each card exists once in the campaign, so choosing one removes it from the other players' fields. Rescued Allies: also one holder each, but a player may hold several — hence boxes rather than a dropdown, and on the other players they lock rather than disappear, naming who holds them. Then the three results later scenarios ask about: which Experimental Weapons went into the encounter deck after scenario 1 — the sheet wants the names, not a count, because scenario 2 shuffles exactly those back in — the delay counters left on the main scheme after scenario 2, and after scenario 4 which players were engaged with minions; one line to write names on, on paper, here a checkbox per player, since the app already knows who is playing. The allies removed from the campaign stay free text, because more than the four rescuable ones can end up there; a leading “~” strikes a list entry through.",
+    helpDe: "Der MC10-Bogen folgt dem gedruckten Original — und das heißt vor allem: es gibt hier bewusst keine Szenario-Tabelle, kein „Abgeschlossen“, kein „Gescheitert“ und keinen Würfel. Die fünf Szenarien (Crossbones, Absorbing Man, Taskmaster, Zola, Red Skull) werden in fester Reihenfolge gespielt, deshalb hält der Bogen nur fest, was von einem Szenario ins nächste mitgeht. Oben im Spielerbereich steht der Haken „Expertenmodus“: verbleibende Trefferpunkte und Verpflichtungen gibt es nur auf Expertenstufe, und auf Standardstufe blendet der Bogen beide aus, statt danach zu fragen. Ausblenden heißt nicht löschen — wer versehentlich umschaltet, verliert nichts. Wo auf Papier eine leere Zeile steht, stehen hier die tatsächlichen Karten — jedes dieser Felder hat genau vier gedruckte Möglichkeiten, und jedes trägt seine eigene Regel. Verpflichtungen: Jeder Spieler hat seinen eigenen Satz aller vier, zwei Spieler können also dieselbe haben. Tech- und Basis-Verbesserung: Jede Karte gibt es einmal in der Kampagne, eine gewählte verschwindet daher aus den Feldern der anderen Spieler. Gerettete Verbündete: Auch jeder nur einmal, aber ein Spieler kann mehrere haben — deshalb Kästchen statt Auswahlfeld, und bei den übrigen Spielern sind sie gesperrt statt verschwunden; der Sperrgrund nennt, wer ihn hat. Dazu die drei Ergebnisse, nach denen spätere Szenarien fragen: welche Experimentalwaffen nach Szenario 1 ins Begegnungsdeck gewandert sind — der Bogen will die Namen, nicht die Anzahl, weil Szenario 2 genau die wieder einmischt —, die Verzögerungsmarker auf dem Hauptplan nach Szenario 2, und nach Szenario 4, welche Spieler mit Handlangern im Gefecht waren; auf Papier eine Zeile zum Hineinschreiben, hier ein Häkchen pro Spieler, weil die App die Mitspieler ohnehin kennt. Die aus der Kampagne entfernten Verbündeten bleiben Freitext, weil dort mehr landen kann als die vier rettbaren; ein „~“ am Anfang eines Listeneintrags streicht ihn durch.",
+    helpEn: "The MC10 sheet follows the printed original, and that above all means what is deliberately absent: no scenario table, no “completed”, no “failed”, no die. The five scenarios (Crossbones, Absorbing Man, Taskmaster, Zola, Red Skull) are played in a fixed order, so the log only records what carries forward from one to the next. At the top of the player area sits the “Expert level” box: remaining hit points and obligations exist only at expert level, and at standard level the sheet hides both rather than asking for them. Hiding is not clearing — switching by accident loses nothing. Where the paper has a blank line, this has the actual cards — each of those fields has exactly four printed possibilities, and each carries its own rule. Obligations: every player has their own set of all four, so two players can hold the same one. Tech and Basic Upgrade: each card exists once in the campaign, so choosing one removes it from the other players' fields. Rescued Allies: also one holder each, but a player may hold several — hence boxes rather than a dropdown, and on the other players they lock rather than disappear, naming who holds them. Then the three results later scenarios ask about: which Experimental Weapons went into the encounter deck after scenario 1 — the sheet wants the names, not a count, because scenario 2 shuffles exactly those back in — the delay counters left on the main scheme after scenario 2, and after scenario 4 which players were engaged with minions; one line to write names on, on paper, here a checkbox per player, since the app already knows who is playing. The allies removed from the campaign stay free text, because more than the four rescuable ones can end up there; a leading “~” strikes a list entry through.",
 
     /* Deutsche Feldnamen: MC10 ist auf Deutsch erschienen, aber die genaue
        Beschriftung des gedruckten deutschen Bogens ließ sich nicht belegen. Die
@@ -753,6 +807,8 @@
         colIdentity: "Identität",
         colHp: "Verbleibende Trefferpunkte",
         identityPlaceholder: "Held …",
+        lblExpert: "Expertenmodus",
+        expertHint: "Nur auf Expertenstufe werden verbleibende Trefferpunkte und Verpflichtungen festgehalten. Ausschalten blendet beide aus, löscht sie aber nicht.",
         addPlayer: "+ Spieler",
         addPlayerFull: "Mehr als vier Spieler kennt das Spiel nicht.",
         removePlayer: "Spieler entfernen",
@@ -788,6 +844,8 @@
         colIdentity: "Identity",
         colHp: "Remaining hit points",
         identityPlaceholder: "Hero …",
+        lblExpert: "Expert level",
+        expertHint: "Remaining hit points and obligations are only recorded at expert level. Switching this off hides both without clearing them.",
         addPlayer: "+ Player",
         addPlayerFull: "The game does not go beyond four players.",
         removePlayer: "Remove player",
