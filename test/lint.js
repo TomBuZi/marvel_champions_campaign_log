@@ -196,6 +196,12 @@ for (const def of campaigns) {
        does not have. They must land nowhere. */
     check(p + "no scenarios key on this sheet", once.scenarios === undefined);
     check(p + "no flags key on this sheet", once.flags === undefined);
+    /* The level is a real boolean, and standard is the default: a sheet that
+       says nothing is not an expert campaign. */
+    check(p + "the level defaults to standard", empty.expert === false);
+    check(p + "the level is a real boolean", once.expert === false, once.expert);
+    check(p + "a tolerant truthy level reads as expert",
+      def.normalize({ expert: "true" }).expert === true);
     check(p + "player list capped at 4", once.players.length === 4, once.players.length);
     check(p + "an empty player list still yields one player",
       def.normalize({ players: [] }).players.length === 1);
@@ -222,6 +228,7 @@ for (const def of campaigns) {
           engagedWithMinion: 0 },
         "not even an object",
       ],
+      expert: 1,
       experimentalWeapons: ["exo-suit", "laser-rifle", "exo-suit", "made-up"],
       delayCounters: -5,
       removed: 42,
@@ -265,6 +272,18 @@ for (const def of campaigns) {
       eq(r1.experimentalWeapons, ["laser-rifle", "exo-suit"]),
       JSON.stringify(r1.experimentalWeapons));
     check(p + "the delay counter is clamped", r1.delayCounters === 0, r1.delayCounters);
+    check(p + "the level survives as a boolean", r1.expert === true, r1.expert);
+    /* Hiding is not clearing: the expert-only fields have to survive a sheet
+       that is currently standard, or toggling by accident would cost data. */
+    const standard = def.normalize({
+      expert: false,
+      players: [{ hero: "Echo", hp: 7, obligations: ["martial-law"] }],
+    });
+    check(p + "a standard sheet keeps its hidden hit points",
+      standard.players[0].hp === 7, standard.players[0].hp);
+    check(p + "a standard sheet keeps its hidden obligations",
+      eq(standard.players[0].obligations, ["martial-law"]),
+      JSON.stringify(standard.players[0].obligations));
     /* Neither an array nor a string, so there is nothing to read as a list —
        an empty one is the honest answer. */
     check(p + "a bare number yields no list at all", eq(r1.removed, []),

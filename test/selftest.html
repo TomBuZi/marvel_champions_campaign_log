@@ -1373,6 +1373,10 @@
           log("the picker groups by campaign",
             d.getElementById("log-select").querySelectorAll("optgroup").length === 2);
           log("this sheet has no scenario table", !d.querySelector(".sheet-table"));
+          log("a fresh sheet starts at standard level",
+            active.state.expert === false, active.state.expert);
+          log("standard level shows no hit points",
+            !d.querySelector(".player-card .num-input"));
           finish();
         });
       }
@@ -1566,6 +1570,66 @@
         });
       }
 
+      /* The expert switch, and the promise that switching it off hides the two
+         fields rather than clearing them. */
+      function caseRrsExpert() {
+        var seeded = rrsLog();
+        seeded.state.expert = false;
+        /* Filled in, but not visible at standard level — exactly the state that
+           would lose data if hiding were clearing. */
+        seeded.state.players = [{
+          hero: "Captain America", hp: 7, obligations: ["martial-law"],
+          techUpgrade: "laser-cannon", basicUpgrade: "", rescuedAllies: [],
+          engagedWithMinion: false,
+        }];
+        seed({ rrs1: seeded }, "rrs1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var card = function () { return d.querySelector(".player-card"); };
+          var toggle = function () {
+            return d.querySelector("[data-section=players] .panel-head .flag .sheet-check");
+          };
+          var rows = function () { return card().querySelectorAll(".flag-row").length; };
+
+          log("the switch is in the player panel head", !!toggle());
+          log("it starts unticked", toggle().checked === false);
+          log("standard hides the hit points", !card().querySelector(".num-input"));
+          log("standard leaves one card set — the allies", rows() === 1, rows());
+          log("the upgrades are not hidden",
+            card().querySelectorAll(".pool-select").length === 2);
+
+          toggle().checked = true;
+          fire(toggle(), "change");
+
+          log("expert reveals the hit points", !!card().querySelector(".num-input"));
+          log("and the value was still there",
+            card().querySelector(".num-input").value === "7",
+            card().querySelector(".num-input").value);
+          log("expert reveals the obligations", rows() === 2, rows());
+          log("and the ticked one was still ticked",
+            card().querySelectorAll(".flag-row")[0]
+              .querySelectorAll(".sheet-check")[2].checked === true);
+
+          toggle().checked = false;
+          fire(toggle(), "change");
+          log("switching back hides them again",
+            !card().querySelector(".num-input") && rows() === 1);
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).rrs1.state;
+            log("the sheet is back at standard", st.expert === false);
+            log("but the hidden hit points survived", st.players[0].hp === 7,
+              st.players[0].hp);
+            log("and so did the hidden obligation",
+              JSON.stringify(st.players[0].obligations) ===
+                JSON.stringify(["martial-law"]),
+              JSON.stringify(st.players[0].obligations));
+            finish();
+          }, 500);
+        });
+      }
+
       function caseRrsPrint() {
         var seeded = rrsLog();
         seeded.state.players = [
@@ -1591,6 +1655,8 @@
           log("print names the upgrades", /Laser Cannon/.test(text) &&
             /Basic Attack Upgrade/.test(text));
           log("print names the obligation", /Martial Law/.test(text));
+          log("print says which level was played",
+            /\[x\] Expertenmodus/.test(text), text.slice(0, 120));
           log("print names both rescued allies",
             /Elektra/.test(text) && /White Tiger: Angela Del Toro/.test(text));
           /* Which weapons did NOT enter play matters too, so all four print. */
@@ -1619,6 +1685,9 @@
           title: "The Rise of Red Skull",
           createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-02T00:00:00.000Z",
           state: {
+            /* Expert, because two of the fields these cases drive exist only
+               there. caseRrsExpert is the one that starts at standard. */
+            expert: true,
             players: [rrsPlayer("", null)],
             experimentalWeapons: [], delayCounters: null, removed: [],
           },
@@ -1647,7 +1716,7 @@
         fire(input, "blur");
       }
 
-      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools };
+      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert };
       (cases[CASE] || caseBasic)();
     </script>
   </body>

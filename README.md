@@ -28,6 +28,13 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     Verbündeten. **Keine** Szenario-Tabelle, kein Fortschritt, kein Würfel — der
     gedruckte MC10-Bogen hat das alles nicht, weil die fünf Szenarien in fester
     Reihenfolge gespielt werden.
+* **Standard- oder Expertenstufe** (MC10) — der Haken „Expertenmodus“ oben im
+  Spielerbereich. Verbleibende Trefferpunkte und Verpflichtungen gibt es nur auf
+  Expertenstufe (das Regelheft nennt beides ausdrücklich dort), auf Standardstufe
+  blendet der Bogen sie aus, statt danach zu fragen. **Ausblenden ist nicht
+  Löschen**: wer versehentlich umschaltet, findet nach dem Zurückschalten alles
+  wieder vor. Gedruckt wird der Haken mit, weil er entscheidet, was der Bogen
+  überhaupt bedeutet.
 * **Karten statt Freitext** (MC10) — wo auf Papier eine leere Zeile steht, stehen hier
   die tatsächlichen Karten. Jedes dieser Felder hat genau vier gedruckte
   Möglichkeiten, und jedes trägt seine eigene Regel aus der Kampagne:
@@ -277,20 +284,22 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (289 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (305 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   langpath | print | import | lock |
                                     #   lockconflict | random | randomspread |
                                     #   appearance | players | migrate |
                                     #   round | roundlast | roundspread |
-                                    #   rrs | rrsdialog | rrsprint | rrspools
+                                    #   rrs | rrsdialog | rrsprint | rrspools |
+                                    #   rrsexpert
 BROWSER_LANG=de-DE node test/run-browser.js   # unter einer anderen Browser-Sprache
 ```
 
 `test/seed.html` legt einen ausgefüllten Beispielbogen an und springt in die App —
 praktisch für Screenshots und für den Druckvergleich. `?c=mc10` nimmt den MC10-Bogen
-statt MC60, `?theme=dark` nagelt zusätzlich das Theme fest; letzteres braucht man, um
-zu prüfen, dass der Druck auch aus einer Dark-Mode-Sitzung schwarz auf weiß bleibt.
+statt MC60, `?expert=0` stellt ihn auf Standardstufe, und `?theme=dark` nagelt das
+Theme fest; letzteres braucht man, um zu prüfen, dass der Druck auch aus einer
+Dark-Mode-Sitzung schwarz auf weiß bleibt.
 
 Der Selbsttest sucht Edge oder Chrome selbst; mit `BROWSER=/pfad/zum/chrome` lässt sich
 das überschreiben. Findet er keinen, bricht er mit Code 2 ab und sagt ausdrücklich,

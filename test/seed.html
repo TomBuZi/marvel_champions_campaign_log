@@ -9,6 +9,9 @@ var which = q.get("c") === "mc10" ? "mc10" : "mc60";
    Gebraucht fuer den Druckvergleich: der Druck muss schwarz auf weiss sein,
    auch aus einer Dark-Mode-Sitzung und auch mit einem Kampagnen-Skin. */
 var theme = q.get("theme");
+/* "?expert=0" stellt den MC10-Bogen auf Standardstufe, wo verbleibende
+   Trefferpunkte und Verpflichtungen ausgeblendet sind. */
+var expert = q.get("expert");
 
 var logs = {
   mc60: {
@@ -36,6 +39,7 @@ var logs = {
     title: "Roter Schädel, Durchgang 1", createdAt: "2026-08-02T18:00:00.000Z",
     updatedAt: "2026-08-15T20:10:00.000Z",
     state: {
+      expert: true,
       players: [
         { hero: "Captain America", hp: 9,
           obligations: ["martial-law", "anti-hero-propaganda"],
@@ -58,6 +62,7 @@ var logs = {
 };
 
 var log = logs[which];
+if (expert === "0" && log.state.expert !== undefined) log.state.expert = false;
 localStorage.clear();
 var store = {};
 store[log.id] = log;
