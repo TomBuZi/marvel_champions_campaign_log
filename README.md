@@ -294,7 +294,7 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (321 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (322 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   langpath | print | import | lock |
                                     #   lockconflict | random | randomspread |

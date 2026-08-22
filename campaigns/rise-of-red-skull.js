@@ -40,11 +40,12 @@
   var COUNT_MAX = 99;
 
   /* ---- POOLS ---------------------------------------------------------------
-     Card names stay English in both languages, the same convention the MC60
-     module follows for its villains. The German edition does translate these,
-     but the printed German wording could not be verified — correct one line
-     each once it can. Nothing migrates when a name changes, because only the
-     slug is ever persisted.
+     Every card carries an English and a German name. `de: null` means there is
+     no German name on record yet, and then the English one is shown — the same
+     convention heroes.js uses for heroes whose name is the same in both
+     languages. Filling a `de` in later migrates nothing, because only the slug
+     is ever persisted; and a forgotten one is visibly English rather than
+     broken.
 
      Each pool carries a different rule, taken from the campaign:
 
@@ -64,52 +65,65 @@
      ones back into the encounter deck, which is why it is the names that
      matter and not a count. */
   var EXPERIMENTAL_WEAPONS = [
-    { slug: "laser-rifle",     name: "Laser Rifle" },
-    { slug: "energy-shield",   name: "Energy Shield" },
-    { slug: "power-gauntlets", name: "Power Gauntlets" },
-    { slug: "exo-suit",        name: "Exo-Suit" },
+    { slug: "laser-rifle",     en: "Laser Rifle",     de: null },
+    { slug: "energy-shield",   en: "Energy Shield",   de: null },
+    { slug: "power-gauntlets", en: "Power Gauntlets", de: null },
+    { slug: "exo-suit",        en: "Exo-Suit",        de: null },
   ];
 
   var TECH_UPGRADES = [
-    { slug: "adrenal-stims",        name: "Adrenal Stims" },
-    { slug: "tactical-scanner",     name: "Tactical Scanner" },
-    { slug: "emergency-teleporter", name: "Emergency Teleporter" },
-    { slug: "laser-cannon",         name: "Laser Cannon" },
+    { slug: "adrenal-stims",        en: "Adrenal Stims",        de: null },
+    { slug: "tactical-scanner",     en: "Tactical Scanner",     de: null },
+    { slug: "emergency-teleporter", en: "Emergency Teleporter", de: null },
+    { slug: "laser-cannon",         en: "Laser Cannon",         de: null },
   ];
 
   /* These really are the printed names: the Condition upgrades in the campaign
      set are called "Basic <stat> Upgrade", and flip to an "Improved" side. */
   var BASIC_UPGRADES = [
-    { slug: "basic-thwart",   name: "Basic Thwart Upgrade" },
-    { slug: "basic-attack",   name: "Basic Attack Upgrade" },
-    { slug: "basic-defense",  name: "Basic Defense Upgrade" },
-    { slug: "basic-recovery", name: "Basic Recovery Upgrade" },
+    { slug: "basic-thwart",   en: "Basic Thwart Upgrade",   de: null },
+    { slug: "basic-attack",   en: "Basic Attack Upgrade",   de: null },
+    { slug: "basic-defense",  en: "Basic Defense Upgrade",  de: null },
+    { slug: "basic-recovery", en: "Basic Recovery Upgrade", de: null },
   ];
 
   /* Every player is dealt their own copy of the same four, so unlike the
      upgrades these are not shared out — two players can both carry Martial
      Law. */
   var OBLIGATIONS = [
-    { slug: "zolas-algorithm",      name: "Zola's Algorithm" },
-    { slug: "medical-emergency",    name: "Medical Emergency" },
-    { slug: "martial-law",          name: "Martial Law" },
-    { slug: "anti-hero-propaganda", name: "Anti-Hero Propaganda" },
+    { slug: "zolas-algorithm",      en: "Zola's Algorithm",      de: null },
+    { slug: "medical-emergency",    en: "Medical Emergency",     de: null },
+    { slug: "martial-law",          en: "Martial Law",           de: null },
+    { slug: "anti-hero-propaganda", en: "Anti-Hero Propaganda",  de: null },
   ];
 
+  /* Character names are the one group that may well stay English even in the
+     German edition, the way the MC60 villains do. */
   var RESCUABLE_ALLIES = [
-    { slug: "elektra",     name: "Elektra" },
-    { slug: "moon-knight", name: "Moon Knight: Marc Spector" },
-    { slug: "shang-chi",   name: "Shang-Chi" },
-    { slug: "white-tiger", name: "White Tiger: Angela Del Toro" },
+    { slug: "elektra",     en: "Elektra",                      de: null },
+    { slug: "moon-knight", en: "Moon Knight: Marc Spector",    de: null },
+    { slug: "shang-chi",   en: "Shang-Chi",                    de: null },
+    { slug: "white-tiger", en: "White Tiger: Angela Del Toro", de: null },
   ];
 
   function inPool(pool, slug) {
     for (var i = 0; i < pool.length; i++) if (pool[i].slug === slug) return pool[i];
     return null;
   }
-  function poolName(pool, slug) {
+  /* The name to show. Falls back to English while `de` is null, so a card
+     without a German name yet is readable rather than blank. */
+  function entryName(entry, lang) {
+    return (lang === "de" && entry.de) ? entry.de : entry.en;
+  }
+  /* "en" only while the English name is what is actually on screen: tagging a
+     German name as English would mislead hyphenation and screen readers. The
+     MC60 module does the same for its scenario names. */
+  function entryLang(entry, lang) {
+    return (lang === "de" && entry.de) ? null : "en";
+  }
+  function poolName(pool, slug, lang) {
     var entry = inPool(pool, slug);
-    return entry ? entry.name : null;
+    return entry ? entryName(entry, lang) : null;
   }
   function poolIndex(pool, slug) {
     for (var i = 0; i < pool.length; i++) if (pool[i].slug === slug) return i;
@@ -277,7 +291,7 @@
   /* A caption plus a row of named checkboxes — the shape every card set on this
      sheet takes. `attrs(entry)` decorates each box so a caller with a
      cross-player rule can find its boxes again without a re-render. */
-  function checkRow(labelText, pool, cfg) {
+  function checkRow(labelText, pool, lang, cfg) {
     var wrap = W.el("div", "player-field");
     var caption = W.el("p", "field-label");
     caption.textContent = labelText;
@@ -286,8 +300,8 @@
     var row = W.el("div", "flag-row");
     pool.forEach(function (entry) {
       var flag = W.el("label", "flag");
-      var text = W.el("span", null, { lang: "en" });
-      text.textContent = entry.name;
+      var text = W.el("span", null, { lang: entryLang(entry, lang) });
+      text.textContent = entryName(entry, lang);
       flag.appendChild(text);
       flag.appendChild(W.checkbox({
         checked: cfg.isOn(entry),
@@ -314,7 +328,7 @@
        styles.css), which is how they are printed; they stay in this order in
        the DOM, so reading order and print output follow the paper sheet. */
     var row = W.el("div", "scenario-row");
-    row.appendChild(renderScenario1(t, state, ctx));
+    row.appendChild(renderScenario1(t, lang, state, ctx));
     row.appendChild(renderScenario2(t, state, ctx));
     root.appendChild(row);
     root.appendChild(renderScenario4(t, state, ctx));
@@ -444,9 +458,11 @@
          Set. Every player has their own copy of all four, so unlike the
          upgrades there is nothing to share out and nothing to lock. */
       if (state.expert) {
-        card.appendChild(checkRow(t("lblObligations"), OBLIGATIONS, {
+        card.appendChild(checkRow(t("lblObligations"), OBLIGATIONS, lang, {
           isOn: function (o) { return player.obligations.indexOf(o.slug) !== -1; },
-          labelFor: function (o) { return playerLabel(t, player, i) + " – " + o.name; },
+          labelFor: function (o) {
+            return playerLabel(t, player, i) + " – " + entryName(o, lang);
+          },
           onChange: function (o, on) {
             toggleSlug(player.obligations, OBLIGATIONS, o.slug, on);
             ctx.save();
@@ -459,7 +475,7 @@
         label: caption + " – " + t("lblTechUpgrade"),
         placeholder: t("upgradePlaceholder"),
         options: TECH_UPGRADES.map(function (u) {
-          return { value: u.slug, label: u.name, lang: "en" };
+          return { value: u.slug, label: entryName(u, lang), lang: entryLang(u, lang) };
         }),
         onChange: function (next) {
           player.techUpgrade = next;
@@ -475,7 +491,7 @@
         label: caption + " – " + t("lblBasicUpgrade"),
         placeholder: t("upgradePlaceholder"),
         options: BASIC_UPGRADES.map(function (u) {
-          return { value: u.slug, label: u.name, lang: "en" };
+          return { value: u.slug, label: entryName(u, lang), lang: entryLang(u, lang) };
         }),
         onChange: function (next) {
           player.basicUpgrade = next;
@@ -489,9 +505,11 @@
       /* Rescued allies: each ally goes to at most one player, but a player may
          hold several — so boxes rather than a dropdown, and on the other
          players they lock instead of disappearing. */
-      card.appendChild(checkRow(t("lblRescuedAllies"), RESCUABLE_ALLIES, {
+      card.appendChild(checkRow(t("lblRescuedAllies"), RESCUABLE_ALLIES, lang, {
         isOn: function (a) { return player.rescuedAllies.indexOf(a.slug) !== -1; },
-        labelFor: function (a) { return playerLabel(t, player, i) + " – " + a.name; },
+        labelFor: function (a) {
+          return playerLabel(t, player, i) + " – " + entryName(a, lang);
+        },
         isLocked: function (a) {
           var at = holderOf(state, "rescuedAllies", a.slug);
           return at !== -1 && at !== i;
@@ -585,11 +603,13 @@
     return null;
   }
 
-  function renderScenario1(t, state, ctx) {
+  function renderScenario1(t, lang, state, ctx) {
     var section = panel("scenario-1", t("secScenario1"));
-    section.appendChild(checkRow(t("lblExperimentalWeapons"), EXPERIMENTAL_WEAPONS, {
+    section.appendChild(checkRow(t("lblExperimentalWeapons"), EXPERIMENTAL_WEAPONS, lang, {
       isOn: function (w) { return state.experimentalWeapons.indexOf(w.slug) !== -1; },
-      labelFor: function (w) { return t("lblExperimentalWeapons") + " – " + w.name; },
+      labelFor: function (w) {
+        return t("lblExperimentalWeapons") + " – " + entryName(w, lang);
+      },
       onChange: function (w, on) {
         toggleSlug(state.experimentalWeapons, EXPERIMENTAL_WEAPONS, w.slug, on);
         ctx.save();
@@ -685,7 +705,7 @@
   /* A plain text snapshot. Checkboxes become box glyphs drawn in CSS, so the
      printout does not depend on a font carrying a tick. */
   function renderPrint(root, ctx) {
-    var t = ctx.t, state = ctx.state;
+    var t = ctx.t, lang = ctx.lang, state = ctx.state;
 
     var players = printSection(root, t("secPlayers"));
     /* First, because it decides what the rest of this section even means. */
@@ -698,15 +718,15 @@
       }
       printLine(players, line);
       printLine(players, "  " + t("lblTechUpgrade") + ": " +
-        (poolName(TECH_UPGRADES, p.techUpgrade) || "—"));
+        (poolName(TECH_UPGRADES, p.techUpgrade, lang) || "—"));
       printLine(players, "  " + t("lblBasicUpgrade") + ": " +
-        (poolName(BASIC_UPGRADES, p.basicUpgrade) || "—"));
+        (poolName(BASIC_UPGRADES, p.basicUpgrade, lang) || "—"));
       /* The hidden fields stay out of the printout too, so a standard sheet
          does not print rules it is not playing. */
       if (state.expert) {
-        printNames(players, p.obligations, OBLIGATIONS, t("lblObligations"));
+        printNames(players, p.obligations, OBLIGATIONS, t("lblObligations"), lang);
       }
-      printNames(players, p.rescuedAllies, RESCUABLE_ALLIES, t("lblRescuedAllies"));
+      printNames(players, p.rescuedAllies, RESCUABLE_ALLIES, t("lblRescuedAllies"), lang);
     });
 
     /* Every weapon on its own line with a box: which ones did NOT enter play
@@ -715,7 +735,8 @@
     var one = printSection(root, t("secScenario1"));
     printLine(one, t("lblExperimentalWeapons") + ":");
     EXPERIMENTAL_WEAPONS.forEach(function (w) {
-      printLine(one, (state.experimentalWeapons.indexOf(w.slug) !== -1 ? "[x] " : "[ ] ") + w.name);
+      printLine(one, (state.experimentalWeapons.indexOf(w.slug) !== -1 ? "[x] " : "[ ] ") +
+        entryName(w, lang));
     });
 
     var two = printSection(root, t("secScenario2"));
@@ -758,10 +779,10 @@
   }
 
   /* A heading plus the chosen card names, or nothing at all when none are. */
-  function printNames(parent, slugs, pool, heading) {
+  function printNames(parent, slugs, pool, heading, lang) {
     if (!slugs.length) return;
     printLine(parent, "  " + heading + ": " + slugs.map(function (slug) {
-      return poolName(pool, slug);
+      return poolName(pool, slug, lang);
     }).join(", "));
   }
 
@@ -791,9 +812,9 @@
        Beschriftung des gedruckten deutschen Bogens ließ sich nicht belegen. Die
        mit „zu bestätigen“ markierten Zeilen bitte gegen den Bogen abgleichen
        und je eine Zeile korrigieren. Es migriert nichts, wenn sie sich ändern —
-       persistiert werden nur Feldschlüssel, nie Beschriftungen. Für die
-       Kartennamen gilt dasselbe wie für die MC60-Schurken: sie bleiben
-       englisch. */
+       persistiert werden nur Feldschlüssel, nie Beschriftungen. Die Kartennamen
+       stehen oben in den Pools, je mit einem en- und einem de-Feld; solange
+       de null ist, wird der englische Name gezeigt. */
     i18n: {
       de: {
         secPlayers: "Spieler-Informationen",

@@ -82,6 +82,22 @@ for (const def of campaigns) {
 }
 
 // ------------------------------------------------------------------- campaigns
+/* Display names in a campaign's own tables — scenario names, card pools —
+   carry an `en` and a `de`. A `de` of null means "no German name on record"
+   and the English one is shown instead; an EMPTY string means exactly the
+   same thing while LOOKING like a filled-in translation, so it is almost
+   certainly a slip. This is source-level on purpose: those tables are
+   private to their module, and exporting them just to test them would be
+   the tail wagging the dog. */
+section("Display names");
+for (const def of campaigns) {
+  const src = read("campaigns/" + def.id + ".js");
+  const empties = [...src.matchAll(/^.*\bde:\s*(""|'')/gm)]
+    .map((m) => m[0].trim());
+  check(def.id + ": no empty de in a name table",
+    empties.length === 0, empties.join(" | "));
+}
+
 section("Campaign definitions");
 const seenIds = new Set();
 for (const def of campaigns) {

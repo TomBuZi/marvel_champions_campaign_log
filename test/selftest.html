@@ -1507,6 +1507,18 @@
           log("the boxes carry the printed card names",
             /Zola's Algorithm/.test(rows[0].textContent) &&
             /Martial Law/.test(rows[0].textContent), rows[0].textContent);
+          /* A card without a German name yet shows the English one — and only
+             then may it be tagged lang="en", because tagging a German string as
+             English misleads hyphenation and screen readers. Written as an
+             equivalence, so it stays true once the de names are filled in. */
+          var EN_OBLIGATIONS = ["Zola's Algorithm", "Medical Emergency",
+                                "Martial Law", "Anti-Hero Propaganda"];
+          log("the language tag follows the name actually shown",
+            Array.prototype.every.call(rows[0].querySelectorAll(".flag > span"),
+              function (span, n) {
+                return (span.textContent === EN_OBLIGATIONS[n]) ===
+                  (span.getAttribute("lang") === "en");
+              }));
           log("the ally boxes carry their printed names",
             /Moon Knight: Marc Spector/.test(rows[1].textContent) &&
             /White Tiger: Angela Del Toro/.test(rows[1].textContent), rows[1].textContent);
