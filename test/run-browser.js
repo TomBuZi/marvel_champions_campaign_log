@@ -121,12 +121,23 @@ function decodeEntities(s) {
     if (!m) {
       failures++;
       console.log("  no output — the harness never reported");
+      if (process.env.GITHUB_ACTIONS) {
+        console.log("::error title=" + name + "::the harness never reported");
+      }
       continue;
     }
     const text = decodeEntities(m[1]).trim();
     console.log(text.split("\n").map((l) => "  " + l).join("\n"));
     for (const line of text.split("\n")) {
-      if (/^(FAIL|ERROR|REJECT|TIMEOUT)/.test(line)) failures++;
+      if (/^(FAIL|ERROR|REJECT|TIMEOUT)/.test(line)) {
+        failures++;
+        /* Also as a workflow command, so a red run says WHY on the CI
+           summary. Without this the only signal in the UI is "exit code
+           1", and the log itself needs admin rights on the repo. */
+        if (process.env.GITHUB_ACTIONS) {
+          console.log("::error title=" + name + "::" + line);
+        }
+      }
       if (/^(PASS|FAIL)/.test(line)) total++;
     }
   }
