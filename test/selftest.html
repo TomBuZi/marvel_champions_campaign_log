@@ -77,6 +77,19 @@
           log("log title auto-named", log0 && log0.title === "Fear No Evil", log0 && log0.title);
           log("state has 5 scenarios", log0 && log0.state.scenarios.length === 5);
 
+          /* Standard level is the default, and it has no hit-point field. The
+             rest of this case is about that field, so switch to expert first —
+             the hint lives inside it. */
+          log("a fresh sheet starts at standard level",
+            log0 && log0.state.expert === false, log0 && log0.state.expert);
+          log("standard level shows no hit points",
+            !d.querySelector(".player-card .num-input"));
+          var expertBox = d.querySelector("[data-section=players] .panel-head .flag .sheet-check");
+          expertBox.checked = true;
+          fire(expertBox, "change");
+          log("expert level reveals the hit points",
+            !!d.querySelector(".player-card .num-input"));
+
           // Type a hero, check the starting-hit-points hint appears.
           var hero = d.querySelectorAll(".player-card .text-input")[0];
           hero.value = "She-Hulk";
@@ -165,7 +178,10 @@
           log("add enabled again once filled", !d.querySelector(".entry-add").disabled);
 
           // Flags.
-          var flagBoxes = d.querySelectorAll(".flag .sheet-check");
+          /* Scoped to the campaign-state panel: the expert switch in the
+             player panel head is a .flag too, and it comes first in the
+             document. */
+          var flagBoxes = d.querySelectorAll("[data-section=flags] .flag .sheet-check");
           flagBoxes[1].checked = true;
           fire(flagBoxes[1], "change");
 
@@ -451,7 +467,10 @@
           entry.value = "~Foggy Nelson";
           fire(entry, "input");
           fire(entry, "blur");
-          var flagBoxes = d.querySelectorAll(".flag .sheet-check");
+          /* Scoped to the campaign-state panel: the expert switch in the
+             player panel head is a .flag too, and it comes first in the
+             document. */
+          var flagBoxes = d.querySelectorAll("[data-section=flags] .flag .sheet-check");
           flagBoxes[0].checked = true;
           fire(flagBoxes[0], "change");
 
@@ -460,6 +479,12 @@
           var text = pv.textContent;
           log("print view built", pv.children.length > 0, pv.children.length);
           log("print names the campaign", /Fear No Evil \(MC60\)/.test(text));
+          log("print says which level was played",
+            /\[ \] Expertenmodus/.test(text), text.slice(0, 130));
+          /* Standard level, so the hit points are not on the sheet and must
+             not be on the printout either. */
+          log("print omits the hit points at standard level",
+            !/Verbleibende Trefferpunkte/.test(text));
           log("print carries the hero", /Daredevil/.test(text));
           log("print marks the villain", /Typhoid Mary/.test(text));
           log("print shows the failed scenario", /Gescheitert/.test(text));
@@ -1001,6 +1026,12 @@
             });
           }
 
+          /* This case checks the hit-point hint at the end, and that field only
+             exists at expert level. */
+          var expertBox = d.querySelector("[data-section=players] .panel-head .flag .sheet-check");
+          expertBox.checked = true;
+          fire(expertBox, "change");
+
           log("a fresh sheet starts with one player", cards().length === 1, cards().length);
           log("the add button is offered", !!addBtn() && !addBtn().disabled);
           log("the only player cannot be removed", removeBtn(0).disabled);
@@ -1071,7 +1102,58 @@
         });
       }
 
-      // ------------------------------------------------------- migrate v1 -> v2
+      // ------------------------------------------------------------ expert level
+      /* Standard hides the remaining hit points; switching back has to hide
+         them without throwing them away. */
+      function caseExpert() {
+        var sheet = {
+          schemaVersion: 1, id: "exp-1", campaignId: "fear-no-evil", stateVersion: 3,
+          title: "Standardstufe", createdAt: "2026-04-01T00:00:00.000Z",
+          updatedAt: "2026-04-02T00:00:00.000Z",
+          state: {
+            expert: false,
+            /* Filled in but not visible — exactly the state that would lose
+               data if hiding were clearing. */
+            players: [{ hero: "Daredevil", hp: 6 }],
+            scenarios: [], removed: [],
+            flags: { trustEstablished: false, maryDefeated: false },
+          },
+        };
+        seed({ "exp-1": sheet }, "exp-1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          function card() { return d.querySelector(".player-card"); }
+          function toggle() { return d.querySelector("[data-section=players] .panel-head .flag .sheet-check"); }
+
+          log("the switch is in the player panel head", !!toggle());
+          log("it starts unticked", toggle().checked === false);
+          log("standard hides the hit points", !card().querySelector(".num-input"));
+          log("the identity field is not hidden", !!card().querySelector(".text-input"));
+          log("the scenario table is not hidden", !!d.querySelector(".sheet-table"));
+
+          toggle().checked = true;
+          fire(toggle(), "change");
+          log("expert reveals the hit points", !!card().querySelector(".num-input"));
+          log("and the value was still there",
+            card().querySelector(".num-input").value === "6",
+            card().querySelector(".num-input").value);
+
+          toggle().checked = false;
+          fire(toggle(), "change");
+          log("switching back hides it again", !card().querySelector(".num-input"));
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs"))["exp-1"].state;
+            log("the sheet is back at standard", st.expert === false);
+            log("but the hidden hit points survived", st.players[0].hp === 6,
+              st.players[0].hp);
+            finish();
+          }, 500);
+        });
+      }
+
+      // ------------------------------------------------------- migrate v1 -> v3
       /* Version 1 sheets always carried four player entries. Opening one now has
          to leave only the players who were actually on it, without losing them
          and without renumbering the ones that stay. */
@@ -1093,19 +1175,21 @@
         seed({ "old-1": v1 }, "old-1");
         boot("", function (frame, w, d) {
           f0 = w;
-          var cards = d.querySelectorAll(".player-card");
+          /* Re-queried, because switching the level below re-renders. */
+          function cards() { return d.querySelectorAll(".player-card"); }
           log("the old sheet opens without a notice", d.getElementById("notice").hidden);
-          log("only the two real players are shown", cards.length === 2, cards.length);
+          log("only the two real players are shown", cards().length === 2, cards().length);
           log("their heroes survived",
-            cards[0].querySelector(".text-input").value === "Daredevil" &&
-            cards[1].querySelector(".text-input").value === "Echo");
-          log("their hit points survived",
-            cards[0].querySelector(".num-input").value === "8" &&
-            cards[1].querySelector(".num-input").value === "11");
+            cards()[0].querySelector(".text-input").value === "Daredevil" &&
+            cards()[1].querySelector(".text-input").value === "Echo");
           log("the rest of the sheet came along",
             d.querySelectorAll("tbody tr").length === 5 &&
             d.querySelector(".entry-input").value === "Karen Page");
           log("the add button is available again", !d.querySelector(".btn-add").disabled);
+          /* A version 1 sheet never carried the level, so it opens as standard
+             and its hit points are not on screen yet. */
+          log("an old sheet opens at standard level",
+            !d.querySelector(".player-card .num-input"));
 
           /* Migration happens on read; the stored blob is only rewritten by the
              next actual edit. A visit that changes nothing therefore leaves it
@@ -1117,8 +1201,18 @@
           log("and leaves its four stored entries alone",
             onLoad.state.players.length === 4, onLoad.state.players.length);
 
-          // The first edit writes it out in the current shape.
-          var hp = cards[0].querySelector(".num-input");
+          /* Switching the level is itself the first edit — and it reveals the
+             hit points the migration carried over. */
+          var expertBox = d.querySelector("[data-section=players] .panel-head .flag .sheet-check");
+          expertBox.checked = true;
+          fire(expertBox, "change");
+          log("their hit points survived the migration",
+            cards()[0].querySelector(".num-input").value === "8" &&
+            cards()[1].querySelector(".num-input").value === "11",
+            cards()[0].querySelector(".num-input").value + "/" +
+            cards()[1].querySelector(".num-input").value);
+
+          var hp = cards()[0].querySelector(".num-input");
           hp.value = "6";
           fire(hp, "input");
           fire(hp, "blur");
@@ -1126,7 +1220,7 @@
           setTimeout(function () {
             var stored = JSON.parse(localStorage.getItem("mcclog:logs"))["old-1"];
             log("an edit carries the stored sheet up to the current version",
-              stored.stateVersion === 2, stored.stateVersion);
+              stored.stateVersion === 3, stored.stateVersion);
             log("and stores two players, not four",
               stored.state.players.length === 2, JSON.stringify(stored.state.players));
             log("the edit itself landed", stored.state.players[0].hp === 6, stored.state.players[0].hp);
@@ -1716,7 +1810,7 @@
         fire(input, "blur");
       }
 
-      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert };
+      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert };
       (cases[CASE] || caseBasic)();
     </script>
   </body>

@@ -187,6 +187,20 @@ for (const def of campaigns) {
       eq(def.normalize(def.migrate(JSON.parse(JSON.stringify(empty)), def.stateVersion)), empty));
     check(p + "flags are booleans",
       Object.values(once.flags).every((v) => typeof v === "boolean"));
+    /* The level is a real boolean, and standard is the default: a sheet that
+       says nothing is not an expert campaign. */
+    check(p + "the level defaults to standard", empty.expert === false);
+    check(p + "a tolerant truthy level reads as expert",
+      def.normalize({ expert: 1 }).expert === true);
+    /* Hiding is not clearing: the hit points have to survive a sheet that is
+       currently standard, or toggling by accident would cost data. */
+    check(p + "a standard sheet keeps its hidden hit points",
+      def.normalize({ expert: false, players: [{ hero: "Echo", hp: 7 }] })
+        .players[0].hp === 7);
+    /* Version 3 only added the flag, so an older sheet needs no work beyond
+       reading standard out of its absence. */
+    check(p + "a version 2 sheet migrates to standard level",
+      def.normalize(def.migrate({ players: [{ hero: "Echo", hp: 7 }] }, 2)).expert === false);
     check(p + "list entries trimmed, blanks dropped",
       eq(once.removed, ["keep", "~struck", "42"]), JSON.stringify(once.removed));
   }
