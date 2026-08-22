@@ -1423,9 +1423,7 @@
 
           addEntry(d, "trors-removed", "Nick Fury");
 
-          var notes = d.querySelector(".notes-input");
-          notes.value = "erste Zeile\nzweite Zeile";
-          fire(notes, "input");
+          log("this sheet has no notes field", !d.querySelector(".notes-input"));
 
           w.dispatchEvent(new w.Event("pagehide"));
           setTimeout(function () {
@@ -1453,10 +1451,7 @@
             log("the removed list stored",
               JSON.stringify(st.removed) === JSON.stringify(["Nick Fury"]),
               JSON.stringify(st.removed));
-            /* The point of this sheet's own notes coercion: a paragraph break
-               has to survive a save, which W.coerceText would have eaten. */
-            log("the note keeps its line break",
-              st.notes === "erste Zeile\nzweite Zeile", JSON.stringify(st.notes));
+            log("no notes key reached storage", st.notes === undefined);
             finish();
           }, 500);
         });
@@ -1559,7 +1554,6 @@
         seeded.state.experimentalWeapons = ["laser-rifle", "exo-suit"];
         seeded.state.delayCounters = 3;
         seeded.state.removed = ["~Nick Fury"];
-        seeded.state.notes = "erste Zeile\nzweite Zeile";
         seed({ rrs1: seeded }, "rrs1");
         boot("", function (frame, w, d) {
           f0 = w;
@@ -1586,8 +1580,7 @@
           log("print keeps the struck entry", /Nick Fury/.test(text));
           log("print strikes it visually", !!pv.querySelector(".print-list .struck"));
           log("print hides the tilde", text.indexOf("~") === -1);
-          log("print carries both note lines",
-            /erste Zeile/.test(text) && /zweite Zeile/.test(text));
+          log("print has no notes section", !/Notizen/.test(text));
           /* Field-faithful means the MC60 vocabulary must NOT turn up here. */
           log("print has no progress wording", !/Gescheitert|Abgeschlossen/.test(text));
           log("print keeps the disclaimer", /MARVEL/.test(text));
@@ -1603,7 +1596,7 @@
           createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-02T00:00:00.000Z",
           state: {
             players: [rrsPlayer("", null)],
-            experimentalWeapons: [], delayCounters: null, removed: [], notes: "",
+            experimentalWeapons: [], delayCounters: null, removed: [],
           },
         };
       }

@@ -24,8 +24,8 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     beiden Kampagnen-Marken.
   * *The Rise of Red Skull (MC10)* — je Spieler Identität, Trefferpunkte,
     Verpflichtungen, Tech- und Basis-Verbesserung und gerettete Verbündete; dazu die
-    drei Felder, nach denen spätere Szenarien fragen, die entfernten Verbündeten und
-    ein Notizfeld. **Keine** Szenario-Tabelle, kein Fortschritt, kein Würfel — der
+    drei Felder, nach denen spätere Szenarien fragen, und die entfernten
+    Verbündeten. **Keine** Szenario-Tabelle, kein Fortschritt, kein Würfel — der
     gedruckte MC10-Bogen hat das alles nicht, weil die fünf Szenarien in fester
     Reihenfolge gespielt werden.
 * **Karten statt Freitext** (MC10) — wo auf Papier eine leere Zeile steht, stehen hier
@@ -207,7 +207,7 @@ auch über `file://` und direkt aus dem Repo-Root über GitHub Pages.
 | `i18n.js` | `window.I18N = { de, en }` — nur Strings des Rahmens |
 | `heroes.js` | 68 Helden (Name, Trefferpunkte) als Vorschlagsliste für die Identitätsfelder |
 | `campaigns/fear-no-evil.js` | die Kampagne MC60: eigenes Datenmodell, eigenes Rendering, eigene Strings |
-| `campaigns/rise-of-red-skull.js` | die Kampagne MC10: feste Kartenpools mit ihren Eindeutigkeitsregeln, drei Szenariofelder, Notizen; bewusst ohne Szenario-Tabelle |
+| `campaigns/rise-of-red-skull.js` | die Kampagne MC10: feste Kartenpools mit ihren Eindeutigkeitsregeln und drei Szenariofelder; bewusst ohne Szenario-Tabelle |
 | `test/lint.js` | Prüfungen ohne Browser: Wörterbücher, Kampagnendefinition, Datenmodell, Paketierung |
 | `test/selftest.html`, `test/run-browser.js` | Selbsttest, der die echte Seite in einem iframe fernsteuert |
 | `fonts/` | Exo 2 (OFL, selbst gehostet), `OFL.txt` daneben |
@@ -277,7 +277,7 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (288 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (289 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   langpath | print | import | lock |
                                     #   lockconflict | random | randomspread |

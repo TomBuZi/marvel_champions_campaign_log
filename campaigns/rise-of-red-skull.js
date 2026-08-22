@@ -31,7 +31,6 @@
   var HP_MAX = 99;
   var NAME_MAX = 60;
   var COUNT_MAX = 99;
-  var NOTES_MAX = 4000;
 
   /* ---- POOLS ---------------------------------------------------------------
      Card names stay English in both languages, the same convention the MC60
@@ -153,7 +152,6 @@
       /* Scenario 4: allies removed from the campaign. Free text, because what
          leaves is not limited to the four rescuable ones. */
       removed: [],
-      notes: "",
     };
   }
 
@@ -214,7 +212,6 @@
     out.experimentalWeapons = pickSlugs(raw.experimentalWeapons, EXPERIMENTAL_WEAPONS);
     out.delayCounters = W.clampNumber(raw.delayCounters, 0, COUNT_MAX);
     out.removed = W.coerceStringList(raw.removed, { split: true, trim: true });
-    out.notes = coerceNotes(raw.notes);
 
     return out;
   }
@@ -236,38 +233,6 @@
       if (seen[p[key]]) p[key] = "";
       else seen[p[key]] = true;
     });
-  }
-
-  /* Drop the control characters, keep the newline. Written as a loop over the
-     char codes rather than a regexp character class: such a class has to spell
-     the control characters out, and a source file that CONTAINS the bytes it
-     means to remove is a trap for whoever edits it next. */
-  function stripControls(s) {
-    var out = "";
-    for (var i = 0; i < s.length; i++) {
-      var c = s.charCodeAt(i);
-      if (c === 10) { out += "\n"; continue; }          // the newline stays
-      if (c < 32) continue;                             // the rest of C0, tab included
-      if (c >= 127 && c <= 159) continue;               // DEL and C1
-      out += s.charAt(i);
-    }
-    return out;
-  }
-
-  /* Free text, cleaned - the multi-line counterpart to W.coerceText.
-     W.coerceText drops every character below U+0020, and the newline is one of
-     them: running it over the notes would silently flatten every paragraph on
-     the next save. So this keeps the newline, and normalises CRLF on the way in
-     so a file edited on Windows and one edited elsewhere compare equal.
-
-     Deliberately local rather than an option on the shared helper: it has one
-     consumer, and that helper sits on the other campaign's data path. */
-  function coerceNotes(v) {
-    var s = typeof v === "string" ? v : (v == null ? "" : String(v));
-    s = stripControls(s.replace(/\r\n?/g, "\n"));
-    /* Trim, cap, trim again: the cap can land in the middle of whitespace, and
-       without the second trim the value would not be a fixpoint. */
-    return s.trim().slice(0, NOTES_MAX).trim();
   }
 
   /* No migrate(): stateVersion is 1, so there is no older shape in the wild
@@ -340,7 +305,6 @@
     row.appendChild(renderScenario2(t, state, ctx));
     root.appendChild(row);
     root.appendChild(renderScenario4(t, state, ctx));
-    root.appendChild(renderNotes(t, state, ctx));
   }
 
   function renderPlayers(t, lang, state, ctx) {
@@ -671,47 +635,6 @@
     });
   }
 
-  function renderNotes(t, state, ctx) {
-    var section = panel("notes", t("secNotes"));
-
-    /* The one field on this sheet that no widget covers: W.textField is a
-       single-line input, and W.stringList is a list of rows with grips and
-       remove buttons — neither is a free-text block. Composed here from W.el
-       and W.autoGrow rather than added to the shared toolbox, since this is
-       its only consumer so far. */
-    var ta = W.el("textarea", "notes-input", {
-      rows: "3",
-      "aria-label": t("secNotes"),
-      title: t("secNotes"),
-      placeholder: t("notesPlaceholder"),
-      maxlength: String(NOTES_MAX),
-      spellcheck: "false",
-    });
-    ta.value = state.notes;
-    ta.addEventListener("input", function () {
-      state.notes = ta.value;
-      W.autoGrow(ta);
-      /* In place — a re-render here would drop the focus on every keystroke. */
-      ctx.save();
-    });
-    ta.addEventListener("blur", function () {
-      var trimmed = ta.value.trim();
-      if (trimmed !== ta.value) {
-        ta.value = trimmed;
-        state.notes = trimmed;
-        W.autoGrow(ta);
-        ctx.save();
-      }
-    });
-    section.appendChild(ta);
-    /* Sized after the element is in the document: scrollHeight is 0 while it
-       is still detached. Same reason stringList defers its multiline sizing. */
-    if (typeof requestAnimationFrame === "function") {
-      requestAnimationFrame(function () { W.autoGrow(ta); });
-    }
-    return section;
-  }
-
   // ---- Print ---------------------------------------------------------------
   /* A plain text snapshot. Checkboxes become box glyphs drawn in CSS, so the
      printout does not depend on a font carrying a tick. */
@@ -762,12 +685,6 @@
       four.appendChild(ul);
     }
 
-    if (state.notes) {
-      var notes = printSection(root, t("secNotes"));
-      state.notes.split("\n").forEach(function (line) {
-        if (line.trim()) printLine(notes, line);
-      });
-    }
   }
 
   function printSection(root, heading) {
@@ -813,8 +730,8 @@
     render: render,
     renderPrint: renderPrint,
 
-    helpDe: "Der MC10-Bogen folgt dem gedruckten Original — und das heißt vor allem: es gibt hier bewusst keine Szenario-Tabelle, kein „Abgeschlossen“, kein „Gescheitert“ und keinen Würfel. Die fünf Szenarien (Crossbones, Absorbing Man, Taskmaster, Zola, Red Skull) werden in fester Reihenfolge gespielt, deshalb hält der Bogen nur fest, was von einem Szenario ins nächste mitgeht. Wo auf Papier eine leere Zeile steht, stehen hier die tatsächlichen Karten — jedes dieser Felder hat genau vier gedruckte Möglichkeiten, und jedes trägt seine eigene Regel. Verpflichtungen: Jeder Spieler hat seinen eigenen Satz aller vier, zwei Spieler können also dieselbe haben. Tech- und Basis-Verbesserung: Jede Karte gibt es einmal in der Kampagne, eine gewählte verschwindet daher aus den Feldern der anderen Spieler. Gerettete Verbündete: Auch jeder nur einmal, aber ein Spieler kann mehrere haben — deshalb Kästchen statt Auswahlfeld, und bei den übrigen Spielern sind sie gesperrt statt verschwunden; der Sperrgrund nennt, wer ihn hat. Dazu die drei Ergebnisse, nach denen spätere Szenarien fragen: welche Experimentalwaffen nach Szenario 1 ins Begegnungsdeck gewandert sind — der Bogen will die Namen, nicht die Anzahl, weil Szenario 2 genau die wieder einmischt —, die Verzögerungsmarker auf dem Hauptplan nach Szenario 2, und nach Szenario 4, welche Spieler mit Handlangern im Gefecht waren; auf Papier eine Zeile zum Hineinschreiben, hier ein Häkchen pro Spieler, weil die App die Mitspieler ohnehin kennt. Die aus der Kampagne entfernten Verbündeten bleiben Freitext, weil dort mehr landen kann als die vier rettbaren. Alles übrige nimmt das Notizfeld auf; ein „~“ am Anfang eines Listeneintrags streicht ihn durch.",
-    helpEn: "The MC10 sheet follows the printed original, and that above all means what is deliberately absent: no scenario table, no “completed”, no “failed”, no die. The five scenarios (Crossbones, Absorbing Man, Taskmaster, Zola, Red Skull) are played in a fixed order, so the log only records what carries forward from one to the next. Where the paper has a blank line, this has the actual cards — each of those fields has exactly four printed possibilities, and each carries its own rule. Obligations: every player has their own set of all four, so two players can hold the same one. Tech and Basic Upgrade: each card exists once in the campaign, so choosing one removes it from the other players' fields. Rescued Allies: also one holder each, but a player may hold several — hence boxes rather than a dropdown, and on the other players they lock rather than disappear, naming who holds them. Then the three results later scenarios ask about: which Experimental Weapons went into the encounter deck after scenario 1 — the sheet wants the names, not a count, because scenario 2 shuffles exactly those back in — the delay counters left on the main scheme after scenario 2, and after scenario 4 which players were engaged with minions; one line to write names on, on paper, here a checkbox per player, since the app already knows who is playing. The allies removed from the campaign stay free text, because more than the four rescuable ones can end up there. Everything else goes in Notes; a leading “~” strikes a list entry through.",
+    helpDe: "Der MC10-Bogen folgt dem gedruckten Original — und das heißt vor allem: es gibt hier bewusst keine Szenario-Tabelle, kein „Abgeschlossen“, kein „Gescheitert“ und keinen Würfel. Die fünf Szenarien (Crossbones, Absorbing Man, Taskmaster, Zola, Red Skull) werden in fester Reihenfolge gespielt, deshalb hält der Bogen nur fest, was von einem Szenario ins nächste mitgeht. Wo auf Papier eine leere Zeile steht, stehen hier die tatsächlichen Karten — jedes dieser Felder hat genau vier gedruckte Möglichkeiten, und jedes trägt seine eigene Regel. Verpflichtungen: Jeder Spieler hat seinen eigenen Satz aller vier, zwei Spieler können also dieselbe haben. Tech- und Basis-Verbesserung: Jede Karte gibt es einmal in der Kampagne, eine gewählte verschwindet daher aus den Feldern der anderen Spieler. Gerettete Verbündete: Auch jeder nur einmal, aber ein Spieler kann mehrere haben — deshalb Kästchen statt Auswahlfeld, und bei den übrigen Spielern sind sie gesperrt statt verschwunden; der Sperrgrund nennt, wer ihn hat. Dazu die drei Ergebnisse, nach denen spätere Szenarien fragen: welche Experimentalwaffen nach Szenario 1 ins Begegnungsdeck gewandert sind — der Bogen will die Namen, nicht die Anzahl, weil Szenario 2 genau die wieder einmischt —, die Verzögerungsmarker auf dem Hauptplan nach Szenario 2, und nach Szenario 4, welche Spieler mit Handlangern im Gefecht waren; auf Papier eine Zeile zum Hineinschreiben, hier ein Häkchen pro Spieler, weil die App die Mitspieler ohnehin kennt. Die aus der Kampagne entfernten Verbündeten bleiben Freitext, weil dort mehr landen kann als die vier rettbaren; ein „~“ am Anfang eines Listeneintrags streicht ihn durch.",
+    helpEn: "The MC10 sheet follows the printed original, and that above all means what is deliberately absent: no scenario table, no “completed”, no “failed”, no die. The five scenarios (Crossbones, Absorbing Man, Taskmaster, Zola, Red Skull) are played in a fixed order, so the log only records what carries forward from one to the next. Where the paper has a blank line, this has the actual cards — each of those fields has exactly four printed possibilities, and each carries its own rule. Obligations: every player has their own set of all four, so two players can hold the same one. Tech and Basic Upgrade: each card exists once in the campaign, so choosing one removes it from the other players' fields. Rescued Allies: also one holder each, but a player may hold several — hence boxes rather than a dropdown, and on the other players they lock rather than disappear, naming who holds them. Then the three results later scenarios ask about: which Experimental Weapons went into the encounter deck after scenario 1 — the sheet wants the names, not a count, because scenario 2 shuffles exactly those back in — the delay counters left on the main scheme after scenario 2, and after scenario 4 which players were engaged with minions; one line to write names on, on paper, here a checkbox per player, since the app already knows who is playing. The allies removed from the campaign stay free text, because more than the four rescuable ones can end up there; a leading “~” strikes a list entry through.",
 
     /* Deutsche Feldnamen: MC10 ist auf Deutsch erschienen, aber die genaue
        Beschriftung des gedruckten deutschen Bogens ließ sich nicht belegen. Die
@@ -830,7 +747,6 @@
         secScenario2: "Szenario 2",
         secScenario4: "Szenario 4",
         secRemoved: "Aus der Kampagne entfernte Verbündete",
-        secNotes: "Notizen",
 
         /* "%s" = Spielernummer. */
         playerRow: "Spieler #%s",
@@ -860,7 +776,6 @@
         lblEngaged: "Spieler im Gefecht mit Handlangern",
 
         cardNamePlaceholder: "Kartenname …",
-        notesPlaceholder: "Notizen …",
       },
       en: {
         secPlayers: "Player Information",
@@ -868,7 +783,6 @@
         secScenario2: "Scenario 2",
         secScenario4: "Scenario 4",
         secRemoved: "Allies removed from the campaign",
-        secNotes: "Notes",
 
         playerRow: "Player #%s",
         colIdentity: "Identity",
@@ -893,7 +807,6 @@
         lblEngaged: "Players engaged with minions",
 
         cardNamePlaceholder: "Card name …",
-        notesPlaceholder: "Notes …",
       },
     },
   });

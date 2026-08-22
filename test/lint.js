@@ -225,7 +225,6 @@ for (const def of campaigns) {
       experimentalWeapons: ["exo-suit", "laser-rifle", "exo-suit", "made-up"],
       delayCounters: -5,
       removed: 42,
-      notes: "  line one\rline two\u0007bad  ",
       scenarios: [{ slug: "does-not-exist" }],
       flags: { invented: true },
       somethingUnknown: { nested: [1, 2, 3] },
@@ -271,17 +270,9 @@ for (const def of campaigns) {
     check(p + "a bare number yields no list at all", eq(r1.removed, []),
       JSON.stringify(r1.removed));
 
-    /* The whole reason the notes carry their own coercion: W.coerceText would
-       strip the newline along with the other control characters, and every
-       paragraph would vanish on the next save. */
-    check(p + "notes keep the line break, lose the control character",
-      r1.notes === "line one\nline twobad", JSON.stringify(r1.notes));
-    const multiline = "first\nsecond\nthird";
-    check(p + "a multi-line note survives normalize unchanged",
-      def.normalize({ notes: multiline }).notes === multiline,
-      JSON.stringify(def.normalize({ notes: multiline }).notes));
-    check(p + "CRLF is reduced to one newline form",
-      def.normalize({ notes: "a\r\nb" }).notes === "a\nb");
+    /* This sheet has no free-text notes, so an arriving one has nowhere to go. */
+    check(p + "a notes field is not part of this sheet",
+      def.normalize({ notes: "anything" }).notes === undefined);
   }
 }
 

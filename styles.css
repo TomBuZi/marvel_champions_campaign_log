@@ -390,16 +390,6 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
-/* The free-text notes block. Grows with its content instead of scrolling
-   inside itself, so nothing on the sheet is hidden behind a scrollbar and the
-   print view gets the whole text. The manual resize handle is off because the
-   height is driven by the content. */
-.notes-input {
-  width: 100%;
-  resize: none;
-  overflow: hidden;
-  line-height: 1.45;
-}
 
 .btn {
   background: var(--pill);
