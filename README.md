@@ -254,6 +254,11 @@ Version N.*
 
 ### Eine Kampagne hinzufügen
 
+Hier steht der **Vertrag** eines Moduls. Der **Arbeitsweg** — Vorschau-Branch,
+Farben aus dem Bogen-PDF messen, Testfälle, Merge nach `main` — steht in
+[`CLAUDE.md`](CLAUDE.md), zusammen mit den Fallstricken, die dabei schon Zeit
+gekostet haben.
+
 1. `campaigns/<id>.js` anlegen und `window.registerCampaign({...})` aufrufen:
 
    ```js
