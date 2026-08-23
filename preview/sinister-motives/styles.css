@@ -626,6 +626,10 @@ a { color: var(--accent-2); }
 }
 
 .log-picker { display: flex; }
+/* The picker takes its width from its widest row, and the rows are log titles
+   plus the "start another run" label — either can be long. Capped, so the
+   topbar cannot push past the viewport on a phone. */
+.log-picker select { max-width: min(22rem, 60vw); }
 
 /* ---------- Buttons and inputs ---------- */
 select, input, textarea, button {
@@ -849,6 +853,42 @@ button:focus-visible {
 }
 .chip-draw:hover,
 .chip-draw:focus-visible { background: var(--pill); }
+
+/* The per-player symbol MC27 sets in three of its rule lines. Drawn here, like
+   the checkbox and the halftone above, because the printed glyph comes from the
+   publisher's icon font and that is not ours to ship: a head and a pair of
+   shoulders in the current text colour, sized in em so it follows whatever line
+   it sits in. The element carries the meaning as its accessible name — see
+   ruleText() in campaigns/sinister-motives.js. */
+.icon-pp {
+  position: relative;
+  display: inline-block;
+  width: 0.6em;
+  height: 0.88em;
+  vertical-align: -0.14em;
+  margin: 0 0.1em;
+}
+.icon-pp::before,
+.icon-pp::after {
+  content: "";
+  position: absolute;
+  background: currentColor;
+}
+.icon-pp::before {
+  top: 0;
+  left: 50%;
+  width: 0.4em;
+  height: 0.4em;
+  transform: translateX(-50%);
+  border-radius: 50%;
+}
+.icon-pp::after {
+  left: 0;
+  right: 0;
+  bottom: 0.04em;
+  height: 0.42em;
+  border-radius: 46% 46% 14% 14% / 68% 68% 22% 22%;
+}
 
 /* Why a field is closed, said in the open rather than only in a tooltip — the
    rung that opens it is information the player wants before they get there.
@@ -1354,6 +1394,11 @@ body[class*="dnd-"] .entry-list { min-height: 2.2rem; outline: 1px dashed var(--
   from { opacity: 0; transform: translate(-50%, 6px); }
   to   { opacity: 1; transform: translate(-50%, 0); }
 }
+
+/* The picker's "start another run" rows. A native select popup may ignore this
+   — which is why the angle brackets around the label carry the distinction and
+   the italics are only a hint. */
+.opt-new { font-style: italic; }
 
 /* ---------- Footer ---------- */
 .footer {

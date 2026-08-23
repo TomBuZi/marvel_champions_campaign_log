@@ -478,6 +478,30 @@
     return section;
   }
 
+  /* The sheet sets one symbol in its rule text: the per-player mark, three
+     times — twice in the penalties ("Place 1 [per player] threat") and once in
+     the conditions legend. It cannot be a character here, because the glyph
+     belongs to the publisher's icon font, which is not ours to ship. So it is
+     drawn in CSS like every other device in this project, and it carries its
+     meaning as its accessible name: a symbol nobody can read would be worse
+     than the words it stands for. */
+  function perPlayer(t) {
+    return W.el("span", "icon-pp", {
+      role: "img", "aria-label": t("perPlayer"), title: t("perPlayer"),
+    });
+  }
+
+  /* One rule line as the sheet prints it. "{pp}" in the text marks where the
+     per-player symbol sits, so the wording and the symbol's position stay
+     together in the dictionary and a translator cannot lose it. */
+  function ruleText(parent, text, t) {
+    String(text).split("{pp}").forEach(function (part, i) {
+      if (i) parent.appendChild(perPlayer(t));
+      if (part) parent.appendChild(document.createTextNode(part));
+    });
+    return parent;
+  }
+
   /* A labelled row inside a player card or a panel. `at` marks the rung that
      opens the field, so paintUnlocks() can find the row again and say why it is
      closed without anything being re-rendered. */
@@ -829,9 +853,7 @@
     section.appendChild(legend);
     var ul = W.el("ul", "rep-conditions");
     CONDITIONS.forEach(function (key) {
-      var li = W.el("li");
-      li.textContent = t(key);
-      ul.appendChild(li);
+      ul.appendChild(ruleText(W.el("li"), t(key), t));
     });
     section.appendChild(ul);
 
@@ -863,9 +885,7 @@
       [["colReward", row.reward], ["colPenalty", row.penalty]].forEach(function (pair) {
         var td = W.el("td", null, { "data-label": t(pair[0]) });
         pair[1].forEach(function (key) {
-          var p = W.el("p", "rep-rule");
-          p.textContent = t(key);
-          td.appendChild(p);
+          td.appendChild(ruleText(W.el("p", "rep-rule"), t(key), t));
         });
         tr.appendChild(td);
       });
@@ -1232,6 +1252,9 @@
         colPenalty: "Strafe",
         /* "%s" = die Stufe, ab der das Feld aufgeht. Kurz, weil es neben der
            Feldbeschriftung steht; der Sperrgrund sagt es ganz. */
+        /* Der Name des Symbols, das im Regeltext an den Stellen mit "{pp}"
+           steht — er wird gesprochen und beim Zeigen eingeblendet. */
+        perPlayer: "pro Spieler",
         unlockNote: "ab Reputation %s",
         unlockReason: "Wird ab Reputation %s freigeschaltet. Eingetragenes bleibt erhalten.",
         /* "%s" = Abschnitt, Nummer der Zelle, Anzahl der Zellen. Der gedruckte
@@ -1260,16 +1283,16 @@
 
         pnOsbornTech: "Choose one “Osborn Tech” attachment at random. Record its name in the “Osborn Tech” section of the campaign log.",
         pnOsbornShuffle: "Setup: Shuffle each card recorded in the “Osborn Tech” section of the campaign log into the encounter deck.",
-        pnThreat: "Setup: Place 1 threat on the main scheme.",
+        pnThreat: "Setup: Place 1 {pp} threat on the main scheme.",
         pnMinion: "Setup: In player order, each player must search the encounter deck and discard pile for a minion, then put that minion into play engaged with themself. (Shuffle.) For each player who did not put a minion into play this way, deal that player 1 facedown encounter card.",
-        pnSideScheme: "Setup: The first player must search the encounter deck and discard pile for a scenario-specific side scheme, then reveal it. Place 1 threat on that side scheme. (Shuffle.)",
+        pnSideScheme: "Setup: The first player must search the encounter deck and discard pile for a scenario-specific side scheme, then reveal it. Place 1 {pp} threat on that side scheme. (Shuffle.)",
         pnEncounter: "Setup: Deal 1 facedown encounter card to each player.",
 
         cdVictoryPoints: "(+X) Victory points in the victory display",
         cdNoMinions: "(+1) No minions in play",
         cdNoSideSchemes: "(+1) No side schemes in play",
         cdNoThreat: "(+1) No threat on the main scheme",
-        cdNoAcceleration: "(+1) Fewer than 1 acceleration tokens in play",
+        cdNoAcceleration: "(+1) Fewer than 1 {pp} acceleration tokens in play",
         cdNoDefeated: "(+1) No defeated identities",
       },
       en: {
@@ -1310,6 +1333,7 @@
         colThreshold: "At",
         colReward: "Reward",
         colPenalty: "Penalty",
+        perPlayer: "per player",
         unlockNote: "from reputation %s",
         unlockReason: "Unlocked at reputation %s. Anything recorded is kept.",
         cellLabel: "%s – cell %s of %s",
@@ -1333,16 +1357,16 @@
 
         pnOsbornTech: "Choose one “Osborn Tech” attachment at random. Record its name in the “Osborn Tech” section of the campaign log.",
         pnOsbornShuffle: "Setup: Shuffle each card recorded in the “Osborn Tech” section of the campaign log into the encounter deck.",
-        pnThreat: "Setup: Place 1 threat on the main scheme.",
+        pnThreat: "Setup: Place 1 {pp} threat on the main scheme.",
         pnMinion: "Setup: In player order, each player must search the encounter deck and discard pile for a minion, then put that minion into play engaged with themself. (Shuffle.) For each player who did not put a minion into play this way, deal that player 1 facedown encounter card.",
-        pnSideScheme: "Setup: The first player must search the encounter deck and discard pile for a scenario-specific side scheme, then reveal it. Place 1 threat on that side scheme. (Shuffle.)",
+        pnSideScheme: "Setup: The first player must search the encounter deck and discard pile for a scenario-specific side scheme, then reveal it. Place 1 {pp} threat on that side scheme. (Shuffle.)",
         pnEncounter: "Setup: Deal 1 facedown encounter card to each player.",
 
         cdVictoryPoints: "(+X) Victory points in the victory display",
         cdNoMinions: "(+1) No minions in play",
         cdNoSideSchemes: "(+1) No side schemes in play",
         cdNoThreat: "(+1) No threat on the main scheme",
-        cdNoAcceleration: "(+1) Fewer than 1 acceleration tokens in play",
+        cdNoAcceleration: "(+1) Fewer than 1 {pp} acceleration tokens in play",
         cdNoDefeated: "(+1) No defeated identities",
       },
     },
