@@ -147,6 +147,25 @@ Harte Punkte:
 * Ein englisch angezeigter Name trägt `lang="en"`, ein übersetzter nicht.
 * Expertenmodus, falls die Kampagne einen hat: **Ausblenden ist nicht Löschen.**
 * Alle Beschriftungen über `i18n`, in beiden Sprachen, dazu `helpDe`/`helpEn`.
+* **Symbole im Regeltext.** Setzt der Bogen ein Zeichen aus der Icon-Schrift des
+  Herausgebers (`MarvelLCGIcons`, z. B. `` = „pro Spieler"), wird es
+  **gezeichnet**, nicht eingebettet — die Schrift ist nicht unsere. Im
+  Wörterbuch steht an der Stelle ein Marker, damit Wortlaut und Position des
+  Symbols zusammenbleiben und keine Übersetzung ihn verliert (`{pp}` in MC27),
+  und das gezeichnete Element trägt die Bedeutung als `aria-label`: ein Symbol,
+  das niemand lesen kann, ist schlimmer als das Wort dafür. Zu finden sind alle
+  Vorkommen so:
+
+  ```python
+  import fitz
+  for pno, pg in enumerate(fitz.open("mcXX_....pdf")):
+      for b in pg.get_text("dict")["blocks"]:
+          for l in b.get("lines", []):
+              for sp in l["spans"]:
+                  if "Icon" in sp["font"]:
+                      print(pno, [hex(ord(c)) for c in sp["text"].strip()],
+                            "".join(x["text"] for x in l["spans"]))
+  ```
 
 **Zweisprachig anlegen, englisch befüllen, deutsch trägt der Herausgeber nach.**
 Das ist das Vorgehen für neue Kampagnen. Es zerfällt in zwei Gruppen, und die

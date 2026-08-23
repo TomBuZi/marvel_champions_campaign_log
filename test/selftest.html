@@ -1537,6 +1537,34 @@
           log("and its groups follow the product number too",
             /\(MC10\)/.test(groups[0].label) && /\(MC60\)/.test(groups[1].label),
             groups[0].label + " | " + groups[1].label);
+
+          /* Every group offers a way to start another run of the campaign it
+             heads, and it sits directly under the heading. Read by value rather
+             than by label, so it survives the wording being changed. */
+          log("every group starts with a way to start another run",
+            Array.prototype.every.call(groups, function (g) {
+              return g.children[0].value.indexOf("new:") === 0;
+            }), groups[0].children[0].value + " | " + groups[1].children[0].value);
+          log("and that row reads as something other than a sheet",
+            /^<.*>$/.test(groups[0].children[0].textContent.trim()),
+            groups[0].children[0].textContent);
+
+          /* Choosing it is the dialog with the campaign already answered — not
+             a sheet created behind the player's back. */
+          var sel = d.getElementById("log-select");
+          var before = localStorage.getItem("mcclog:activeId");
+          sel.value = groups[1].children[0].value;      // the MC60 group
+          fire(sel, "change");
+          log("choosing it opens the dialog", dlg.open);
+          log("with that campaign preselected",
+            d.querySelector("#campaign-choices input:checked").value === "fear-no-evil",
+            d.querySelector("#campaign-choices input:checked").value);
+          log("and the picker back on the sheet that is actually open",
+            sel.value === before, sel.value + " vs " + before);
+          d.getElementById("btn-campaign-cancel").click();
+          log("cancelling it creates nothing", Object.keys(store()).length === 2,
+            Object.keys(store()).length);
+
           log("this sheet has no scenario table", !d.querySelector(".sheet-table"));
           log("a fresh sheet starts at standard level",
             active.state.expert === false, active.state.expert);

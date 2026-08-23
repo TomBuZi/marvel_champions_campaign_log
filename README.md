@@ -47,7 +47,10 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     gedruckten Bogens, und ohne sie ließe sich nicht sagen, welche Belohnungen
     gerade gelten. Deshalb ein Zahlenfeld 0–35 und daneben die sieben Stufen
     (1, 5, 9, 13, 17, 21, 25) mit Belohnung und Strafe; erreichte Stufen sind
-    hervorgehoben, die offenen abgeblendet.
+    hervorgehoben, die offenen abgeblendet. Das „pro Spieler"-Symbol, das der
+    gedruckte Bogen an drei Stellen im Regeltext setzt, steht auch hier —
+    gezeichnet statt aus der Icon-Schrift des Herausgebers, und mit seiner
+    Bedeutung als Name, damit Screenreader „pro Spieler" sagen.
 * **Standard- oder Expertenstufe** — der Haken „Expertenmodus“ oben im
   Spielerbereich, in allen vier Kampagnen an derselben Stelle. Auf Standardstufe
   blendet der Bogen aus, was es dort nicht gibt, statt danach zu fragen:
@@ -112,7 +115,12 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
 * **„Nächste Runde"** (MC60) — zieht zwei Szenarien, die noch im Spiel sind, und gibt jedem
   einen Fortschrittspunkt. Ist nur noch eines im Spiel, bekommt es beide.
 * **Mehrere Durchläufe** parallel, mit Auswahl oben; die Kampagne wird beim Anlegen
-  gewählt und bleibt danach fest.
+  gewählt und bleibt danach fest. Die Auswahl gruppiert nach Kampagne, und direkt
+  unter jeder Überschrift steht `< Neue Kampagne starten >` — das legt keinen
+  Bogen an, sondern öffnet den Dialog „Neuer Bogen" mit dieser Kampagne schon
+  angekreuzt. Wer die Zeile aus Versehen erwischt, bricht ab und hat nichts
+  angerichtet; die Auswahl springt vorher schon auf den Bogen zurück, der
+  wirklich offen ist.
 * **Automatisch gespeichert** im Speicher des Browsers — kein Server, kein Konto,
   keine Übertragung irgendwohin.
 * **Export / Import** als JSON, und **Link teilen**: der komplette Bogen steckt
@@ -356,7 +364,7 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (433 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (439 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   langpath | print | import | lock |
                                     #   lockconflict | random | randomspread |
