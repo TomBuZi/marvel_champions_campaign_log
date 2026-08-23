@@ -241,6 +241,34 @@
     return state.reputation == null ? 0 : state.reputation;
   }
 
+  /* The cards still available to a draw. Both sets are drawn from without
+     replacement, but for different reasons: a recorded Osborn Tech attachment
+     is shuffled into the encounter deck, and a chosen S.H.I.E.L.D. Tech upgrade
+     goes into that player's deck while the others go back to the collection. */
+  function freeOsborn(state) {
+    return OSBORN_TECH.filter(function (e) {
+      return state.osbornTech.indexOf(e.slug) === -1;
+    });
+  }
+  function freeShieldTech(state) {
+    var taken = {};
+    state.players.forEach(function (p) { if (p.shieldTech) taken[p.shieldTech] = true; });
+    return SHIELD_TECH.filter(function (e) { return !taken[e.slug]; });
+  }
+
+  /* Three at random out of what is left, or fewer near the end of the
+     campaign — the rung deals three and lets the player keep one. */
+  function drawThree(pool) {
+    var rest = pool.slice();
+    var out = [];
+    while (out.length < 3 && rest.length) {
+      var pick = W.pickRandom(rest);
+      rest.splice(rest.indexOf(pick), 1);
+      out.push(pick);
+    }
+    return out;
+  }
+
   /* Which rungs the given reputation has reached. Derived and never stored: the
      reputation is the single source, so an imported sheet cannot disagree with
      itself about what is unlocked. */
@@ -453,14 +481,27 @@
   /* A labelled row inside a player card or a panel. `at` marks the rung that
      opens the field, so paintUnlocks() can find the row again and say why it is
      closed without anything being re-rendered. */
-  function fieldRow(labelText, control, at) {
+  function fieldRow(labelText, control, at, extra) {
     var row = W.el("div", "player-field", at ? { "data-unlock": String(at) } : null);
     var label = W.el("label", "field-label");
     label.textContent = labelText;
     if (at) label.appendChild(W.el("span", "lock-note"));
     label.appendChild(control);
     row.appendChild(label);
+    /* Outside the <label>, because what goes here is a second control rather
+       than part of the field's own name. */
+    if (extra) row.appendChild(extra);
     return row;
+  }
+
+  /* A field with a die beside it — the same shape MC60 gives its villain cell,
+     as a class of its own because here it sits in a player card rather than in
+     a table. */
+  function withDie(control, die) {
+    var wrap = W.el("div", "with-die");
+    wrap.appendChild(control);
+    wrap.appendChild(die);
+    return wrap;
   }
 
   /* A control with no visible label. The sheet prints these two sections as a
@@ -522,7 +563,7 @@
     /* Last, once every gated control is in the document: what the reputation
        has opened is painted in one pass rather than decided per control, so
        the screen and the number can never say different things. */
-    paintUnlocks(t, state);
+    paintGates(t, state);
   }
 
   function renderPlayers(t, lang, state, ctx) {
@@ -643,34 +684,76 @@
       }
 
       /* The three reward fields, each closed until its rung. The pooled one is
-         a dropdown with cross-player exclusion, the other two free text. */
+         a dropdown with cross-player exclusion and a die beside it, the other
+         two free text. */
       PLAYER_REWARDS.forEach(function (def) {
-        var control;
-        if (def.pool) {
-          control = W.poolSelect({
-            value: player[def.key],
-            label: caption + " – " + t(def.head),
-            placeholder: t("cardPlaceholder"),
-            options: def.pool.map(function (e) {
-              return { value: e.slug, label: entryName(e, lang), lang: entryLang(e, lang) };
-            }),
-            onChange: function (next) {
-              player[def.key] = next;
-              ctx.save();
-              W.syncUnique(techSelects);
-            },
-          });
-          techSelects.push(control);
-        } else {
-          control = W.textField({
+        if (!def.pool) {
+          card.appendChild(fieldRow(t(def.head), W.textField({
             value: player[def.key],
             label: caption + " – " + t(def.head),
             placeholder: t("cardNamePlaceholder"),
             maxLength: NAME_MAX,
             onChange: function (next) { player[def.key] = next; ctx.save(); },
-          });
+          }), OPENS_AT[def.key]));
+          return;
         }
-        card.appendChild(fieldRow(t(def.head), control, OPENS_AT[def.key]));
+
+        var select = W.poolSelect({
+          value: player[def.key],
+          label: caption + " – " + t(def.head),
+          placeholder: t("cardPlaceholder"),
+          options: def.pool.map(function (e) {
+            return { value: e.slug, label: entryName(e, lang), lang: entryLang(e, lang) };
+          }),
+          onChange: function (next) { record(next); },
+        });
+        techSelects.push(select);
+
+        /* The rung deals THREE upgrades at random and lets the player keep one,
+           so the die cannot simply fill the field. It offers what it dealt and
+           the player picks. The offer lives in the DOM only: it is not part of
+           the sheet, and it stands until the choice is made. */
+        var offer = W.el("ul", "chip-list draw-list");
+        var die = W.iconButton({
+          glyph: "🎲",
+          label: caption + " – " + t("dieShieldTech"),
+          onClick: function () {
+            offer.innerHTML = "";
+            var drawn = drawThree(freeShieldTech(state));
+            if (!drawn.length) return;
+            var head = W.el("li", "draw-caption");
+            head.textContent = t("drawnCaption");
+            offer.appendChild(head);
+            drawn.forEach(function (e) {
+              var li = W.el("li");
+              var b = W.el("button", "chip chip-draw", {
+                type: "button", lang: entryLang(e, lang),
+                "aria-label": t("drawnPick", entryName(e, lang)),
+                title: t("drawnPick", entryName(e, lang)),
+              });
+              b.textContent = entryName(e, lang);
+              b.addEventListener("click", function () { record(e.slug); });
+              li.appendChild(b);
+              offer.appendChild(li);
+            });
+          },
+        });
+
+        /* Applied from the dropdown and from a chip alike, and in place rather
+           than by re-rendering: a re-render would take the focus out of
+           whatever the player was doing. */
+        function record(next) {
+          player[def.key] = next;
+          select.value = next;
+          offer.innerHTML = "";
+          ctx.save();
+          W.syncUnique(techSelects);
+          paintGates(t, state);
+        }
+
+        var row = fieldRow(t(def.head), withDie(select, die), OPENS_AT[def.key], offer);
+        row.setAttribute("data-shield-player", String(i));
+        card.appendChild(row);
       });
 
       /* The hero's printed starting hit points, as a reminder of what full
@@ -734,7 +817,7 @@
            the rung list and every gated field follow from this one value, so
            both are repainted from it. */
         paintReached(table, next);
-        paintUnlocks(t, state);
+        paintGates(t, state);
       },
     })));
 
@@ -808,26 +891,63 @@
   }
 
   /* Every field whose rung has not been reached is closed, and says which rung
-     opens it. Looked up in the document, like MC10's ally locks, because the
-     reputation field sits in a different panel than the fields it governs.
+     opens it — and so is the die beside it, which is why this is one pass over
+     the whole sheet rather than a decision per control. Looked up in the
+     document, like MC10's ally locks, because the reputation field sits in a
+     different panel than the fields it governs.
 
      Closed, never emptied and never hidden: an imported sheet may carry an
      entry the current reputation does not reach, and lowering the marker after
      a mistyped number must not make a record vanish. */
-  function paintUnlocks(t, state) {
+  function paintGates(t, state) {
     var rep = repOf(state);
     document.querySelectorAll("[data-unlock]").forEach(function (row) {
       var at = parseInt(row.getAttribute("data-unlock"), 10);
       var open = rep >= at;
       var note = row.querySelector(".lock-note");
       if (note) note.textContent = open ? "" : t("unlockNote", String(at));
-      var control = row.querySelector(".text-input, .pool-select");
-      if (!control) return;
-      control.disabled = !open;
-      control.title = open
-        ? (control.getAttribute("aria-label") || "")
-        : t("unlockReason", String(at));
+
+      var field = row.querySelector(".text-input, .pool-select");
+      if (field) {
+        field.disabled = !open;
+        field.title = open
+          ? (field.getAttribute("aria-label") || "")
+          : t("unlockReason", String(at));
+      }
+
+      var die = row.querySelector(".icon-btn");
+      if (die) paintDie(t, state, row, die, open, at);
+      /* An offer that is no longer reachable goes away with the field: leaving
+         three clickable cards under a closed field would be an invitation to
+         write into it. */
+      var offer = row.querySelector(".draw-list");
+      if (offer && !open) offer.innerHTML = "";
     });
+  }
+
+  /* Why a die is locked, in the order the player would ask: the rung has not
+     been reached, the field already holds a card, or there is nothing left to
+     draw. A die never overwrites a choice — the same rule MC60's villain die
+     follows. */
+  function paintDie(t, state, row, die, open, at) {
+    var cell = row.getAttribute("data-osborn-cell");
+    var who = row.getAttribute("data-shield-player");
+    var filled, left;
+    if (cell != null) {
+      filled = !!state.osbornTech[Number(cell)];
+      left = freeOsborn(state).length;
+    } else if (who != null) {
+      var player = state.players[Number(who)];
+      filled = !!(player && player.shieldTech);
+      left = freeShieldTech(state).length;
+    } else {
+      return;
+    }
+    var reason = !open ? t("unlockReason", String(at))
+      : filled ? t("dieTaken")
+      : !left ? t("dieNoneLeft") : null;
+    die.disabled = !!reason;
+    die.title = reason || (die.getAttribute("aria-label") || "");
   }
 
   function renderCommunityService(t, lang, state, ctx) {
@@ -900,22 +1020,45 @@
     var row = W.el("div", "cell-row", { "data-cells": String(OSBORN_TECH_CELLS) });
     var selects = [];
     state.osbornTech.forEach(function (slug, i) {
-      var cell = W.el("div", "cell", { "data-unlock": String(OSBORN_AT[i]) });
+      var cell = W.el("div", "cell", {
+        "data-unlock": String(OSBORN_AT[i]), "data-osborn-cell": String(i),
+      });
+      var name = t("cellLabel", t("secOsbornTech"), String(i + 1),
+        String(OSBORN_TECH_CELLS));
       var sel = W.poolSelect({
         value: slug,
-        label: t("cellLabel", t("secOsbornTech"), String(i + 1), String(OSBORN_TECH_CELLS)),
+        label: name,
         placeholder: t("cardPlaceholder"),
         options: OSBORN_TECH.map(function (e) {
           return { value: e.slug, label: entryName(e, lang), lang: entryLang(e, lang) };
         }),
-        onChange: function (next) {
-          state.osbornTech[i] = next;
-          ctx.save();
-          W.syncUnique(selects);
-        },
+        onChange: function (next) { record(next); },
       });
       selects.push(sel);
-      cell.appendChild(sel);
+
+      /* The rung draws ONE attachment at random, so unlike the S.H.I.E.L.D.
+         Tech die this one can fill the cell outright. It draws from what no
+         other cell holds: a recorded card is already in the encounter deck. */
+      var die = W.iconButton({
+        glyph: "🎲",
+        label: name + " – " + t("dieOsborn"),
+        onClick: function () {
+          var pick = W.pickRandom(freeOsborn(state));
+          if (pick) record(pick.slug);
+        },
+      });
+
+      /* Applied from the dropdown and the die alike, and in place rather than
+         by re-rendering: that keeps the focus where the player put it. */
+      function record(next) {
+        state.osbornTech[i] = next;
+        sel.value = next;
+        ctx.save();
+        W.syncUnique(selects);
+        paintGates(t, state);
+      }
+
+      cell.appendChild(withDie(sel, die));
       cell.appendChild(W.el("span", "lock-note"));
       row.appendChild(cell);
     });
@@ -1030,8 +1173,8 @@
     render: render,
     renderPrint: renderPrint,
 
-    helpDe: "Der MC27-Bogen ist der einzige der vier, auf dem kein einziges Häkchen gedruckt ist: alle Felder sind Zeilen zum Hineinschreiben. Wo die Zeile eine Karte aus einem gedruckten Satz meint, steht hier der Satz — in der Form, die der Bogen verlangt. Community Service und Last Ones Standing fragen, *welche* Karten, deshalb Kästchen über dem ganzen Satz: fünf Nebenschemata beziehungsweise die sechs Schurken der Sinister Six. Osborn Tech wird je Stufe der Leiste einmal gezogen, deshalb behält es eine Zelle je Stufe, und jede Karte gibt es nur einmal — eine gewählte verschwindet aus den anderen Zellen. Aspect Advantage und Planning Ahead bleiben Freitext, weil die Karte aus der eigenen Sammlung beziehungsweise dem eigenen Deck kommt und keine endliche gedruckte Liste ist. Die drei Belohnungsfelder (S.H.I.E.L.D. Tech, Aspect Advantage, Planning Ahead) druckt der Bogen als eigene Blöcke mit einer Spalte P1 bis P4; diese Spalte ist nur die Spielerliste noch einmal, deshalb stehen die Felder hier direkt in der Spielerkarte. Der Reputationsabschnitt hat auf dem Logbuchblatt kein Gegenstück: die laufende Reputation lebt auf der Leiste der ersten Seite, und ohne sie ließe sich nicht sagen, welche Belohnungen gerade gelten. Deshalb steht hier ein Zahlenfeld von 0 bis 35 und daneben die sieben Stufen der Leiste (1, 5, 9, 13, 17, 21, 25) mit Belohnung und Strafe; erreichte Stufen sind hervorgehoben, die noch offenen abgeblendet. Und dieselbe Zahl schaltet die Felder frei: S.H.I.E.L.D. Tech ab 1, Aspect Advantage ab 9, Planning Ahead ab 17, die drei Osborn-Tech-Zellen ab 1, 13 und 21. Ein noch nicht freigeschaltetes Feld ist gesperrt und sagt, ab welcher Stufe es aufgeht — gesperrt, nicht versteckt und nie geleert: wer die Reputation nach einem Zahlendreher zurückstellt, verliert keine Eintragung. Die Legende über der Tabelle sagt, wofür es Reputationspunkte gibt; addiert wird nichts, weil der Bogen dafür kein Feld hat. Oben im Spielerbereich steht der Haken „Expertenmodus“: die verbleibenden Lebenspunkte sind das einzige Feld, das der gedruckte Bogen mit „Expert Mode Only“ kennzeichnet, und auf Standardstufe blendet der Bogen es aus, statt danach zu fragen. Ausblenden heißt nicht löschen. Es gibt hier bewusst keine Szenario-Tabelle, kein „Abgeschlossen“, keinen Fortschrittszähler und kein Notizfeld: der gedruckte Bogen hat sie nicht.",
-    helpEn: "The MC27 sheet is the only one of the four with no printed checkbox at all: every field is a line to write on. Where the line means a card from a printed set, the set is here — in the shape the sheet asks for. Community Service and Last Ones Standing ask *which* cards, so they are boxes over the whole set: five side schemes, and the six villains of the Sinister Six. Osborn Tech is drawn once per rung of the track, so it keeps one cell per rung, and each card exists once — choosing one removes it from the other cells. Aspect Advantage and Planning Ahead stay free text, because that card comes out of the player's own collection or deck rather than a finite printed list. The three reward fields (S.H.I.E.L.D. Tech, Aspect Advantage, Planning Ahead) are printed as their own blocks with a P1 to P4 column; that column is just the player list again, so the fields sit in the player card here. The reputation section has no counterpart on the log page: the running reputation lives on the track on page 1, and without it there is no saying which rewards are in force. So there is a number field from 0 to 35 here, and beside it the track's seven rungs (1, 5, 9, 13, 17, 21, 25) with their reward and penalty; the rungs reached are highlighted and the ones still ahead are dimmed. The same number opens the fields: S.H.I.E.L.D. Tech at 1, Aspect Advantage at 9, Planning Ahead at 17, and the three Osborn Tech cells at 1, 13 and 21. A field not yet unlocked is closed and says which rung opens it — closed, not hidden and never cleared: putting the reputation back after a mistyped number costs no record. The legend above the table says what a victory is worth; nothing is added up, because the sheet has no field for it. At the top of the player area sits the “Expert level” box: the remaining hit points are the only field the printed sheet marks “Expert Mode Only”, and at standard level the sheet hides it rather than asking for it. Hiding is not clearing. There is deliberately no scenario table, no “completed”, no progress counter and no notes field: the printed sheet has none.",
+    helpDe: "Der MC27-Bogen ist der einzige der vier, auf dem kein einziges Häkchen gedruckt ist: alle Felder sind Zeilen zum Hineinschreiben. Wo die Zeile eine Karte aus einem gedruckten Satz meint, steht hier der Satz — in der Form, die der Bogen verlangt. Community Service und Last Ones Standing fragen, *welche* Karten, deshalb Kästchen über dem ganzen Satz: fünf Nebenschemata beziehungsweise die sechs Schurken der Sinister Six. Osborn Tech wird je Stufe der Leiste einmal gezogen, deshalb behält es eine Zelle je Stufe, und jede Karte gibt es nur einmal — eine gewählte verschwindet aus den anderen Zellen. Aspect Advantage und Planning Ahead bleiben Freitext, weil die Karte aus der eigenen Sammlung beziehungsweise dem eigenen Deck kommt und keine endliche gedruckte Liste ist. Die drei Belohnungsfelder (S.H.I.E.L.D. Tech, Aspect Advantage, Planning Ahead) druckt der Bogen als eigene Blöcke mit einer Spalte P1 bis P4; diese Spalte ist nur die Spielerliste noch einmal, deshalb stehen die Felder hier direkt in der Spielerkarte. Der Reputationsabschnitt hat auf dem Logbuchblatt kein Gegenstück: die laufende Reputation lebt auf der Leiste der ersten Seite, und ohne sie ließe sich nicht sagen, welche Belohnungen gerade gelten. Deshalb steht hier ein Zahlenfeld von 0 bis 35 und daneben die sieben Stufen der Leiste (1, 5, 9, 13, 17, 21, 25) mit Belohnung und Strafe; erreichte Stufen sind hervorgehoben, die noch offenen abgeblendet. Und dieselbe Zahl schaltet die Felder frei: S.H.I.E.L.D. Tech ab 1, Aspect Advantage ab 9, Planning Ahead ab 17, die drei Osborn-Tech-Zellen ab 1, 13 und 21. Ein noch nicht freigeschaltetes Feld ist gesperrt und sagt, ab welcher Stufe es aufgeht — gesperrt, nicht versteckt und nie geleert: wer die Reputation nach einem Zahlendreher zurückstellt, verliert keine Eintragung. Beide ausgelosten Felder haben einen Würfel neben sich, und er ist genau dann bedienbar, wenn das Feld selbst es ist. Bei Osborn Tech zieht der Würfel eine Karte und trägt sie ein — eine, weil die Stufe genau eine zieht, und nur aus den Karten, die in keiner anderen Zelle stehen. Bei S.H.I.E.L.D. Tech teilt der Würfel drei Verbesserungen aus, von denen der Spieler eine behält: die drei erscheinen unter dem Feld und werden mit einem Klick eingetragen. Die Auslosung selbst wird nicht gespeichert, sie steht nur bis zur Wahl — sie ist keine Eintragung auf dem Bogen. Ein Würfel überschreibt nie eine Wahl: steht im Feld schon eine Karte, ist er gesperrt und sagt auch das. Die Legende über der Tabelle sagt, wofür es Reputationspunkte gibt; addiert wird nichts, weil der Bogen dafür kein Feld hat. Oben im Spielerbereich steht der Haken „Expertenmodus“: die verbleibenden Lebenspunkte sind das einzige Feld, das der gedruckte Bogen mit „Expert Mode Only“ kennzeichnet, und auf Standardstufe blendet der Bogen es aus, statt danach zu fragen. Ausblenden heißt nicht löschen. Es gibt hier bewusst keine Szenario-Tabelle, kein „Abgeschlossen“, keinen Fortschrittszähler und kein Notizfeld: der gedruckte Bogen hat sie nicht.",
+    helpEn: "The MC27 sheet is the only one of the four with no printed checkbox at all: every field is a line to write on. Where the line means a card from a printed set, the set is here — in the shape the sheet asks for. Community Service and Last Ones Standing ask *which* cards, so they are boxes over the whole set: five side schemes, and the six villains of the Sinister Six. Osborn Tech is drawn once per rung of the track, so it keeps one cell per rung, and each card exists once — choosing one removes it from the other cells. Aspect Advantage and Planning Ahead stay free text, because that card comes out of the player's own collection or deck rather than a finite printed list. The three reward fields (S.H.I.E.L.D. Tech, Aspect Advantage, Planning Ahead) are printed as their own blocks with a P1 to P4 column; that column is just the player list again, so the fields sit in the player card here. The reputation section has no counterpart on the log page: the running reputation lives on the track on page 1, and without it there is no saying which rewards are in force. So there is a number field from 0 to 35 here, and beside it the track's seven rungs (1, 5, 9, 13, 17, 21, 25) with their reward and penalty; the rungs reached are highlighted and the ones still ahead are dimmed. The same number opens the fields: S.H.I.E.L.D. Tech at 1, Aspect Advantage at 9, Planning Ahead at 17, and the three Osborn Tech cells at 1, 13 and 21. A field not yet unlocked is closed and says which rung opens it — closed, not hidden and never cleared: putting the reputation back after a mistyped number costs no record. Both drawn fields have a die beside them, and the die is usable exactly when the field is. The Osborn Tech die draws one card and records it — one, because the rung draws one, and only from the cards no other cell holds. The S.H.I.E.L.D. Tech die deals three upgrades for the player to keep one of: the three appear under the field and a click records one. The draw itself is not stored and stands only until the choice is made — it is not an entry on the sheet. A die never overwrites a choice: with a card already in the field it is locked, and it says so. The legend above the table says what a victory is worth; nothing is added up, because the sheet has no field for it. At the top of the player area sits the “Expert level” box: the remaining hit points are the only field the printed sheet marks “Expert Mode Only”, and at standard level the sheet hides it rather than asking for it. Hiding is not clearing. There is deliberately no scenario table, no “completed”, no progress counter and no notes field: the printed sheet has none.",
 
     /* Zweisprachig angelegt, aber noch nicht zweisprachig befüllt. Zwei
        Gruppen, und die Unterscheidung ist wichtig:
@@ -1095,6 +1238,14 @@
            Bogen beschriftet die Zellen nicht; die Nummer ist das Wenigste, was
            sie für Screenreader auseinanderhält. */
         cellLabel: "%s – Feld %s von %s",
+        /* Beschriftung und Sperrgründe der Würfel. "%s" in drawnPick ist der
+           Kartenname. */
+        dieOsborn: "Karte auslosen",
+        dieShieldTech: "Drei Verbesserungen austeilen",
+        dieTaken: "In diesem Feld steht schon eine Karte. Ein Würfel überschreibt keine Wahl.",
+        dieNoneLeft: "Es ist keine Karte mehr übrig.",
+        drawnCaption: "Ausgeteilt — eine behalten:",
+        drawnPick: "%s eintragen",
         cardPlaceholder: "— Karte wählen —",
         cardNamePlaceholder: "Kartenname …",
 
@@ -1162,6 +1313,12 @@
         unlockNote: "from reputation %s",
         unlockReason: "Unlocked at reputation %s. Anything recorded is kept.",
         cellLabel: "%s – cell %s of %s",
+        dieOsborn: "Draw a card",
+        dieShieldTech: "Deal three upgrades",
+        dieTaken: "This field already holds a card. A die never overwrites a choice.",
+        dieNoneLeft: "No card is left.",
+        drawnCaption: "Dealt — keep one:",
+        drawnPick: "Record %s",
         cardPlaceholder: "— choose a card —",
         cardNamePlaceholder: "Card name …",
 

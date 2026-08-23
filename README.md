@@ -68,7 +68,7 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   Leiste hervorhebt, öffnet auch die Felder: S.H.I.E.L.D. Tech ab 1, Aspect
   Advantage ab 9, Planning Ahead ab 17, die drei Osborn-Tech-Zellen ab 1, 13 und
   21. Ein noch nicht freigeschaltetes Feld ist gesperrt und sagt, ab welcher
-  Stufe es aufgeht. **Gesperrt ist nicht versteckt und nicht geleert**: wer die
+  Stufe es aufgeht — samt dem Würfel daneben. **Gesperrt ist nicht versteckt und nicht geleert**: wer die
   Reputation nach einem Zahlendreher zurückstellt, verliert keine Eintragung —
   und ein importierter Bogen darf Eintragungen tragen, die die aktuelle Zahl
   noch nicht erreicht. Was freigeschaltet ist, wird aus der einen Zahl
@@ -101,6 +101,14 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
 * **Schurken auslosen** (MC60) — der Würfel neben einem leeren Schurken-Feld zieht einen der
   noch nicht zugeordneten Schurken. Steht schon einer im Feld, ist der Würfel gesperrt;
   ein Würfel überschreibt nie eine Wahl.
+* **Karten auslosen** (MC27) — dieselbe Regel, zwei Formen, weil die Kampagne zwei
+  Formen kennt. Der Würfel neben einer *Osborn-Tech*-Zelle zieht **eine** Karte und
+  trägt sie ein, aus den Karten, die in keiner anderen Zelle stehen. Der Würfel neben
+  dem *S.H.I.E.L.D.-Tech*-Feld eines Spielers teilt **drei** Verbesserungen aus, von
+  denen der Spieler eine behält: die drei erscheinen unter dem Feld und werden mit
+  einem Klick eingetragen. Die Auslosung selbst wird nicht gespeichert — sie ist keine
+  Eintragung auf dem Bogen und steht nur bis zur Wahl. Beide Würfel sind genau dann
+  bedienbar, wenn das Feld daneben es ist, und keiner überschreibt eine Wahl.
 * **„Nächste Runde"** (MC60) — zieht zwei Szenarien, die noch im Spiel sind, und gibt jedem
   einen Fortschrittspunkt. Ist nur noch eines im Spiel, bekommt es beide.
 * **Mehrere Durchläufe** parallel, mit Auswahl oben; die Kampagne wird beim Anlegen
@@ -348,7 +356,7 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (425 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (433 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   langpath | print | import | lock |
                                     #   lockconflict | random | randomspread |

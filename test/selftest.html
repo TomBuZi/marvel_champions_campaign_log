@@ -2215,21 +2215,49 @@
           log("both boxes stayed ticked",
             cs[4].checked && cs[1].checked);
 
-          ot[0].value = "arm-cannon";
-          fire(ot[0], "change");
+          /* Both drawn fields have a die, and both dice are gated with their
+             field — four in all here, because the marker is at the top of the
+             track. */
+          log("every drawn field has a die beside it",
+            at("[data-unlock] .icon-btn").length === 4,
+            at("[data-unlock] .icon-btn").length);
+
+          /* The Osborn Tech rung draws ONE card, so its die fills the cell.
+             What it drew is read back rather than assumed — it is a draw. */
+          var otDice = at("[data-osborn-cell] .icon-btn");
+          otDice[0].click();
+          var drew = ot[0].value;
+          log("the Osborn Tech die fills its cell from the set",
+            !!drew && !!ot[0].querySelector('option[value="' + drew + '"]'), drew);
+          log("and locks itself afterwards, so it cannot overwrite a choice",
+            otDice[0].disabled);
           log("a card taken by one cell is closed to the next",
-            ot[1].querySelector('option[value="arm-cannon"]').disabled);
+            ot[1].querySelector('option[value="' + drew + '"]').disabled);
           log("but the cell holding it keeps it selectable",
-            !ot[0].querySelector('option[value="arm-cannon"]').disabled);
-          ot[2].value = "kinetic-armor";
+            !ot[0].querySelector('option[value="' + drew + '"]').disabled);
+          /* A different card in the third cell, whichever the die left. */
+          var other = drew === "kinetic-armor" ? "arm-cannon" : "kinetic-armor";
+          ot[2].value = other;
           fire(ot[2], "change");
 
           var hero = card.querySelector(".text-input");
           hero.value = "Ghost-Spider";
           fire(hero, "input");
+
+          /* The S.H.I.E.L.D. Tech rung deals THREE and the player keeps one, so
+             this die offers rather than fills. */
+          var techDie = card.querySelector("[data-shield-player] .icon-btn");
+          techDie.click();
+          var chips = card.querySelectorAll(".chip-draw");
+          log("the S.H.I.E.L.D. Tech die deals three", chips.length === 3, chips.length);
+          var kept = chips[1].textContent;
+          chips[1].click();
           var tech = card.querySelector(".pool-select");
-          tech.value = "laser-goggles";
-          fire(tech, "change");
+          log("keeping one records it and takes the offer away",
+            tech.options[tech.selectedIndex].textContent === kept &&
+            card.querySelectorAll(".chip-draw").length === 0,
+            tech.value + " / " + kept);
+          log("and the die locks once the field holds a card", techDie.disabled);
           /* The identity field is the card's first text input; the two free-text
              rewards follow it. */
           var texts = card.querySelectorAll(".text-input");
@@ -2243,7 +2271,7 @@
             app.querySelectorAll(".player-card [data-unlock]").length);
           log("and the card the first player took is closed to the second",
             app.querySelectorAll(".player-card .pool-select")[1]
-              .querySelector('option[value="laser-goggles"]').disabled);
+              .querySelector('option[value="' + tech.value + '"]').disabled);
 
           w.dispatchEvent(new w.Event("pagehide"));
           setTimeout(function () {
@@ -2257,12 +2285,11 @@
                 JSON.stringify(["kraven-the-hunter"]),
               JSON.stringify(st.lastOnesStanding));
             log("the cells were stored in the cells they were entered in",
-              JSON.stringify(st.osbornTech) ===
-                JSON.stringify(["arm-cannon", "", "kinetic-armor"]),
+              JSON.stringify(st.osbornTech) === JSON.stringify([drew, "", other]),
               JSON.stringify(st.osbornTech));
             log("the identity and two of the rewards were stored",
               st.players[0].hero === "Ghost-Spider" &&
-              st.players[0].shieldTech === "laser-goggles" &&
+              st.players[0].shieldTech === tech.value &&
               st.players[0].aspectAdvantage === "Enhanced Reflexes",
               JSON.stringify(st.players[0]));
             finish();
@@ -2340,6 +2367,12 @@
             closed.querySelector(".text-input").value);
           log("and an open field carries no note",
             app.querySelector('[data-unlock="9"] .lock-note').textContent === "");
+          /* The die is gated with its field, and says the same reason: the last
+             Osborn Tech cell is empty at 11, so nothing but the rung can be
+             holding its die shut. */
+          var lateDie = app.querySelector('[data-unlock="21"] .icon-btn');
+          log("a closed field's die is closed with it",
+            lateDie.disabled && /21/.test(lateDie.title), lateDie.title);
 
           field.focus();
           field.value = "25";
@@ -2347,6 +2380,7 @@
           log("raising the marker puts every rung in force",
             reached() === "1,5,9,13,17,21,25", reached());
           log("and opens every gated field", open() === "1,9,17,1,13,21", open());
+          log("and the die of the last cell with it", !lateDie.disabled);
           /* Repainted in place, not re-rendered: a re-render would replace the
              field and the caret would be gone mid-number. */
           log("the field being typed in keeps the focus", d.activeElement === field);
