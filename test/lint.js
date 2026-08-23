@@ -213,10 +213,16 @@ for (const def of campaigns) {
     check(p + "a standard sheet keeps its hidden hit points",
       def.normalize({ expert: false, players: [{ hero: "Echo", hp: 7 }] })
         .players[0].hp === 7);
-    /* Version 3 only added the flag, so an older sheet needs no work beyond
-       reading standard out of its absence. */
-    check(p + "a version 2 sheet migrates to standard level",
-      def.normalize(def.migrate({ players: [{ hero: "Echo", hp: 7 }] }, 2)).expert === false);
+    /* Version 3 added the flag. An older sheet that records hit points was an
+       expert game — reading it as standard would hide numbers its owner had
+       entered — while one that never recorded any is a standard game. */
+    check(p + "a version 2 sheet with hit points migrates to expert level",
+      def.normalize(def.migrate({ players: [{ hero: "Echo", hp: 7 }] }, 2)).expert === true);
+    check(p + "a version 2 sheet without hit points stays standard",
+      def.normalize(def.migrate({ players: [{ hero: "Echo", hp: null }] }, 2)).expert === false);
+    /* Zero is a recorded value: a hero downed at the end of a scenario. */
+    check(p + "a recorded zero counts as recorded",
+      def.normalize(def.migrate({ players: [{ hero: "Echo", hp: 0 }] }, 2)).expert === true);
     check(p + "list entries trimmed, blanks dropped",
       eq(once.removed, ["keep", "~struck", "42"]), JSON.stringify(once.removed));
   }

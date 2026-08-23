@@ -209,10 +209,10 @@
      remains — while an empty card between two filled ones is kept, so the
      numbering of the players who ARE on the sheet does not shift under them.
 
-     2 -> 3 needs no work: version 3 only added the `expert` flag, and a sheet
-     that does not mention it is a standard one, which is what normalize()
-     already reads out of a missing field. It is still a new version, because a
-     build that predates the flag would drop it on the next save. */
+     2 -> 3 adds the `expert` flag. Defaulting it to false would be wrong for
+     a sheet already in use: the hit points are only ever asked for at expert
+     level, so a sheet that records them was an expert game, and reading it as
+     standard would hide numbers the owner had entered. */
   function migrate(raw, fromVersion) {
     raw = (raw && typeof raw === "object") ? raw : {};
     if (fromVersion < 2 && Array.isArray(raw.players)) {
@@ -224,6 +224,12 @@
         if (filled) lastUsed = i;
       });
       raw.players = players.slice(0, Math.max(1, lastUsed + 1));
+    }
+    if (fromVersion < 3 && Array.isArray(raw.players)) {
+      var recorded = raw.players.some(function (p) {
+        return p && typeof p === "object" && p.hp != null;
+      });
+      if (recorded) raw.expert = true;
     }
     return raw;
   }

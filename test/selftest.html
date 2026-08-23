@@ -1175,7 +1175,7 @@
         seed({ "old-1": v1 }, "old-1");
         boot("", function (frame, w, d) {
           f0 = w;
-          /* Re-queried, because switching the level below re-renders. */
+          /* A function, because an edit can re-render the cards. */
           function cards() { return d.querySelectorAll(".player-card"); }
           log("the old sheet opens without a notice", d.getElementById("notice").hidden);
           log("only the two real players are shown", cards().length === 2, cards().length);
@@ -1186,10 +1186,17 @@
             d.querySelectorAll("tbody tr").length === 5 &&
             d.querySelector(".entry-input").value === "Karen Page");
           log("the add button is available again", !d.querySelector(".btn-add").disabled);
-          /* A version 1 sheet never carried the level, so it opens as standard
-             and its hit points are not on screen yet. */
-          log("an old sheet opens at standard level",
-            !d.querySelector(".player-card .num-input"));
+          /* A version 1 sheet never carried the level, but it did carry hit
+             points — and those are only ever kept at expert level, so the
+             migration reads it as an expert game rather than hiding numbers
+             its owner had entered. */
+          log("an old sheet with hit points opens at expert level",
+            !!d.querySelector(".player-card .num-input"));
+          log("their hit points survived the migration",
+            cards()[0].querySelector(".num-input").value === "8" &&
+            cards()[1].querySelector(".num-input").value === "11",
+            cards()[0].querySelector(".num-input").value + "/" +
+            cards()[1].querySelector(".num-input").value);
 
           /* Migration happens on read; the stored blob is only rewritten by the
              next actual edit. A visit that changes nothing therefore leaves it
@@ -1201,17 +1208,8 @@
           log("and leaves its four stored entries alone",
             onLoad.state.players.length === 4, onLoad.state.players.length);
 
-          /* Switching the level is itself the first edit — and it reveals the
-             hit points the migration carried over. */
-          var expertBox = d.querySelector("[data-section=players] .panel-head .flag .sheet-check");
-          expertBox.checked = true;
-          fire(expertBox, "change");
-          log("their hit points survived the migration",
-            cards()[0].querySelector(".num-input").value === "8" &&
-            cards()[1].querySelector(".num-input").value === "11",
-            cards()[0].querySelector(".num-input").value + "/" +
-            cards()[1].querySelector(".num-input").value);
-
+          /* Editing a hit point is the first real edit, so it is what carries
+             the stored sheet up to the current version. */
           var hp = cards()[0].querySelector(".num-input");
           hp.value = "6";
           fire(hp, "input");
