@@ -329,6 +329,62 @@ for (const def of campaigns) {
     check(p + "a notes field is not part of this sheet",
       def.normalize({ notes: "anything" }).notes === undefined);
   }
+
+  if (def.id === "mad-titans-shadow") {
+    /* The generic fixture feeds `scenarios` and `removed`, which this sheet does
+       not have, and MC60's flag names, which are not boxes on it. None of it may
+       land. */
+    check(p + "no scenarios key on this sheet", once.scenarios === undefined);
+    check(p + "no removed key on this sheet", once.removed === undefined);
+    check(p + "a notes field is not part of this sheet",
+      def.normalize({ notes: "anything" }).notes === undefined);
+
+    /* The level is a real boolean, and standard is the default: a sheet that
+       says nothing is not an expert campaign. */
+    check(p + "the level defaults to standard", empty.expert === false);
+    check(p + "a tolerant truthy level reads as expert",
+      def.normalize({ expert: "true" }).expert === true);
+    /* Hiding is not clearing: the hit points have to survive a sheet that is
+       currently standard, or toggling by accident would cost data. */
+    check(p + "a standard sheet keeps its hidden hit points",
+      def.normalize({ expert: false, players: [{ hero: "Gamora", hp: 6 }] })
+        .players[0].hp === 6);
+
+    check(p + "player list capped at 4", once.players.length === 4, once.players.length);
+    check(p + "an empty player list still yields one player",
+      def.normalize({ players: [] }).players.length === 1);
+    /* The leanest player card of the three: a name and a number, nothing else. */
+    check(p + "a player carries nothing but a hero and hit points",
+      eq(Object.keys(once.players[0]).sort(), ["hero", "hp"]),
+      JSON.stringify(Object.keys(once.players[0])));
+
+    /* Nine boxes, every one present as a real boolean. A missing key would read
+       as unticked on screen and then be written back on the next save, which is
+       how a box silently disappears from a stored sheet. */
+    const NINE = ["blackSwan", "cosmo", "infinityStones1B", "nornStone", "odin",
+                  "securityBreach", "shawarma", "systemShock", "towerDamaged"];
+    check(p + "all nine boxes exist",
+      eq(Object.keys(empty.flags).sort(), NINE),
+      JSON.stringify(Object.keys(empty.flags)));
+    check(p + "they start unticked",
+      Object.values(empty.flags).every((v) => v === false));
+    check(p + "they survive a dirty read as booleans",
+      Object.keys(once.flags).length === 9 &&
+      Object.values(once.flags).every((v) => typeof v === "boolean"),
+      JSON.stringify(once.flags));
+    check(p + "a foreign flag is dropped", once.flags.trustEstablished === undefined);
+
+    const ticked = def.normalize({ flags: { cosmo: 1, odin: "true", invented: true } });
+    /* The tolerance coerceBool() documents, and only that: 1 and "true" are
+       what hand-edited JSON and older exports carry, "yes" is not. */
+    check(p + "a tolerant truthy box reads as ticked",
+      ticked.flags.cosmo === true && ticked.flags.odin === true);
+    check(p + "but an unrecognised truthy value is not a tick",
+      def.normalize({ flags: { cosmo: "yes" } }).flags.cosmo === false);
+    check(p + "an invented box is dropped", ticked.flags.invented === undefined);
+    check(p + "and the boxes nobody touched stay unticked",
+      ticked.flags.shawarma === false && ticked.flags.towerDamaged === false);
+  }
 }
 
 // ------------------------------------------------------------------- roster

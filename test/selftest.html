@@ -1429,7 +1429,11 @@
 
           var choices = d.getElementById("campaign-choices");
           var radios = choices.querySelectorAll("input[type=radio]");
-          log("one choice per campaign", radios.length === 2, radios.length);
+          /* Counted from the script tags rather than pinned to a number: those
+             are the registration, so a fourth campaign moves both together. */
+          var registered = d.querySelectorAll('script[src^="campaigns/"]').length;
+          log("one choice per campaign", radios.length === registered,
+            radios.length + " of " + registered);
           log("Fear No Evil stays preselected",
             radios[0].checked && radios[0].value === "fear-no-evil", radios[0].value);
           log("the dialog names MC10",
@@ -1826,7 +1830,187 @@
         fire(input, "blur");
       }
 
-      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert };
+      // ----------------------------------------------------------- MC21
+      /* The MC21 sheet is players plus nine checkboxes, so these cases are
+         mostly about the boxes being the ones the paper sheet has, in the
+         sections it puts them in. */
+      function mtsLog() {
+        return {
+          schemaVersion: 1, id: "mts1", campaignId: "mad-titans-shadow", stateVersion: 1,
+          title: "The Mad Titan's Shadow",
+          createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-02T00:00:00.000Z",
+          state: {
+            /* Expert, because the hit points only exist there. caseMtsExpert is
+               the one that starts at standard. */
+            expert: true,
+            players: [{ hero: "", hp: null }],
+            /* Deliberately empty: normalize() has to read all nine boxes out of
+               a state that mentions none of them. */
+            flags: {},
+          },
+        };
+      }
+
+      function caseMts() {
+        seed({ mts1: mtsLog() }, "mts1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var card = d.querySelectorAll(".player-card")[0];
+
+          log("identity is the only free-text field on the card",
+            card.querySelectorAll(".text-input").length === 1,
+            card.querySelectorAll(".text-input").length);
+          var hero = card.querySelector(".text-input");
+          hero.value = "Gamora";
+          fire(hero, "input");
+          log("the hit point hint follows the hero",
+            /\d/.test(card.querySelector(".num-hint").textContent),
+            card.querySelector(".num-hint").textContent);
+
+          var hp = card.querySelector(".num-input");
+          hp.value = "8";
+          fire(hp, "input");
+          fire(hp, "blur");
+
+          /* Four sections, because the printed sheet has four — the finale
+             against Loki records nothing and so has no section here. */
+          var sections = d.querySelectorAll('[data-section^="scenario-"]');
+          log("four scenario sections", sections.length === 4, sections.length);
+          log("and no fifth one for the finale",
+            !d.querySelector("[data-section=scenario-5]"));
+
+          var boxes = d.querySelectorAll('[data-section^="scenario-"] .sheet-check');
+          log("nine boxes across them", boxes.length === 9, boxes.length);
+          /* Per section: 2, 3, 2, 2 — the shape of the paper sheet. */
+          var split = Array.prototype.map.call(sections, function (sc) {
+            return sc.querySelectorAll(".sheet-check").length;
+          }).join();
+          log("split 2 / 3 / 2 / 2 as printed", split === "2,3,2,2", split);
+
+          log("the sections name their scenarios",
+            /Ebony Maw/.test(sections[0].textContent) &&
+            /Tower Defense/.test(sections[1].textContent) &&
+            /Thanos/.test(sections[2].textContent) &&
+            /Hela/.test(sections[3].textContent));
+          log("the pooled cards are named",
+            /Cosmo/.test(sections[0].textContent) &&
+            /Security Breach/.test(sections[0].textContent));
+          /* The two boxes that do not say "added to campaign pool" keep their
+             own wording. */
+          log("the tower keeps its own wording",
+            /Avengers Tower/.test(sections[1].textContent));
+          log("and so does the side scheme",
+            /Infinity Stones 1B/.test(sections[2].textContent));
+
+          tick(sections[0].querySelectorAll(".sheet-check")[0]);   // Cosmo
+          tick(sections[1].querySelectorAll(".sheet-check")[2]);   // Damaged
+          tick(sections[3].querySelectorAll(".sheet-check")[1]);   // Odin
+
+          d.querySelector(".btn-add").click();
+          log("a second player can be added",
+            d.querySelectorAll(".player-card").length === 2,
+            d.querySelectorAll(".player-card").length);
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).mts1.state;
+            log("the hero and hit points were stored",
+              st.players[0].hero === "Gamora" && st.players[0].hp === 8,
+              st.players[0].hero + "/" + st.players[0].hp);
+            log("the three ticked boxes were stored",
+              st.flags.cosmo === true && st.flags.towerDamaged === true &&
+              st.flags.odin === true);
+            log("and the six untouched ones are false, not missing",
+              st.flags.securityBreach === false && st.flags.shawarma === false &&
+              st.flags.blackSwan === false && st.flags.systemShock === false &&
+              st.flags.infinityStones1B === false && st.flags.nornStone === false,
+              JSON.stringify(st.flags));
+            finish();
+          }, 500);
+        });
+      }
+
+      function caseMtsExpert() {
+        var seeded = mtsLog();
+        seeded.state.expert = false;
+        /* Filled in, but not visible at standard level — exactly the state that
+           would lose data if hiding were clearing. */
+        seeded.state.players = [{ hero: "Gamora", hp: 6 }];
+        seed({ mts1: seeded }, "mts1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var card = function () { return d.querySelector(".player-card"); };
+          var toggle = function () {
+            return d.querySelector("[data-section=players] .panel-head .flag .sheet-check");
+          };
+
+          log("the switch is in the player panel head", !!toggle());
+          log("it starts unticked", toggle().checked === false);
+          log("standard hides the hit points", !card().querySelector(".num-input"));
+          log("the identity field is not hidden with them",
+            !!card().querySelector(".text-input"));
+          /* The level governs the hit points and nothing else here, so the
+             boxes stay put either way. */
+          log("standard leaves all nine boxes",
+            d.querySelectorAll('[data-section^="scenario-"] .sheet-check').length === 9);
+
+          toggle().checked = true;
+          fire(toggle(), "change");
+
+          log("expert reveals the hit points", !!card().querySelector(".num-input"));
+          log("and the value was still there",
+            card().querySelector(".num-input").value === "6",
+            card().querySelector(".num-input").value);
+
+          toggle().checked = false;
+          fire(toggle(), "change");
+          log("switching back hides them again", !card().querySelector(".num-input"));
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).mts1.state;
+            log("the sheet is back at standard", st.expert === false);
+            log("but the hidden hit points survived", st.players[0].hp === 6,
+              st.players[0].hp);
+            finish();
+          }, 500);
+        });
+      }
+
+      function caseMtsPrint() {
+        var seeded = mtsLog();
+        seeded.state.players = [
+          { hero: "Gamora", hp: 8 },
+          { hero: "Drax", hp: 11 },
+        ];
+        seeded.state.flags = { cosmo: true, towerDamaged: true, odin: true };
+        seed({ mts1: seeded }, "mts1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          w.dispatchEvent(new w.Event("beforeprint"));
+          var pv = d.getElementById("print-view");
+          var text = pv.textContent;
+          log("print view built", pv.children.length > 0, pv.children.length);
+          log("print names the campaign", /The Mad Titan.s Shadow \(MC21\)/.test(text));
+          log("print carries both heroes",
+            /Gamora/.test(text) && /Drax/.test(text));
+          log("print says which level was played",
+            /\[x\] Expertenmodus/.test(text), text.slice(0, 120));
+          /* Named, not just the bare number: textContent runs the lines
+             together, so a digit on its own proves nothing about where it sat. */
+          log("print carries the hit points",
+            /Lebenspunkte: 8/.test(text) && /Lebenspunkte: 11/.test(text));
+          /* Which cards did NOT join the pool matters too, so all nine print. */
+          log("print ticks the recorded boxes", /\[x\] Cosmo/.test(text));
+          log("print leaves the others unticked", /\[ \] Security Breach/.test(text));
+          log("print ticks the tower trait", /\[x\] Avengers Tower/.test(text));
+          log("print leaves the side scheme unticked",
+            /\[ \] .{0,3}The Infinity Stones 1B/.test(text));
+          finish();
+        });
+      }
+
+      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint };
       (cases[CASE] || caseBasic)();
     </script>
   </body>

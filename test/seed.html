@@ -1,16 +1,16 @@
 <!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>seed</title></head><body>
 <script>
 /* Legt einen ausgefüllten Beispielbogen an und springt in die App — für
-   Screenshots und den Druckvergleich. "?c=mc10" nimmt den MC10-Bogen, ohne
-   Angabe kommt MC60. */
+   Screenshots und den Druckvergleich. "?c=mc10" nimmt den MC10-Bogen,
+   "?c=mc21" den MC21-Bogen, ohne Angabe kommt MC60. */
 var q = new URLSearchParams(location.search);
-var which = q.get("c") === "mc10" ? "mc10" : "mc60";
+var which = { mc10: "mc10", mc21: "mc21" }[q.get("c")] || "mc60";
 /* "?theme=dark" (oder light) nagelt das Theme fest — sonst folgt es dem System.
    Gebraucht fuer den Druckvergleich: der Druck muss schwarz auf weiss sein,
    auch aus einer Dark-Mode-Sitzung und auch mit einem Kampagnen-Skin. */
 var theme = q.get("theme");
-/* "?expert=0" stellt den MC10-Bogen auf Standardstufe, wo verbleibende
-   Trefferpunkte und Verpflichtungen ausgeblendet sind. */
+/* "?expert=0" stellt den Bogen auf Standardstufe, wo die verbleibenden
+   Lebenspunkte ausgeblendet sind — bei MC10 zusaetzlich die Verpflichtungen. */
 var expert = q.get("expert");
 
 var logs = {
@@ -58,6 +58,27 @@ var logs = {
       experimentalWeapons: ["laser-rifle", "exo-suit"],
       delayCounters: 3,
       removed: ["~Nick Fury", "Maria Hill"]
+    }
+  },
+  mc21: {
+    schemaVersion: 1, id: "seed-3", campaignId: "mad-titans-shadow", stateVersion: 1,
+    title: "Der Schatten des Titanen, Durchgang 1",
+    createdAt: "2026-08-03T18:00:00.000Z", updatedAt: "2026-08-16T19:45:00.000Z",
+    state: {
+      expert: true,
+      players: [
+        { hero: "Gamora", hp: 8 },
+        { hero: "Drax", hp: 11 },
+        { hero: "Captain Marvel", hp: 4 }
+      ],
+      /* Gemischt gesetzt: der Bogen soll im Screenshot beides zeigen, gesetzte
+         und leere Kaestchen. */
+      flags: {
+        cosmo: true, securityBreach: false,
+        shawarma: true, blackSwan: false, towerDamaged: true,
+        systemShock: false, infinityStones1B: true,
+        nornStone: true, odin: false
+      }
     }
   }
 };

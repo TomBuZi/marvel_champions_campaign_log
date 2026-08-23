@@ -261,6 +261,124 @@
   color-scheme: dark;
 }
 
+/* ---------- Campaign skin: MC21, The Mad Titan's Shadow ----------
+   Sampled from mc21_the_mad_titans_shadow_rulebook-compressed-campaign_log.pdf
+   the same way the two palettes above were sampled from their sheets: the fill
+   colours of the vector areas in the page content stream, weighted by how much
+   area each covers. Indigo #2f3694 and orange #e19526 carry 12% of the area
+   each, lavender #e0dff0 another 17%, with a gold accent on the badges — which
+   also keeps MC21 apart from MC60 and from MC10's green at a glance.
+
+   Two are darkened from what was sampled, for the same reason MC10's --brick
+   is: the orange page field and the mid indigo carry text, and the printed
+   tones are too light to hold 4.5 against it. Every pair here matches or beats
+   the MC10 palette's contrast.
+
+   Four blocks, mirroring the four above, and for the reason spelled out there:
+   a single [data-campaign] block outranks the bare :root inside the dark media
+   query and would paint the light palette in dark mode. */
+:root[data-campaign="tmts"] {
+  --page:      #b4541c;   /* rust page field — darkened from the sampled
+                             #e19526, which cannot carry text              */
+  --bar:       #2f3694;   /* indigo: bars, borders, ink outlines           */
+  --brick:     #4a4fa0;   /* mid indigo, table body — derived and darkened
+                             so the text on it holds 4.5 (6.6 as it is)    */
+  --panel-1:   #fffaf4;   /* panel gradient, top                          */
+  --panel-2:   #ffe6cb;   /* … bottom                                     */
+  --pill:      #e0dff0;   /* heading pill, table header row               */
+  --check:     #d3c8e3;   /* empty checkbox                               */
+  --zap:       #e9ab21;   /* accent gold: focus, ticks, counters          */
+  --ink:       #231f20;   /* near-black text                              */
+
+  --bg-input: #fdfbff;
+  --text-dim: #454072;
+  --accent-strong: #1d2270;
+  --accent-2: #5a62c4;
+  /* Stays red: here the colour carries meaning, not identity. */
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(233, 171, 33, 0.55);
+  --halftone: rgba(47, 54, 148, 0.16);
+  --hatch: rgba(47, 54, 148, 0.10);
+  --on-brick: #f5f4fb;
+  --on-page: #fffaf4;
+  --on-zap: #231f20;
+  --on-danger: #fff4ef;
+  --tick: #e9ab21;
+  --title-shadow: #fffaf4;
+  --zap-strong: #f7bd3a;
+  --input-settled: #ded9ee;
+  --backdrop: rgba(9, 10, 26, 0.55);
+}
+/* --accent, --panel-border and --ink-shadow are left alone on purpose: they
+   are already defined as var(--bar) and follow it by themselves. */
+@media (prefers-color-scheme: dark) {
+  :root[data-campaign="tmts"] {
+    --page: #0d0f1f; --bar: #a9adf0; --brick: #2a2d55;
+    --panel-1: #1a1c33; --panel-2: #14162a; --pill: #262a4d;
+    --check: #1e2140; --zap: #f0c04a; --ink: #e8e7f5;
+    --bg-input: #12142a; --panel-border: #3b3f6b; --text-dim: #a5a3c8;
+    --accent: #a9adf0; --accent-strong: #cfd2fb; --accent-2: #8f96e8;
+    --danger: #ff6b5c;
+    --glow: 0 0 0 3px rgba(240, 192, 74, 0.40);
+    --halftone: rgba(255, 255, 255, 0.06);
+    --hatch: rgba(255, 255, 255, 0.05);
+    --ink-shadow: 4px 4px 0 0 #05060f;
+    --on-brick: #e8e7f5;
+    --on-page: #e8e7f5;
+    --on-zap: #231f20;
+    --on-danger: #2b0a07;
+    --tick: #0d0f1f;
+    --title-shadow: #05060f;
+    --zap-strong: #f7cf62;
+    --input-settled: #0a0b18;
+    --backdrop: rgba(5, 6, 15, 0.6);
+  }
+}
+:root[data-campaign="tmts"][data-theme="light"] {
+  --page: #b4541c; --bar: #2f3694; --brick: #4a4fa0;
+  --panel-1: #fffaf4; --panel-2: #ffe6cb; --pill: #e0dff0;
+  --check: #d3c8e3; --zap: #e9ab21; --ink: #231f20;
+  --bg-input: #fdfbff; --panel-border: var(--bar); --text-dim: #454072;
+  --accent: var(--bar); --accent-strong: #1d2270; --accent-2: #5a62c4;
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(233, 171, 33, 0.55);
+  --halftone: rgba(47, 54, 148, 0.16);
+  --hatch: rgba(47, 54, 148, 0.10);
+  --ink-shadow: 4px 4px 0 0 var(--bar);
+  --on-brick: #f5f4fb;
+  --on-page: #fffaf4;
+  --on-zap: #231f20;
+  --on-danger: #fff4ef;
+  --tick: #e9ab21;
+  --title-shadow: #fffaf4;
+  --zap-strong: #f7bd3a;
+  --input-settled: #ded9ee;
+  --backdrop: rgba(9, 10, 26, 0.55);
+  color-scheme: light;
+}
+:root[data-campaign="tmts"][data-theme="dark"] {
+  --page: #0d0f1f; --bar: #a9adf0; --brick: #2a2d55;
+  --panel-1: #1a1c33; --panel-2: #14162a; --pill: #262a4d;
+  --check: #1e2140; --zap: #f0c04a; --ink: #e8e7f5;
+  --bg-input: #12142a; --panel-border: #3b3f6b; --text-dim: #a5a3c8;
+  --accent: #a9adf0; --accent-strong: #cfd2fb; --accent-2: #8f96e8;
+  --danger: #ff6b5c;
+  --glow: 0 0 0 3px rgba(240, 192, 74, 0.40);
+  --halftone: rgba(255, 255, 255, 0.06);
+  --hatch: rgba(255, 255, 255, 0.05);
+  --ink-shadow: 4px 4px 0 0 #05060f;
+  --on-brick: #e8e7f5;
+  --on-page: #e8e7f5;
+  --on-zap: #231f20;
+  --on-danger: #2b0a07;
+  --tick: #0d0f1f;
+  --title-shadow: #05060f;
+  --zap-strong: #f7cf62;
+  --input-settled: #0a0b18;
+  --backdrop: rgba(5, 6, 15, 0.6);
+  color-scheme: dark;
+}
+
 /* ---------- Base ---------- */
 * { box-sizing: border-box; }
 
