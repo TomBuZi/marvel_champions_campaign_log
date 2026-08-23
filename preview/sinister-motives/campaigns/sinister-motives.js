@@ -105,11 +105,11 @@
   /* "Community Service" encounter set — the side schemes recorded after each of
      scenarios 1 to 4. */
   var COMMUNITY_SERVICE = [
-    { slug: "back-alley-burglary", en: "Back Alley Burglary", de: null },
-    { slug: "cat-in-a-tree",       en: "Cat in a Tree",       de: null },
-    { slug: "henchmen-heist",      en: "Henchmen Heist",      de: null },
-    { slug: "off-the-rails",       en: "Off the Rails",       de: null },
-    { slug: "rubble-rescue",       en: "Rubble Rescue",       de: null },
+    { slug: "back-alley-burglary", en: "Back Alley Burglary", de: "Diebstahl in der Hintergasse" },
+    { slug: "cat-in-a-tree",       en: "Cat in a Tree",       de: "Katze auf einem Baum" },
+    { slug: "henchmen-heist",      en: "Henchmen Heist",      de: "Raubüberfall durch Handlanger" },
+    { slug: "off-the-rails",       en: "Off the Rails",       de: "Entgleist" },
+    { slug: "rubble-rescue",       en: "Rubble Rescue",       de: "Rettung von den Trümmern" },
   ];
 
   /* "Sinister Assault" encounter set — the six elite minions of The Sinister
@@ -118,7 +118,7 @@
     { slug: "doctor-octopus",    en: "Doctor Octopus",    de: null },
     { slug: "electro",           en: "Electro",           de: null },
     { slug: "hobgoblin",         en: "Hobgoblin",         de: null },
-    { slug: "kraven-the-hunter", en: "Kraven the Hunter", de: null },
+    { slug: "kraven-the-hunter", en: "Kraven the Hunter", de: "Kraven der Jäger" },
     { slug: "scorpion",          en: "Scorpion",          de: null },
     { slug: "vulture",           en: "Vulture",           de: null },
   ];
@@ -126,12 +126,12 @@
   /* "Osborn Tech" encounter set — the attachments drawn at random on three
      rungs of the reputation track. */
   var OSBORN_TECH = [
-    { slug: "arm-cannon",       en: "Arm Cannon",       de: null },
-    { slug: "ionic-boots",      en: "Ionic Boots",      de: null },
-    { slug: "kinetic-armor",    en: "Kinetic Armor",    de: null },
-    { slug: "neocarbon-scales", en: "Neocarbon Scales", de: null },
-    { slug: "spiked-gauntlet",  en: "Spiked Gauntlet",  de: null },
-    { slug: "tracking-display", en: "Tracking Display", de: null },
+    { slug: "arm-cannon",       en: "Arm Cannon",       de: "Armkanone" },
+    { slug: "ionic-boots",      en: "Ionic Boots",      de: "Ionenstiefel" },
+    { slug: "kinetic-armor",    en: "Kinetic Armor",    de: "Kinetische Rüstung" },
+    { slug: "neocarbon-scales", en: "Neocarbon Scales", de: "Neocarbon-Schuppenpanzer" },
+    { slug: "spiked-gauntlet",  en: "Spiked Gauntlet",  de: "Stachelhandschuh" },
+    { slug: "tracking-display", en: "Tracking Display", de: "Zielverfolgungsvisier" },
   ];
 
   /* The "Campaign - S.H.I.E.L.D. Tech" upgrades. Each has a plain and an
@@ -139,14 +139,14 @@
      the pool lists eight titles rather than sixteen faces. Flipping to the
      Enhanced side is a track reward, not a second field. */
   var SHIELD_TECH = [
-    { slug: "compact-darts",         en: "Compact Darts",         de: null },
-    { slug: "impact-dampening-suit", en: "Impact-Dampening Suit", de: null },
-    { slug: "laser-goggles",         en: "Laser Goggles",         de: null },
-    { slug: "propulsion-gauntlet",   en: "Propulsion Gauntlet",   de: null },
-    { slug: "retinal-display",       en: "Retinal Display",       de: null },
-    { slug: "shock-knuckles",        en: "Shock Knuckles",        de: null },
-    { slug: "wave-bracers",          en: "Wave Bracers",          de: null },
-    { slug: "wrist-navigator",       en: "Wrist Navigator",       de: null },
+    { slug: "compact-darts",         en: "Compact Darts",         de: "Kompakte Wurfpfeile" },
+    { slug: "impact-dampening-suit", en: "Impact-Dampening Suit", de: "Anzug mit Aufpralldämmung" },
+    { slug: "laser-goggles",         en: "Laser Goggles",         de: "Laserbrille" },
+    { slug: "propulsion-gauntlet",   en: "Propulsion Gauntlet",   de: "Propulsor-Handschuh" },
+    { slug: "retinal-display",       en: "Retinal Display",       de: "Netzhaut-Display" },
+    { slug: "shock-knuckles",        en: "Shock Knuckles",        de: "Schock-Faust" },
+    { slug: "wave-bracers",          en: "Wave Bracers",          de: "Impuls-Armbänder" },
+    { slug: "wrist-navigator",       en: "Wrist Navigator",       de: "Handnavigator" },
   ];
 
   /* ---- THE REPUTATION TRACK ------------------------------------------------

@@ -563,9 +563,11 @@
   }
 
   // ---- Rendering -----------------------------------------------------------
-  /* Log picker, grouped by campaign. One <optgroup> per campaign keeps the
-     runs of different campaigns apart once there is more than one; with a
-     single campaign registered there is simply one group. */
+  /* Log picker, grouped by campaign. One <optgroup> per REGISTERED campaign,
+     whether or not there is a run of it yet: the heading plus the "start
+     another run" row under it is how a campaign is begun from here, so a
+     campaign nobody has played must still have its heading. A group for an
+     unknown campaign only appears because a stored log points at one. */
   function renderLogSelect() {
     var sel = document.getElementById("log-select");
     sel.innerHTML = "";
@@ -581,9 +583,12 @@
       if (order.indexOf(cid) === -1) order.push(cid);
     });
     order.forEach(function (cid) {
-      var ids = byCampaign[cid];
-      if (!ids) return;
+      var ids = byCampaign[cid] || [];
       var def = campaignById(cid);
+      /* An unknown campaign with nothing under it would be a heading over
+         nothing at all — and there is no starting a run of a campaign this
+         build does not have. */
+      if (!def && !ids.length) return;
       var group = el("optgroup", null,
         { label: def ? campaignTitle(def) + " (" + def.code + ")" : cid });
       /* Directly under the heading, before the runs: starting another run of
