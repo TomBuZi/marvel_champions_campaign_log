@@ -821,6 +821,35 @@ button:focus-visible {
 /* A cell is its control plus the line saying which rung opens it. */
 .cell-row > .cell { display: grid; gap: 0.2rem; align-content: start; }
 
+/* A field with a die beside it. MC60 does this inside a table cell, MC27 in a
+   player card and in an Osborn Tech cell, so the shape gets a name of its own.
+   min-width on the field, or a long card name pushes the die off the edge. */
+.with-die {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.with-die > .pool-select { flex: 1 1 auto; min-width: 0; }
+
+/* What a die dealt, offered so the player can keep one. Transient: the draw is
+   not part of the sheet, so it lives in the DOM only and goes as soon as the
+   choice is made. */
+.draw-list { margin-top: 0.35rem; }
+.draw-caption {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.chip-draw {
+  width: 100%;
+  font: inherit;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+}
+.chip-draw:hover,
+.chip-draw:focus-visible { background: var(--pill); }
+
 /* Why a field is closed, said in the open rather than only in a tooltip — the
    rung that opens it is information the player wants before they get there.
    Empty while the field is open, so the row does not jump when it opens. */
