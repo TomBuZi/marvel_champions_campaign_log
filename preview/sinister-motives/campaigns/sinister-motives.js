@@ -13,11 +13,25 @@
 
    What page 2 does NOT have is a single checkbox. Every field on it is a blank
    line to write on. Where the line names a card from a set the campaign prints,
-   this has that set as a dropdown instead — writing a name by hand could only
-   introduce a typo, and each set carries its own rule about repeats (see POOLS
-   below). Aspect Advantage and Planning Ahead stay free text, because they are
-   chosen from the player's own collection and deck, which is not a finite
-   printed list.
+   this has that set instead — writing a name by hand could only introduce a
+   typo. Which shape the set takes follows what the sheet asks for: Community
+   Service and Last Ones Standing ask WHICH cards, so they are boxes over the
+   whole set; Osborn Tech is drawn once per rung of the track, so it keeps one
+   cell per rung. Aspect Advantage and Planning Ahead stay free text, because
+   they are chosen from the player's own collection and deck, which is not a
+   finite printed list.
+
+   Two departures from the paper, both because the app knows something the paper
+   cannot:
+
+   1. The three "Reputation Track Reward" sections are printed as their own
+      blocks with a P1..P4 column. That column is just the player list again, so
+      the fields sit in the player cards instead — the same move MC10 makes with
+      its upgrades.
+   2. A field the players have not unlocked yet is closed, with the rung that
+      opens it named on it. The paper cannot do that; it just has a blank box
+      that means nothing until the track says so. Closed, never hidden and never
+      cleared: lowering the marker must not make a record disappear.
 
    The one thing here that page 2 does not print at all is the running
    reputation. It lives on the track on page 1, where a marker is moved along
@@ -33,7 +47,8 @@
    from the sheet, not guessed: the seven rules that cross the track run exactly
    through the centres of those circles, and the Osborn Tech penalty appears on
    exactly three of them — which is exactly how many Osborn Tech cells page 2
-   prints.
+   prints. That match is why THRESHOLDS below is the single source for the cell
+   count as well as for what each rung opens.
 
    The campaign is played at standard or expert level, and the remaining hit
    points are the only field the sheet marks "Expert Mode Only", so a standard
@@ -58,13 +73,10 @@
   /* The length of the printed track: 25 large circles plus ten small ones
      below them. Reputation starts at 0 — an empty track, nothing unlocked. */
   var REP_MAX = 35;
-
-  /* How many cells each section prints. Not a nice-to-have: the position of a
-     cell is part of the entry, so these lists are fixed-length slots rather
-     than sets, and the numbers below are what normalize() enforces. */
-  var COMMUNITY_SERVICE_CELLS = 4;   // "Victory for Scenarios #1-4"
-  var LAST_ONES_STANDING_CELLS = 6;  // the six villains of the Sinister Six
-  var OSBORN_TECH_CELLS = 3;         // three Osborn Tech rungs on the track
+  /* Waking Nightmare is a scenario tally rather than a place on the track, so
+     it is not bounded by the track's length. Same ceiling as every other loose
+     count in this project. */
+  var SCORE_MAX = 99;
 
   /* ---- POOLS ---------------------------------------------------------------
      Every card carries an English and a German name, as in MC10 and MC21.
@@ -77,13 +89,15 @@
 
      Each pool carries a different rule, taken from the campaign:
 
-       Community Service    four cells out of five printed side schemes; each
-                            side scheme exists once, so the cells differ
-       Sinister Assault     the six villains of scenario 4; six cells, six
-                            cards, each named at most once
-       Osborn Tech          three cells out of six attachments; a recorded one
-                            is shuffled into the encounter deck, so it cannot
-                            be drawn a second time
+       Community Service    which of the five printed side schemes were
+                            recorded; the sheet prints four cells, one per
+                            scenario 1 to 4
+       Sinister Assault     which of the six villains of scenario 4 were still
+                            standing
+       Osborn Tech          one card per Osborn Tech rung of the track, and a
+                            recorded one is shuffled into the encounter deck,
+                            so it cannot be drawn again — the three cells hold
+                            three different cards
        S.H.I.E.L.D. Tech    one per player, each card to at most one player —
                             the unchosen cards go back to the collection, the
                             chosen one does not */
@@ -146,17 +160,48 @@
 
      `pnOsbornTech` appears three times on purpose — the sheet says the same
      sentence on three rungs, so it is one label used three times rather than
-     three labels that could drift apart. */
+     three labels that could drift apart.
+
+     `opens` names the player field this rung tells the players to fill in, and
+     `opensCell` says the rung takes an Osborn Tech card. Both are read below to
+     derive what is locked and how many Osborn Tech cells there are, so the
+     table stays the single source: a field cannot open without a rung that
+     opens it, and a cell cannot exist without a rung that fills it. */
   var THRESHOLDS = [
     { at: 1,  reward: ["rwShieldTech"],
-              penalty: ["pnOsbornTech", "pnOsbornShuffle"] },
-    { at: 5,  reward: ["rwMulligan"],       penalty: ["pnThreat"] },
-    { at: 9,  reward: ["rwAspectAdvantage"], penalty: ["pnMinion"] },
-    { at: 13, reward: ["rwEnhanced"],       penalty: ["pnOsbornTech"] },
+              penalty: ["pnOsbornTech", "pnOsbornShuffle"],
+              opens: "shieldTech", opensCell: true },
+    { at: 5,  reward: ["rwMulligan"],        penalty: ["pnThreat"] },
+    { at: 9,  reward: ["rwAspectAdvantage"], penalty: ["pnMinion"],
+              opens: "aspectAdvantage" },
+    { at: 13, reward: ["rwEnhanced"],        penalty: ["pnOsbornTech"],
+              opensCell: true },
     { at: 17, reward: ["rwPlanningAhead", "rwPlanningAheadSetup"],
-              penalty: ["pnSideScheme"] },
-    { at: 21, reward: ["rwHelicarrier"],    penalty: ["pnOsbornTech"] },
-    { at: 25, reward: ["rwSymbioteSuit"],   penalty: ["pnEncounter"] },
+              penalty: ["pnSideScheme"], opens: "planningAhead" },
+    { at: 21, reward: ["rwHelicarrier"],     penalty: ["pnOsbornTech"],
+              opensCell: true },
+    { at: 25, reward: ["rwSymbioteSuit"],    penalty: ["pnEncounter"] },
+  ];
+
+  /* Which rung opens which player field, and which rungs take an Osborn Tech
+     card. Derived, so the table above cannot fall out of step with either. */
+  var OPENS_AT = {};
+  var OSBORN_AT = [];
+  THRESHOLDS.forEach(function (row) {
+    if (row.opens) OPENS_AT[row.opens] = row.at;
+    if (row.opensCell) OSBORN_AT.push(row.at);
+  });
+  /* Three, because three rungs take a card — and the sheet prints three cells.
+     That agreement is what made the reading of the track trustworthy, so it is
+     derived here rather than written down twice. */
+  var OSBORN_TECH_CELLS = OSBORN_AT.length;
+
+  /* The three fields that live in a player card and open on a rung, in the
+     order the sheet prints their sections. */
+  var PLAYER_REWARDS = [
+    { key: "shieldTech",      head: "secShieldTech",      pool: SHIELD_TECH },
+    { key: "aspectAdvantage", head: "secAspectAdvantage", pool: null },
+    { key: "planningAhead",   head: "secPlanningAhead",   pool: null },
   ];
 
   /* The "Conditions" legend at the foot of the track page: what a victory is
@@ -170,6 +215,10 @@
   function inPool(pool, slug) {
     for (var i = 0; i < pool.length; i++) if (pool[i].slug === slug) return pool[i];
     return null;
+  }
+  function poolIndex(pool, slug) {
+    for (var i = 0; i < pool.length; i++) if (pool[i].slug === slug) return i;
+    return pool.length;
   }
   /* The name to show. Falls back to English while `de` is null, so a card
      without a German name yet is readable rather than blank. */
@@ -187,17 +236,14 @@
     return entry ? entryName(entry, lang) : null;
   }
 
-  /* "Player #1" on its own, or "Player #1 – Ghost-Spider" once there is a name
-     to say. Used wherever a control has to say whose it is. */
-  function playerLabel(t, player, i) {
-    var caption = t("playerRow", String(i + 1));
-    var hero = String(player.hero || "").trim();
-    return hero ? caption + " – " + hero : caption;
+  /* A blank reputation field counts as 0 — an empty track. */
+  function repOf(state) {
+    return state.reputation == null ? 0 : state.reputation;
   }
 
   /* Which rungs the given reputation has reached. Derived and never stored: the
      reputation is the single source, so an imported sheet cannot disagree with
-     itself about what is unlocked. A blank field counts as 0 — an empty track. */
+     itself about what is unlocked. */
   function reachedAt(reputation) {
     var rep = reputation == null ? 0 : reputation;
     return THRESHOLDS.filter(function (row) { return rep >= row.at; });
@@ -216,10 +262,15 @@
       reputation: null,
       /* A fresh sheet starts with a single player; more are added as needed. */
       players: [newPlayer()],
-      communityService: emptySlots(COMMUNITY_SERVICE_CELLS),
+      /* Which cards, not which cell: the sheet asks which side schemes were
+         recorded and which villains were still standing, and a set of names
+         answers that. */
+      communityService: [],
       wakingNightmare: null,
-      lastOnesStanding: emptySlots(LAST_ONES_STANDING_CELLS),
+      lastOnesStanding: [],
       finalScore: null,
+      /* Cells, not a set: each one belongs to a rung of the track, so the
+         position is part of the entry. */
       osbornTech: emptySlots(OSBORN_TECH_CELLS),
     };
   }
@@ -228,7 +279,7 @@
     return {
       hero: "",
       hp: null,
-      /* The three "Reputation Track Reward" sections. They live ON the player
+      /* The three "Reputation Track Reward" fields. They live ON the player
          rather than in three parallel lists, so adding or removing a player can
          never shift the entries out from under the names. */
       shieldTech: "",
@@ -265,6 +316,10 @@
       out.players.push({
         hero: W.coerceText(p.hero, NAME_MAX),
         hp: W.clampNumber(p.hp === "" ? null : p.hp, 0, HP_MAX),
+        /* Kept whatever the reputation currently is: a rung that has not been
+           reached closes the field on screen, it does not empty it. Lowering
+           the marker after a mistyped number would otherwise cost the
+           record. */
         shieldTech: inPool(SHIELD_TECH, p.shieldTech) ? p.shieldTech : "",
         /* Free text: chosen from the player's own collection and deck, which is
            not a finite printed list. */
@@ -279,12 +334,10 @@
        and the alternative is a sheet that cannot legally be played. */
     dropRepeats(out.players, "shieldTech");
 
-    out.communityService =
-      pickSlots(raw.communityService, COMMUNITY_SERVICE, COMMUNITY_SERVICE_CELLS);
+    out.communityService = pickSlugs(raw.communityService, COMMUNITY_SERVICE);
     out.wakingNightmare =
-      W.clampNumber(raw.wakingNightmare === "" ? null : raw.wakingNightmare, 0, REP_MAX);
-    out.lastOnesStanding =
-      pickSlots(raw.lastOnesStanding, SINISTER_ASSAULT, LAST_ONES_STANDING_CELLS);
+      W.clampNumber(raw.wakingNightmare === "" ? null : raw.wakingNightmare, 0, SCORE_MAX);
+    out.lastOnesStanding = pickSlugs(raw.lastOnesStanding, SINISTER_ASSAULT);
     out.finalScore =
       W.clampNumber(raw.finalScore === "" ? null : raw.finalScore, 0, REP_MAX);
     out.osbornTech = pickSlots(raw.osbornTech, OSBORN_TECH, OSBORN_TECH_CELLS);
@@ -292,12 +345,26 @@
     return out;
   }
 
+  /* The recognised slugs of `raw`, in the pool's own order and without
+     duplicates. Canonical output is what makes normalize() a fixpoint: the
+     same set always comes back in the same order, so a second pass and a JSON
+     round-trip both change nothing. Same helper MC10 uses, and it also happens
+     to read a row of cells correctly — the blanks are simply not slugs. */
+  function pickSlugs(raw, pool) {
+    var wanted = {};
+    (Array.isArray(raw) ? raw : []).forEach(function (v) {
+      if (typeof v === "string") wanted[v] = true;
+    });
+    return pool.filter(function (e) { return wanted[e.slug]; })
+      .map(function (e) { return e.slug; });
+  }
+
   /* A fixed-length row of cells, each holding a recognised slug or nothing.
-     Unlike MC10's pickSlugs() this keeps the POSITION: the cell an entry sits
-     in is part of what was written down, so the list cannot be reordered into
-     pool order. An unknown slug and a repeat of one an earlier cell already
-     holds both empty their cell — earlier cells win, and it is that fixed rule
-     which makes a second pass over the same state produce the same array. */
+     Unlike pickSlugs() this keeps the POSITION: an Osborn Tech cell belongs to
+     a rung of the track, so the row cannot be sorted into pool order. An
+     unknown slug and a repeat of one an earlier cell already holds both empty
+     their cell — earlier cells win, and it is that fixed rule which makes a
+     second pass over the same state produce the same array. */
   function pickSlots(raw, pool, count) {
     var list = Array.isArray(raw) ? raw : [];
     var seen = {};
@@ -321,12 +388,25 @@
     });
   }
 
+  /* Add or remove one slug, keeping the list in the pool's order so it matches
+     what normalize() would produce. */
+  function toggleSlug(list, pool, slug, on) {
+    var at = list.indexOf(slug);
+    if (on && at === -1) {
+      list.push(slug);
+      list.sort(function (a, b) { return poolIndex(pool, a) - poolIndex(pool, b); });
+    } else if (!on && at !== -1) {
+      list.splice(at, 1);
+    }
+  }
+
   /* No migrate(): stateVersion is 1, so there is no older shape in the wild
      yet. The first change to the shape above has to bring one with it — see
      the check in test/lint.js. */
 
-  /* Counts the expert-only field even at standard level: it is hidden, not
-     gone, and removing a player would still throw it away. */
+  /* Counts the expert-only field even at standard level, and a closed field
+     even while it is closed: both are hidden or frozen, not gone, and removing
+     a player would still throw them away. */
   function playerHasContent(player) {
     return !!player.hero.trim() || player.hp != null || !!player.shieldTech ||
       !!player.aspectAdvantage.trim() || !!player.planningAhead.trim();
@@ -361,7 +441,7 @@
   }
 
   /* The line the sheet prints under a section heading — "Victory for Scenario
-     #3 — Mysterio", "Reputation Track Reward". It says which game the entry
+     #3 — Mysterio", "Reputation Track Penalty". It says which game the entry
      came out of, so it belongs on screen too. */
   function subtitle(section, text) {
     var p = W.el("p", "hint");
@@ -370,11 +450,14 @@
     return section;
   }
 
-  /* A labelled row inside a player card or a panel. */
-  function fieldRow(labelText, control) {
-    var row = W.el("div", "player-field");
+  /* A labelled row inside a player card or a panel. `at` marks the rung that
+     opens the field, so paintUnlocks() can find the row again and say why it is
+     closed without anything being re-rendered. */
+  function fieldRow(labelText, control, at) {
+    var row = W.el("div", "player-field", at ? { "data-unlock": String(at) } : null);
     var label = W.el("label", "field-label");
     label.textContent = labelText;
+    if (at) label.appendChild(W.el("span", "lock-note"));
     label.appendChild(control);
     row.appendChild(label);
     return row;
@@ -390,36 +473,27 @@
     return row;
   }
 
-  /* One of the sheet's unlabelled cell grids: four, six or three blank places
-     side by side. There is nothing to write above them — the sheet prints the
-     heading once and then bare cells — so the cells carry their position in
-     their accessible name instead, which is the least that keeps them apart
-     for anyone not looking at the grid. */
-  function cellRow(t, heading, pool, lang, slots, cfg) {
-    /* The cell count drives the column count in styles.css, so the grid keeps
-       the shape the sheet prints rather than the shape that happens to fit. */
-    var row = W.el("div", "cell-row", { "data-cells": String(slots.length) });
-    var selects = [];
-    slots.forEach(function (slug, i) {
-      var sel = W.poolSelect({
-        value: slug,
-        label: t("cellLabel", heading, String(i + 1), String(slots.length)),
-        placeholder: t("cardPlaceholder"),
-        options: pool.map(function (e) {
-          return { value: e.slug, label: entryName(e, lang), lang: entryLang(e, lang) };
-        }),
-        onChange: function (next) {
-          slots[i] = next;
-          cfg.onChange();
-          W.syncUnique(selects);
-        },
-      });
-      selects.push(sel);
-      row.appendChild(sel);
+  /* A row of named boxes with no caption over it: the panel heading is the
+     caption here, because the sheet prints the heading once and then bare
+     cells. Each box still needs a name of its own, so it takes the heading and
+     the card. */
+  function flagRow(heading, pool, lang, cfg) {
+    var wrap = W.el("div", "player-field");
+    var row = W.el("div", "flag-row");
+    pool.forEach(function (entry) {
+      var flag = W.el("label", "flag");
+      var text = W.el("span", null, { lang: entryLang(entry, lang) });
+      text.textContent = entryName(entry, lang);
+      flag.appendChild(text);
+      flag.appendChild(W.checkbox({
+        checked: cfg.isOn(entry),
+        label: heading + " – " + entryName(entry, lang),
+        onChange: function (next) { cfg.onChange(entry, next); },
+      }));
+      row.appendChild(flag);
     });
-    /* Last, so the row starts out showing what the other cells already hold. */
-    W.syncUnique(selects);
-    return row;
+    wrap.appendChild(row);
+    return wrap;
   }
 
   function render(root, ctx) {
@@ -429,10 +503,10 @@
     root.appendChild(renderReputation(t, state, ctx));
 
     /* The sheet's own rows, in its own order: a wide section beside a narrow
-       one, twice; then the three reward sections across; then the penalty on
-       its own. .scenario-row is two columns on a wide screen and one on a
-       narrow one, .reward-row three and one — as close as a screen gets to the
-       paper while staying readable. */
+       one, twice, then the penalty on its own. .scenario-row is two columns on
+       a wide screen and one on a narrow one — as close as a screen gets to the
+       paper while staying readable. The three reward sections are not here;
+       they sit in the player cards, see the file header. */
     var row = W.el("div", "scenario-row");
     row.appendChild(renderCommunityService(t, lang, state, ctx));
     row.appendChild(renderWakingNightmare(t, state, ctx));
@@ -443,17 +517,12 @@
     row2.appendChild(renderFinalScore(t, state, ctx));
     root.appendChild(row2);
 
-    var rewards = W.el("div", "reward-row");
-    rewards.appendChild(renderShieldTech(t, lang, state, ctx));
-    rewards.appendChild(renderFreeTextReward(t, state, ctx, {
-      id: "aspect-advantage", head: "secAspectAdvantage", key: "aspectAdvantage",
-    }));
-    rewards.appendChild(renderFreeTextReward(t, state, ctx, {
-      id: "planning-ahead", head: "secPlanningAhead", key: "planningAhead",
-    }));
-    root.appendChild(rewards);
-
     root.appendChild(renderOsbornTech(t, lang, state, ctx));
+
+    /* Last, once every gated control is in the document: what the reputation
+       has opened is painted in one pass rather than decided per control, so
+       the screen and the number can never say different things. */
+    paintUnlocks(t, state);
   }
 
   function renderPlayers(t, lang, state, ctx) {
@@ -497,12 +566,17 @@
 
     /* One shared <datalist> of hero names for all the slots. The identity field
        stays free text: the sheet is a fill-in field, and a hero the roster has
-       not caught up with yet must remain typeable. */
+       not caught up with yet must remain typeable. Not every card field is free
+       text — the S.H.I.E.L.D. Tech pool is printed and finite. */
     var heroes = global.HEROES || [];
     var listId = "hero-suggestions";
     grid.appendChild(W.dataList(listId, heroes.map(function (h) {
       return (lang === "de" && h.de) ? h.de : h.en;
     })));
+
+    /* Collected across all the cards so the upgrade pool can grey out what
+       another player already holds, in place and without a re-render. */
+    var techSelects = [];
 
     state.players.forEach(function (player, i) {
       var card = W.el("div", "player-card", { "data-player": String(i + 1) });
@@ -515,9 +589,9 @@
 
       /* Removing the last player would leave a sheet with nobody on it, so that
          one stays put. Anything else goes, with a confirmation when there is
-         something on the card to lose — and a card here also stands for three
-         entries in the reward panels below, so the check has to look at all of
-         it. */
+         something on the card to lose — and a card here holds three recorded
+         card titles besides the name and the number, so the check has to look
+         at all of it. */
       var last = state.players.length <= 1;
       var del = W.iconButton({
         glyph: "×",
@@ -529,8 +603,8 @@
           state.players.splice(i, 1);
           ctx.save();
           /* A full re-render, never a partial redraw: the cards below shift up
-             and renumber, and the three reward panels have to be rebuilt
-             against the players that are left. */
+             and renumber, and the upgrade pool has to be recomputed against
+             the players that are left. */
           ctx.rerender();
         },
       });
@@ -549,10 +623,6 @@
           ctx.save();
           updateHpHint();
           markDuplicates();
-          /* The three reward panels name their player, so they follow along.
-             Rewritten in place rather than by re-rendering, which would take
-             the focus out of the field being typed in. */
-          paintPlayerNames(t, state);
         },
       });
       card.appendChild(fieldRow(t("colIdentity"), heroInput));
@@ -571,6 +641,37 @@
         });
         card.appendChild(fieldRow(t("colHp"), hpField));
       }
+
+      /* The three reward fields, each closed until its rung. The pooled one is
+         a dropdown with cross-player exclusion, the other two free text. */
+      PLAYER_REWARDS.forEach(function (def) {
+        var control;
+        if (def.pool) {
+          control = W.poolSelect({
+            value: player[def.key],
+            label: caption + " – " + t(def.head),
+            placeholder: t("cardPlaceholder"),
+            options: def.pool.map(function (e) {
+              return { value: e.slug, label: entryName(e, lang), lang: entryLang(e, lang) };
+            }),
+            onChange: function (next) {
+              player[def.key] = next;
+              ctx.save();
+              W.syncUnique(techSelects);
+            },
+          });
+          techSelects.push(control);
+        } else {
+          control = W.textField({
+            value: player[def.key],
+            label: caption + " – " + t(def.head),
+            placeholder: t("cardNamePlaceholder"),
+            maxLength: NAME_MAX,
+            onChange: function (next) { player[def.key] = next; ctx.save(); },
+          });
+        }
+        card.appendChild(fieldRow(t(def.head), control, OPENS_AT[def.key]));
+      });
 
       /* The hero's printed starting hit points, as a reminder of what full
          health was. Rewritten in place rather than by re-rendering the panel,
@@ -605,6 +706,8 @@
     markDuplicates();
 
     section.appendChild(grid);
+    /* Last, so the pool starts out showing what is already taken. */
+    W.syncUnique(techSelects);
     return section;
   }
 
@@ -627,8 +730,11 @@
         state.reputation = next;
         ctx.save();
         /* Repainted in place, never a re-render: the number is being typed in,
-           and rebuilding the panel would take the focus out of the field. */
+           and rebuilding the panel would take the focus out of the field. Both
+           the rung list and every gated field follow from this one value, so
+           both are repainted from it. */
         paintReached(table, next);
+        paintUnlocks(t, state);
       },
     })));
 
@@ -701,11 +807,44 @@
     });
   }
 
+  /* Every field whose rung has not been reached is closed, and says which rung
+     opens it. Looked up in the document, like MC10's ally locks, because the
+     reputation field sits in a different panel than the fields it governs.
+
+     Closed, never emptied and never hidden: an imported sheet may carry an
+     entry the current reputation does not reach, and lowering the marker after
+     a mistyped number must not make a record vanish. */
+  function paintUnlocks(t, state) {
+    var rep = repOf(state);
+    document.querySelectorAll("[data-unlock]").forEach(function (row) {
+      var at = parseInt(row.getAttribute("data-unlock"), 10);
+      var open = rep >= at;
+      var note = row.querySelector(".lock-note");
+      if (note) note.textContent = open ? "" : t("unlockNote", String(at));
+      var control = row.querySelector(".text-input, .pool-select");
+      if (!control) return;
+      control.disabled = !open;
+      control.title = open
+        ? (control.getAttribute("aria-label") || "")
+        : t("unlockReason", String(at));
+    });
+  }
+
   function renderCommunityService(t, lang, state, ctx) {
     var section = panel("community-service", t("secCommunityService"));
     subtitle(section, t("subCommunityService"));
-    section.appendChild(cellRow(t, t("secCommunityService"), COMMUNITY_SERVICE, lang,
-      state.communityService, { onChange: function () { ctx.save(); } }));
+    /* Boxes, not cells: the sheet asks which side schemes were recorded over
+       scenarios 1 to 4, and the set has five. Nothing caps the ticks at four —
+       the paper stops at four cells, but blocking a legal state is worse than
+       allowing one the paper could not hold, and the sheet enforces nothing
+       here either. */
+    section.appendChild(flagRow(t("secCommunityService"), COMMUNITY_SERVICE, lang, {
+      isOn: function (e) { return state.communityService.indexOf(e.slug) !== -1; },
+      onChange: function (e, on) {
+        toggleSlug(state.communityService, COMMUNITY_SERVICE, e.slug, on);
+        ctx.save();
+      },
+    }));
     return section;
   }
 
@@ -714,7 +853,7 @@
     subtitle(section, t("subWakingNightmare"));
     section.appendChild(bareRow(W.numberField({
       value: state.wakingNightmare,
-      min: 0, max: REP_MAX,
+      min: 0, max: SCORE_MAX,
       label: t("secWakingNightmare"),
       onChange: function (next) { state.wakingNightmare = next; ctx.save(); },
     })));
@@ -724,8 +863,15 @@
   function renderLastOnesStanding(t, lang, state, ctx) {
     var section = panel("last-ones-standing", t("secLastOnesStanding"));
     subtitle(section, t("subLastOnesStanding"));
-    section.appendChild(cellRow(t, t("secLastOnesStanding"), SINISTER_ASSAULT, lang,
-      state.lastOnesStanding, { onChange: function () { ctx.save(); } }));
+    /* Six boxes for six villains: the sheet's six cells and the set are the
+       same size, so which cell a name sat in never carried anything. */
+    section.appendChild(flagRow(t("secLastOnesStanding"), SINISTER_ASSAULT, lang, {
+      isOn: function (e) { return state.lastOnesStanding.indexOf(e.slug) !== -1; },
+      onChange: function (e, on) {
+        toggleSlug(state.lastOnesStanding, SINISTER_ASSAULT, e.slug, on);
+        ctx.save();
+      },
+    }));
     return section;
   }
 
@@ -736,96 +882,48 @@
       value: state.finalScore,
       min: 0, max: REP_MAX,
       label: t("secFinalScore"),
+      hint: REP_MAX,
       onChange: function (next) { state.finalScore = next; ctx.save(); },
     })));
     return section;
   }
 
-  /* One S.H.I.E.L.D. Tech upgrade per player, each card to at most one player,
-     so the taken ones disappear from the other players' fields — the same
-     treatment MC10 gives its upgrades. */
-  function renderShieldTech(t, lang, state, ctx) {
-    var section = panel("shield-tech", t("secShieldTech"));
-    subtitle(section, t("subReward"));
+  /* Cells rather than boxes, and one per rung: an Osborn Tech card is drawn on
+     a particular rung of the track, so the cell says when it came in — and each
+     cell opens only once that rung is reached. */
+  function renderOsbornTech(t, lang, state, ctx) {
+    var section = panel("osborn-tech", t("secOsbornTech"));
+    subtitle(section, t("subPenalty"));
 
+    /* The cell count drives the column count in styles.css, so the grid keeps
+       the shape the sheet prints rather than the shape that happens to fit. */
+    var row = W.el("div", "cell-row", { "data-cells": String(OSBORN_TECH_CELLS) });
     var selects = [];
-    state.players.forEach(function (player, i) {
+    state.osbornTech.forEach(function (slug, i) {
+      var cell = W.el("div", "cell", { "data-unlock": String(OSBORN_AT[i]) });
       var sel = W.poolSelect({
-        value: player.shieldTech,
-        label: playerLabel(t, player, i) + " – " + t("secShieldTech"),
+        value: slug,
+        label: t("cellLabel", t("secOsbornTech"), String(i + 1), String(OSBORN_TECH_CELLS)),
         placeholder: t("cardPlaceholder"),
-        options: SHIELD_TECH.map(function (e) {
+        options: OSBORN_TECH.map(function (e) {
           return { value: e.slug, label: entryName(e, lang), lang: entryLang(e, lang) };
         }),
         onChange: function (next) {
-          player.shieldTech = next;
+          state.osbornTech[i] = next;
           ctx.save();
           W.syncUnique(selects);
         },
       });
       selects.push(sel);
-      section.appendChild(playerRow(t, player, i, sel));
+      cell.appendChild(sel);
+      cell.appendChild(W.el("span", "lock-note"));
+      row.appendChild(cell);
     });
-    /* Last, so the pool starts out showing what is already taken. */
+    /* Last, so the row starts out showing what the other cells already hold. */
     W.syncUnique(selects);
+
+    section.appendChild(row);
     return section;
-  }
-
-  /* Aspect Advantage and Planning Ahead: same shape, and free text in both
-     cases, because the card comes out of the player's own collection or deck
-     rather than a printed set. */
-  function renderFreeTextReward(t, state, ctx, cfg) {
-    var section = panel(cfg.id, t(cfg.head));
-    subtitle(section, t("subReward"));
-    state.players.forEach(function (player, i) {
-      var input = W.textField({
-        value: player[cfg.key],
-        label: playerLabel(t, player, i) + " – " + t(cfg.head),
-        placeholder: t("cardNamePlaceholder"),
-        maxLength: NAME_MAX,
-        onChange: function (next) { player[cfg.key] = next; ctx.save(); },
-      });
-      section.appendChild(playerRow(t, player, i, input));
-    });
-    return section;
-  }
-
-  function renderOsbornTech(t, lang, state, ctx) {
-    var section = panel("osborn-tech", t("secOsbornTech"));
-    subtitle(section, t("subPenalty"));
-    section.appendChild(cellRow(t, t("secOsbornTech"), OSBORN_TECH, lang,
-      state.osbornTech, { onChange: function () { ctx.save(); } }));
-    return section;
-  }
-
-  /* A row in one of the reward panels: the player's name as the label, so the
-     panel reads like the sheet's P1 to P4 column. The caption is tagged so
-     paintPlayerNames() can keep it in step with the identity field. */
-  function playerRow(t, player, i, control) {
-    var row = W.el("div", "player-field");
-    var label = W.el("label", "field-label", { "data-player-name": String(i) });
-    label.textContent = playerLabel(t, player, i);
-    label.appendChild(control);
-    row.appendChild(label);
-    return row;
-  }
-
-  /* Keeps every caption that names a player in step with the identity fields,
-     without re-rendering anything. Looked up in the document, like MC10 does,
-     because the callers sit in other panels.
-
-     Only the first text node is rewritten: the caption is a <label> whose
-     control is its own child, so replacing textContent would throw the field
-     away with it. */
-  function paintPlayerNames(t, state) {
-    document.querySelectorAll("[data-player-name]").forEach(function (node) {
-      var i = parseInt(node.getAttribute("data-player-name"), 10);
-      var player = state.players[i];
-      if (!player) return;
-      var text = playerLabel(t, player, i);
-      if (node.firstChild && node.firstChild.nodeType === 3) node.firstChild.nodeValue = text;
-      else node.insertBefore(document.createTextNode(text), node.firstChild);
-    });
   }
 
   // ---- Print ---------------------------------------------------------------
@@ -846,6 +944,9 @@
         line += " · " + t("colHp") + ": " + (p.hp == null ? "—" : String(p.hp));
       }
       printLine(players, line);
+      /* Whether a field is currently closed is not printed: the printout is a
+         record of what was written down, and a closed field with something in
+         it is exactly the case that must not go missing. */
       printLine(players, "  " + t("secShieldTech") + ": " +
         (poolName(SHIELD_TECH, p.shieldTech, lang) || "—"));
       printLine(players, "  " + t("secAspectAdvantage") + ": " +
@@ -862,28 +963,37 @@
     var hit = reachedAt(state.reputation).map(function (row) { return String(row.at); });
     printLine(rep, t("lblReached") + ": " + (hit.length ? hit.join(", ") : "—"));
 
-    printCells(root, t("secCommunityService"), state.communityService, COMMUNITY_SERVICE, lang);
+    /* Every card of the set on its own line with a box: which side schemes were
+       NOT recorded and which villains did NOT survive matters as much as which
+       did, so the whole set prints either way. */
+    printBoxes(root, t("secCommunityService"), state.communityService,
+      COMMUNITY_SERVICE, lang);
 
     /* The bare value under the heading: the sheet prints one blank box there
        and no caption, so repeating the heading on the line would invent one. */
     var wn = printSection(root, t("secWakingNightmare"));
     printLine(wn, state.wakingNightmare == null ? "—" : String(state.wakingNightmare));
 
-    printCells(root, t("secLastOnesStanding"), state.lastOnesStanding, SINISTER_ASSAULT, lang);
+    printBoxes(root, t("secLastOnesStanding"), state.lastOnesStanding,
+      SINISTER_ASSAULT, lang);
 
     var fs = printSection(root, t("secFinalScore"));
     printLine(fs, state.finalScore == null ? "—" : String(state.finalScore));
 
-    printCells(root, t("secOsbornTech"), state.osbornTech, OSBORN_TECH, lang);
+    /* One line per printed cell, empty ones included: an empty cell says that
+       rung took no card yet, and the sheet leaves the place visible either
+       way. */
+    var ot = printSection(root, t("secOsbornTech"));
+    state.osbornTech.forEach(function (slug) {
+      printLine(ot, poolName(OSBORN_TECH, slug, lang) || "—");
+    });
   }
 
-  /* One line per printed cell, empty ones included: an empty cell is a
-     statement — that scenario recorded nothing, or that villain did not
-     survive — and the sheet leaves the place visible either way. */
-  function printCells(root, heading, slots, pool, lang) {
+  function printBoxes(root, heading, slugs, pool, lang) {
     var section = printSection(root, heading);
-    slots.forEach(function (slug) {
-      printLine(section, poolName(pool, slug, lang) || "—");
+    pool.forEach(function (entry) {
+      printLine(section, (slugs.indexOf(entry.slug) !== -1 ? "[x] " : "[ ] ") +
+        entryName(entry, lang));
     });
     return section;
   }
@@ -920,8 +1030,8 @@
     render: render,
     renderPrint: renderPrint,
 
-    helpDe: "Der MC27-Bogen ist der einzige der vier, auf dem kein einziges Häkchen gedruckt ist: alle Felder sind Zeilen zum Hineinschreiben. Wo die Zeile eine Karte aus einem gedruckten Satz meint, steht hier der Satz als Auswahlfeld — Community Service (vier Zellen aus fünf Nebenschemata), Last Ones Standing (die sechs Schurken der Sinister Six), Osborn Tech (drei Zellen aus sechs Anhängen) und S.H.I.E.L.D. Tech (einer je Spieler). Jede Karte gibt es nur einmal, eine gewählte verschwindet daher aus den übrigen Zellen beziehungsweise aus den Feldern der anderen Spieler. Aspect Advantage und Planning Ahead bleiben Freitext, weil die Karte aus der eigenen Sammlung beziehungsweise dem eigenen Deck kommt und keine endliche gedruckte Liste ist. Der Reputationsabschnitt hat auf dem Logbuchblatt kein Gegenstück: die laufende Reputation lebt auf der Leiste der ersten Seite, und ohne sie ließe sich nicht sagen, welche Belohnungen gerade gelten. Deshalb steht hier ein Zahlenfeld von 0 bis 35 und daneben die sieben Stufen der Leiste (1, 5, 9, 13, 17, 21, 25) mit Belohnung und Strafe; erreichte Stufen sind hervorgehoben, die noch offenen abgeblendet. Das ist abgeleitet und wird nicht gespeichert — die Zahl ist die einzige Quelle. Die Legende darüber sagt, wofür es Reputationspunkte gibt; addiert wird nichts, weil der Bogen dafür kein Feld hat. Oben im Spielerbereich steht der Haken „Expertenmodus“: die verbleibenden Lebenspunkte sind das einzige Feld, das der gedruckte Bogen mit „Expert Mode Only“ kennzeichnet, und auf Standardstufe blendet der Bogen es aus, statt danach zu fragen. Ausblenden heißt nicht löschen — wer versehentlich umschaltet, verliert nichts. Es gibt hier bewusst keine Szenario-Tabelle, kein „Abgeschlossen“, keinen Fortschrittszähler und kein Notizfeld: der gedruckte Bogen hat sie nicht.",
-    helpEn: "The MC27 sheet is the only one of the four with no printed checkbox at all: every field is a line to write on. Where the line means a card from a printed set, the set is here as a dropdown — Community Service (four cells out of five side schemes), Last Ones Standing (the six villains of the Sinister Six), Osborn Tech (three cells out of six attachments) and S.H.I.E.L.D. Tech (one per player). Each card exists once, so choosing one removes it from the other cells, or from the other players' fields. Aspect Advantage and Planning Ahead stay free text, because that card comes out of the player's own collection or deck rather than a finite printed list. The reputation section has no counterpart on the log page: the running reputation lives on the track on page 1, and without it there is no saying which rewards are in force. So there is a number field from 0 to 35 here, and beside it the track's seven rungs (1, 5, 9, 13, 17, 21, 25) with their reward and penalty; the rungs reached are highlighted and the ones still ahead are dimmed. That is derived and never stored — the number is the only source. The legend above it says what a victory is worth; nothing is added up, because the sheet has no field for it. At the top of the player area sits the “Expert level” box: the remaining hit points are the only field the printed sheet marks “Expert Mode Only”, and at standard level the sheet hides it rather than asking for it. Hiding is not clearing — switching by accident loses nothing. There is deliberately no scenario table, no “completed”, no progress counter and no notes field: the printed sheet has none.",
+    helpDe: "Der MC27-Bogen ist der einzige der vier, auf dem kein einziges Häkchen gedruckt ist: alle Felder sind Zeilen zum Hineinschreiben. Wo die Zeile eine Karte aus einem gedruckten Satz meint, steht hier der Satz — in der Form, die der Bogen verlangt. Community Service und Last Ones Standing fragen, *welche* Karten, deshalb Kästchen über dem ganzen Satz: fünf Nebenschemata beziehungsweise die sechs Schurken der Sinister Six. Osborn Tech wird je Stufe der Leiste einmal gezogen, deshalb behält es eine Zelle je Stufe, und jede Karte gibt es nur einmal — eine gewählte verschwindet aus den anderen Zellen. Aspect Advantage und Planning Ahead bleiben Freitext, weil die Karte aus der eigenen Sammlung beziehungsweise dem eigenen Deck kommt und keine endliche gedruckte Liste ist. Die drei Belohnungsfelder (S.H.I.E.L.D. Tech, Aspect Advantage, Planning Ahead) druckt der Bogen als eigene Blöcke mit einer Spalte P1 bis P4; diese Spalte ist nur die Spielerliste noch einmal, deshalb stehen die Felder hier direkt in der Spielerkarte. Der Reputationsabschnitt hat auf dem Logbuchblatt kein Gegenstück: die laufende Reputation lebt auf der Leiste der ersten Seite, und ohne sie ließe sich nicht sagen, welche Belohnungen gerade gelten. Deshalb steht hier ein Zahlenfeld von 0 bis 35 und daneben die sieben Stufen der Leiste (1, 5, 9, 13, 17, 21, 25) mit Belohnung und Strafe; erreichte Stufen sind hervorgehoben, die noch offenen abgeblendet. Und dieselbe Zahl schaltet die Felder frei: S.H.I.E.L.D. Tech ab 1, Aspect Advantage ab 9, Planning Ahead ab 17, die drei Osborn-Tech-Zellen ab 1, 13 und 21. Ein noch nicht freigeschaltetes Feld ist gesperrt und sagt, ab welcher Stufe es aufgeht — gesperrt, nicht versteckt und nie geleert: wer die Reputation nach einem Zahlendreher zurückstellt, verliert keine Eintragung. Die Legende über der Tabelle sagt, wofür es Reputationspunkte gibt; addiert wird nichts, weil der Bogen dafür kein Feld hat. Oben im Spielerbereich steht der Haken „Expertenmodus“: die verbleibenden Lebenspunkte sind das einzige Feld, das der gedruckte Bogen mit „Expert Mode Only“ kennzeichnet, und auf Standardstufe blendet der Bogen es aus, statt danach zu fragen. Ausblenden heißt nicht löschen. Es gibt hier bewusst keine Szenario-Tabelle, kein „Abgeschlossen“, keinen Fortschrittszähler und kein Notizfeld: der gedruckte Bogen hat sie nicht.",
+    helpEn: "The MC27 sheet is the only one of the four with no printed checkbox at all: every field is a line to write on. Where the line means a card from a printed set, the set is here — in the shape the sheet asks for. Community Service and Last Ones Standing ask *which* cards, so they are boxes over the whole set: five side schemes, and the six villains of the Sinister Six. Osborn Tech is drawn once per rung of the track, so it keeps one cell per rung, and each card exists once — choosing one removes it from the other cells. Aspect Advantage and Planning Ahead stay free text, because that card comes out of the player's own collection or deck rather than a finite printed list. The three reward fields (S.H.I.E.L.D. Tech, Aspect Advantage, Planning Ahead) are printed as their own blocks with a P1 to P4 column; that column is just the player list again, so the fields sit in the player card here. The reputation section has no counterpart on the log page: the running reputation lives on the track on page 1, and without it there is no saying which rewards are in force. So there is a number field from 0 to 35 here, and beside it the track's seven rungs (1, 5, 9, 13, 17, 21, 25) with their reward and penalty; the rungs reached are highlighted and the ones still ahead are dimmed. The same number opens the fields: S.H.I.E.L.D. Tech at 1, Aspect Advantage at 9, Planning Ahead at 17, and the three Osborn Tech cells at 1, 13 and 21. A field not yet unlocked is closed and says which rung opens it — closed, not hidden and never cleared: putting the reputation back after a mistyped number costs no record. The legend above the table says what a victory is worth; nothing is added up, because the sheet has no field for it. At the top of the player area sits the “Expert level” box: the remaining hit points are the only field the printed sheet marks “Expert Mode Only”, and at standard level the sheet hides it rather than asking for it. Hiding is not clearing. There is deliberately no scenario table, no “completed”, no progress counter and no notes field: the printed sheet has none.",
 
     /* Zweisprachig angelegt, aber noch nicht zweisprachig befüllt. Zwei
        Gruppen, und die Unterscheidung ist wichtig:
@@ -955,7 +1065,6 @@
         subWakingNightmare: "Victory for Scenario #3 — Mysterio",
         subLastOnesStanding: "Victory for Scenario #4 — The Sinister Six",
         subFinalScore: "Victory for Scenario #5 — Venom Goblin",
-        subReward: "Reputation Track Reward",
         subPenalty: "Reputation Track Penalty",
 
         /* "%s" = Spielernummer. */
@@ -978,6 +1087,10 @@
         colThreshold: "Stufe",
         colReward: "Belohnung",
         colPenalty: "Strafe",
+        /* "%s" = die Stufe, ab der das Feld aufgeht. Kurz, weil es neben der
+           Feldbeschriftung steht; der Sperrgrund sagt es ganz. */
+        unlockNote: "ab Reputation %s",
+        unlockReason: "Wird ab Reputation %s freigeschaltet. Eingetragenes bleibt erhalten.",
         /* "%s" = Abschnitt, Nummer der Zelle, Anzahl der Zellen. Der gedruckte
            Bogen beschriftet die Zellen nicht; die Nummer ist das Wenigste, was
            sie für Screenreader auseinanderhält. */
@@ -1025,7 +1138,6 @@
         subWakingNightmare: "Victory for Scenario #3 — Mysterio",
         subLastOnesStanding: "Victory for Scenario #4 — The Sinister Six",
         subFinalScore: "Victory for Scenario #5 — Venom Goblin",
-        subReward: "Reputation Track Reward",
         subPenalty: "Reputation Track Penalty",
 
         playerRow: "Player #%s",
@@ -1047,6 +1159,8 @@
         colThreshold: "At",
         colReward: "Reward",
         colPenalty: "Penalty",
+        unlockNote: "from reputation %s",
+        unlockReason: "Unlocked at reputation %s. Anything recorded is kept.",
         cellLabel: "%s – cell %s of %s",
         cardPlaceholder: "— choose a card —",
         cardNamePlaceholder: "Card name …",

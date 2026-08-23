@@ -805,31 +805,42 @@ button:focus-visible {
   .scenario-row { grid-template-columns: 1fr 1fr; }
 }
 
-/* MC27 prints its three "Reputation Track Reward" sections across, so they get
-   a three-column row of their own rather than being squeezed into the
-   two-column .scenario-row above. */
-.reward-row { display: grid; gap: 1rem; }
-@media (min-width: 64rem) {
-  .reward-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-
-/* MC27's unlabelled cell grids. Keyed on the number of cells, the way
-   .player-grid is keyed on the number of players, so the sheet's own shape
-   survives — Community Service 2x2, Last Ones Standing 3x2, Osborn Tech 1x3 —
-   instead of being whatever happens to fit. The breakpoints are where the card
-   names stop being readable in a narrower cell, not where they stop fitting. */
+/* MC27's unlabelled cell grid — the Osborn Tech row, one cell per rung of the
+   reputation track. Keyed on the number of cells, the way .player-grid is keyed
+   on the number of players, so the sheet's own 1x3 survives instead of being
+   whatever happens to fit; the breakpoint is where the card names stop being
+   readable in a narrower cell, not where they stop fitting. */
 .cell-row {
   display: grid;
   gap: 0.6rem;
   grid-template-columns: minmax(0, 1fr);
 }
-@media (min-width: 34rem) {
-  .cell-row[data-cells="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .cell-row[data-cells="6"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
 @media (min-width: 62rem) {
-  .cell-row[data-cells="3"],
-  .cell-row[data-cells="6"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cell-row[data-cells="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+/* A cell is its control plus the line saying which rung opens it. */
+.cell-row > .cell { display: grid; gap: 0.2rem; align-content: start; }
+
+/* Why a field is closed, said in the open rather than only in a tooltip — the
+   rung that opens it is information the player wants before they get there.
+   Empty while the field is open, so the row does not jump when it opens. */
+.lock-note {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-dim);
+}
+.lock-note:empty { display: none; }
+/* A field the reputation has not opened yet. Same idiom as a locked checkbox
+   further down — dashed border, slight fade, not-allowed cursor — and for the
+   same reason: whatever is already written in it stays legible, because
+   lowering the marker must not hide a record. */
+.pool-select:disabled,
+.text-input:disabled {
+  cursor: not-allowed;
+  border-style: dashed;
+  opacity: 0.8;
 }
 
 /* The "Conditions" legend from the track page. Two columns where there is room,
