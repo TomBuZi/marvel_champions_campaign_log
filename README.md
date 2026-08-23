@@ -115,10 +115,12 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
 * **„Nächste Runde"** (MC60) — zieht zwei Szenarien, die noch im Spiel sind, und gibt jedem
   einen Fortschrittspunkt. Ist nur noch eines im Spiel, bekommt es beide.
 * **Mehrere Durchläufe** parallel, mit Auswahl oben; die Kampagne wird beim Anlegen
-  gewählt und bleibt danach fest. Die Auswahl gruppiert nach Kampagne, und direkt
-  unter jeder Überschrift steht `< Neue Kampagne starten >` — das legt keinen
-  Bogen an, sondern öffnet den Dialog „Neuer Bogen" mit dieser Kampagne schon
-  angekreuzt. Wer die Zeile aus Versehen erwischt, bricht ab und hat nichts
+  gewählt und bleibt danach fest. Die Auswahl gruppiert nach Kampagne — und zwar
+  nach **jeder** umgesetzten Kampagne, auch einer, von der noch kein Bogen
+  existiert; direkt unter jeder Überschrift steht `< Neue Kampagne starten >`.
+  Das legt keinen Bogen an, sondern öffnet den Dialog „Neuer Bogen" mit dieser
+  Kampagne schon angekreuzt. So ist jede Kampagne von hier aus zu beginnen, und
+  nicht nur die, die man schon spielt. Wer die Zeile aus Versehen erwischt, bricht ab und hat nichts
   angerichtet; die Auswahl springt vorher schon auf den Bogen zurück, der
   wirklich offen ist.
 * **Automatisch gespeichert** im Speicher des Browsers — kein Server, kein Konto,
@@ -364,7 +366,7 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (439 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (441 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   langpath | print | import | lock |
                                     #   lockconflict | random | randomspread |

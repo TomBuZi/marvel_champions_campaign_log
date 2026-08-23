@@ -1533,10 +1533,34 @@
             /\(MC10\)/.test(d.getElementById("subtitle").textContent),
             d.getElementById("subtitle").textContent);
           var groups = d.getElementById("log-select").querySelectorAll("optgroup");
-          log("the picker groups by campaign", groups.length === 2, groups.length);
+          /* One heading per REGISTERED campaign, not per campaign that has a
+             run: a campaign nobody has played still has to be startable from
+             here. Counted from the script tags, like the dialog's choices. */
+          log("the picker heads every campaign, played or not",
+            groups.length === registered, groups.length + " of " + registered);
+          /* Only two of them have a run at this point, and both runs sit under
+             the right heading. Matched by campaign rather than by position, so
+             the assertion survives the next campaign landing. */
+          var groupOf = function (id) {
+            return Array.prototype.filter.call(groups, function (g) {
+              return g.children[0].value === "new:" + id;
+            })[0];
+          };
+          log("and each run sits under its own campaign",
+            groupOf("rise-of-red-skull").children.length === 2 &&
+            groupOf("fear-no-evil").children.length === 2 &&
+            groupOf("mad-titans-shadow").children.length === 1,
+            Array.prototype.map.call(groups, function (g) {
+              return g.label + "=" + g.children.length;
+            }).join(" | "));
+          /* Product-number order, read out of the labels and compared against
+             their own sort — the same trick the choice list above uses. */
+          var gcodes = Array.prototype.map.call(groups, function (g) {
+            return parseInt(/\(MC(\d+)\)/.exec(g.label)[1], 10);
+          });
           log("and its groups follow the product number too",
-            /\(MC10\)/.test(groups[0].label) && /\(MC60\)/.test(groups[1].label),
-            groups[0].label + " | " + groups[1].label);
+            gcodes.join() === gcodes.slice().sort(function (a, b) { return a - b; }).join(),
+            gcodes.join());
 
           /* Every group offers a way to start another run of the campaign it
              heads, and it sits directly under the heading. Read by value rather
@@ -1544,7 +1568,9 @@
           log("every group starts with a way to start another run",
             Array.prototype.every.call(groups, function (g) {
               return g.children[0].value.indexOf("new:") === 0;
-            }), groups[0].children[0].value + " | " + groups[1].children[0].value);
+            }), Array.prototype.map.call(groups, function (g) {
+              return g.children[0].value;
+            }).join(" | "));
           log("and that row reads as something other than a sheet",
             /^<.*>$/.test(groups[0].children[0].textContent.trim()),
             groups[0].children[0].textContent);
@@ -1553,7 +1579,7 @@
              a sheet created behind the player's back. */
           var sel = d.getElementById("log-select");
           var before = localStorage.getItem("mcclog:activeId");
-          sel.value = groups[1].children[0].value;      // the MC60 group
+          sel.value = groupOf("fear-no-evil").children[0].value;
           fire(sel, "change");
           log("choosing it opens the dialog", dlg.open);
           log("with that campaign preselected",
@@ -2209,21 +2235,47 @@
           /* Which card on which rung, so cells: one per Osborn Tech rung. */
           var ot = at('[data-section="osborn-tech"] .pool-select');
           log("Osborn Tech stays cells, one per rung", ot.length === 3, ot.length);
-          log("the boxes are named by the cards of their set",
-            /Cat in a Tree/.test(app.querySelector('[data-section="community-service"]').textContent) &&
-            /Kraven the Hunter/.test(app.querySelector('[data-section="last-ones-standing"]').textContent));
+          /* Named, and named out of two DIFFERENT sets. The card names are
+             translated, so what is checked is the relationship between the two
+             panels rather than the words in them — wiring the wrong pool to a
+             panel would make them overlap. */
+          var names = function (section) {
+            return Array.prototype.map.call(
+              at('[data-section="' + section + '"] .flag > span'),
+              function (n) { return n.textContent.trim(); });
+          };
+          var csNames = names("community-service");
+          var losNames = names("last-ones-standing");
+          log("every box is named",
+            csNames.length + losNames.length === 11 &&
+            csNames.concat(losNames).every(function (n) { return n.length > 0; }),
+            csNames.concat(losNames).join(" | "));
+          log("and the two panels draw from different sets",
+            csNames.every(function (n) { return losNames.indexOf(n) === -1; }),
+            csNames.join() + " vs " + losNames.join());
 
-          /* One row, both languages: the German names are still to be entered,
-             so every name is shown in English and tagged as such. Written as an
-             equivalence, so it stays true once a name is filled in. */
+          /* The rule itself, derived instead of written out: a name is tagged as
+             English exactly when it is the SAME string in both languages. Read
+             in German, then in English, then switched back — so this keeps
+             checking the rule however many names get translated later, instead
+             of decaying into a list somebody has to maintain. */
+          var tagged = Array.prototype.map.call(
+            at('[data-section="last-ones-standing"] .flag > span'),
+            function (n) { return n.getAttribute("lang") === "en"; });
+          d.getElementById("btn-lang").click();
+          var english = names("last-ones-standing");
+          d.getElementById("btn-lang").click();
+          var german = names("last-ones-standing");
           log("the language tag follows the name actually shown",
-            Array.prototype.every.call(
-              at('[data-section="community-service"] .flag > span'),
-              function (span) {
-                return (span.getAttribute("lang") === "en") ===
-                  (["Back Alley Burglary", "Cat in a Tree", "Henchmen Heist",
-                    "Off the Rails", "Rubble Rescue"].indexOf(span.textContent) !== -1);
-              }));
+            german.length === english.length && german.length > 0 &&
+            german.every(function (n, i) { return tagged[i] === (n === english[i]); }),
+            german.join() + " / " + english.join() + " / " + tagged.join());
+
+          /* Switching twice rebuilt the sheet twice, so everything below has to
+             be looked up again. */
+          cs = at('[data-section="community-service"] .sheet-check');
+          los = at('[data-section="last-ones-standing"] .sheet-check');
+          ot = at('[data-section="osborn-tech"] .pool-select');
 
           /* The three reward fields live in the player card, not in panels of
              their own — and each of them is gated, so each carries the rung. */
@@ -2520,9 +2572,18 @@
              together, so a digit on its own proves nothing about where it sat. */
           log("print carries the hit points",
             /Lebenspunkte: 8/.test(text) && /Lebenspunkte: 5/.test(text));
+          /* The card name comes off the sheet rather than out of this file: it
+             is translated, and the printout has to carry whatever is shown. The
+             two free-text values are this case's own fixture, so those stay. */
+          var app = d.getElementById("campaign");
+          var shown = function (sel) {
+            var s2 = app.querySelector(sel);
+            return s2.options[s2.selectedIndex].textContent.trim();
+          };
           log("print carries each player's three rewards",
-            /Laser Goggles/.test(text) && /Enhanced Reflexes/.test(text) &&
-            /Swinging Web Kick/.test(text));
+            text.indexOf(shown('.player-card [data-unlock="1"] .pool-select')) !== -1 &&
+            /Enhanced Reflexes/.test(text) && /Swinging Web Kick/.test(text),
+            shown('.player-card [data-unlock="1"] .pool-select'));
           /* A record of what was written down: Planning Ahead opens at 17 and
              the marker is at 11, so that field is closed on screen and its entry
              still prints. Asserted through the field's own state rather than
@@ -2539,13 +2600,33 @@
             text.indexOf(repLabel + ": 11") !== -1 && /1, 5, 9/.test(text),
             repLabel);
           /* Which cards were NOT recorded matters as much as which were, so the
-             whole set prints either way. */
+             whole set prints either way — and every line is checked against the
+             box on screen, so the check does not care what the names are. */
+          var onScreen = [];
+          ["community-service", "last-ones-standing"].forEach(function (sec) {
+            Array.prototype.forEach.call(
+              app.querySelectorAll('[data-section="' + sec + '"] .flag'),
+              function (f) {
+                var on = f.querySelector(".sheet-check").checked;
+                onScreen.push({
+                  line: (on ? "[x] " : "[ ] ") + f.querySelector("span").textContent.trim(),
+                  on: on,
+                });
+              });
+          });
+          var missing = onScreen.filter(function (b) { return text.indexOf(b.line) === -1; });
           log("print ticks the recorded cards",
-            /\[x\] Cat in a Tree/.test(text) && /\[x\] Electro/.test(text));
+            onScreen.some(function (b) { return b.on; }) &&
+            !missing.some(function (b) { return b.on; }),
+            missing.map(function (b) { return b.line; }).join(" | "));
           log("print leaves the rest of the set unticked",
-            /\[ \] Henchmen Heist/.test(text) && /\[ \] Vulture/.test(text));
+            onScreen.some(function (b) { return !b.on; }) && missing.length === 0,
+            onScreen.length + " boxes, " + missing.length + " missing");
+          /* Two empty cells behind the recorded one, so every place the sheet
+             prints is there. */
           log("print keeps the empty Osborn Tech cells visible",
-            /Arm Cannon——/.test(text), text);
+            text.indexOf(shown('[data-osborn-cell="0"] .pool-select') + "\u2014\u2014") !== -1,
+            shown('[data-osborn-cell="0"] .pool-select'));
           /* Waking Nightmare is a tally, not a place on the track, so it is not
              bounded by the track's length. */
           log("print carries a score above the track's length", /42/.test(text));
