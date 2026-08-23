@@ -56,6 +56,30 @@ sonst „reparieren" spätere Leser es.
 Was der Bogen mehrfach gleich sagt, wird **eine** Überschrift über benannten
 Kästchen (siehe `lblAddedToPool` in MC21). Das Häkchen ist das „check here".
 
+**Zellen zählt man an den Trennlinien, nicht am Bild.** Wie viele Kästchen ein
+Abschnitt hat, steht in den Vektorlinien des Content-Streams — Rasterbilder
+täuschen, und Abzählen mit dem Auge auch:
+
+```python
+import fitz
+pg = fitz.open("mcXX_....pdf")[1]
+for d in sorted(pg.get_drawings(), key=lambda d: d["rect"].y0):
+    r = d["rect"]
+    print("y %7.1f-%7.1f  x %7.1f-%7.1f" % (r.y0, r.y1, r.x0, r.x1))
+```
+
+Bei MC27 hat das die Gitter 2×2, 3×2 und 1×3 ergeben und die sieben Stufen der
+Reputationsleiste — die Trennlinien laufen genau durch die Kreismittelpunkte.
+Eine solche Ableitung gehört gegengeprüft: dass die Osborn-Tech-Strafe in genau
+drei Stufen auftaucht und der Bogen genau drei Osborn-Tech-Zellen druckt, war
+der Beleg, dass die Zeilenzahl stimmt.
+
+**Die Kartensätze kommen aus `C:\Repos\marvelsdb-json-data`**, nicht aus dem
+Gedächtnis: `sets.json` nennt die Sets einer Kampagne (`community_service`,
+`osborn_tech`, …), `pack/<pack>.json` die Karten mit ihrem `set_code`, und
+`translations/de/pack/<pack>.json` die deutschen Namen, soweit es sie dort gibt.
+Die Kampagnenkarten fehlen teils, aber die Encounter-Sets sind vollständig.
+
 ### 2. Farben aus dem PDF
 
 Nicht das Rasterbild abtasten — die **Vektor-Füllflächen** des Content-Streams,
@@ -108,6 +132,7 @@ Vorlagen, bewusst verschieden:
 | `campaigns/fear-no-evil.js` | abgeleiteter Zustand, gegenseitige Sperren, Auslosung, `migrate()` |
 | `campaigns/rise-of-red-skull.js` | feste Kartenpools mit Eindeutigkeitsregeln |
 | `campaigns/mad-titans-shadow.js` | das schlankeste: Spieler plus benannte Kästchen |
+| `campaigns/sinister-motives.js` | Kartensätze in Zellgittern, in denen die Position Teil der Eintragung ist; abgeleitete Freischaltungen aus einer Zahl |
 
 Harte Punkte:
 
@@ -118,12 +143,30 @@ Harte Punkte:
   **bestehende** Bögen bedeutet. (MC60 hat gelernt: `expert: false` versteckte
   eingetragene Lebenspunkte.)
 * Kartennamen als Tabelle mit `en` und `de`. `de: null` zeigt den englischen
-  Namen; `de: ""` ist verboten und wird von `lint.js` gefangen. Namen, die im
-  deutschen Druck englisch bleiben, behalten `null` — mit einem Kommentar, dass
-  das eine Entscheidung ist und keine offene Arbeit.
+  Namen; `de: ""` ist verboten und wird von `lint.js` gefangen.
 * Ein englisch angezeigter Name trägt `lang="en"`, ein übersetzter nicht.
 * Expertenmodus, falls die Kampagne einen hat: **Ausblenden ist nicht Löschen.**
 * Alle Beschriftungen über `i18n`, in beiden Sprachen, dazu `helpDe`/`helpEn`.
+
+**Zweisprachig anlegen, englisch befüllen, deutsch trägt der Herausgeber nach.**
+Das ist das Vorgehen für neue Kampagnen. Es zerfällt in zwei Gruppen, und die
+Unterscheidung ist der ganze Punkt:
+
+* Wörter, die **die App selbst wählt** — Spaltentitel, Platzhalter, Hinweise und
+  das gemeinsame Vokabular aller Kampagnen („Verbleibende Lebenspunkte") — werden
+  sofort auf Deutsch eingetragen. Das gemeinsame Vokabular wird aus einem
+  vorhandenen Modul **wörtlich** übernommen, nicht neu formuliert.
+* Wörter, die **vom gedruckten Bogen kommen** — Abschnittsnamen, ihre
+  Unterzeilen, Regeltexte, Legenden — stehen zunächst in beiden Wörterbüchern
+  englisch. Leere Werte fängt `lint.js`, also ist der englische Wortlaut der
+  Platzhalter. Darüber ein Kommentarblock, der sagt, dass das offene Arbeit ist
+  und aus dem deutschen Druck **wörtlich** nachzutragen.
+
+Dieselbe Zweiteilung gilt für `de: null` in den Kartentabellen, und dort ist sie
+am leichtesten zu verwechseln: bei MC10 und MC21 heißt `null` „bleibt im
+deutschen Druck englisch" — eine **Entscheidung**. Bei MC27 heißt es „noch nicht
+eingetragen" — **offene Arbeit**. Der Kommentar muss sagen, welches von beiden
+gemeint ist, sonst räumt ein späterer Leser das Falsche auf.
 
 Dann in `index.html` einhängen (`<script src="campaigns/....js">`). Die
 Reihenfolge dort ist nur noch die Registrierung — **angezeigt** wird nach

@@ -6,7 +6,8 @@ Eintippen statt ausdrucken: automatisch gespeichert, zweisprachig, teilbar, druc
 **Live:** https://tombuzi.github.io/marvel_champions_campaign_log/
 
 Umgesetzt sind die Kampagnen **Fear No Evil (MC60)**,
-**The Rise of Red Skull (MC10)** und **The Mad Titan's Shadow (MC21)**.
+**The Rise of Red Skull (MC10)**, **The Mad Titan's Shadow (MC21)** und
+**Sinister Motives (MC27)**.
 Die Kampagne wird beim Anlegen eines Bogens gewählt
 und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
 [Eine Kampagne hinzufügen](#eine-kampagne-hinzufügen).
@@ -18,7 +19,7 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
 ## Was die App kann
 
 * **Der ganze Bogen, je Kampagne der ihre.** Jedes Modul folgt seiner Vorlage Feld
-  für Feld, und die drei Vorlagen sind sehr verschieden:
+  für Feld, und die vier Vorlagen sind sehr verschieden:
   * *Fear No Evil (MC60)* — Spielerplätze mit Identität und verbleibenden
     Lebenspunkten, die fünf Szenarien mit Schurken-Zuordnung und Fortschritt, die
     aus der Kampagne entfernten Verbündeten und Persona-Unterstützungen, und die
@@ -29,14 +30,26 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     Verbündeten. **Keine** Szenario-Tabelle, kein Fortschritt, kein Würfel — der
     gedruckte MC10-Bogen hat das alles nicht, weil die fünf Szenarien in fester
     Reihenfolge gespielt werden.
-  * *The Mad Titan's Shadow (MC21)* — der schlankeste der drei: je Spieler
+  * *The Mad Titan's Shadow (MC21)* — der schlankeste der vier: je Spieler
     Identität und Lebenspunkte, dazu neun benannte Kästchen in vier
     Szenario-Abschnitten. Sieben von ihnen sagen auf Papier denselben Satz
     („… was added to campaign pool“), deshalb stehen sie hier als eine
     Überschrift über benannten Kästchen. Das fünfte Szenario gegen Loki fehlt
     auch auf dem gedruckten Bogen — im Finale gibt es nichts festzuhalten.
+  * *Sinister Motives (MC27)* — der einzige Bogen ohne ein einziges gedrucktes
+    Kästchen: alles sind Schreibfelder. Je Spieler Identität, Lebenspunkte und
+    die drei Belohnungen der Reputationsleiste (S.H.I.E.L.D. Tech, Aspect
+    Advantage, Planning Ahead), dazu die Zellgitter des Bogens — Community
+    Service (4), Last Ones Standing (6) und Osborn Tech (3) — sowie Waking
+    Nightmare und Final Reputation Score als Zahlen. Und die Reputationsleiste
+    selbst: sie steht auf dem Logbuchblatt gar nicht, sondern auf der ersten
+    Seite des gedruckten Bogens, und ohne sie ließe sich nicht sagen, welche
+    Belohnungen gerade gelten. Deshalb ein Zahlenfeld 0–35 und daneben die
+    sieben Stufen (1, 5, 9, 13, 17, 21, 25) mit Belohnung und Strafe; erreichte
+    Stufen sind hervorgehoben, die offenen abgeblendet. Das ist abgeleitet und
+    wird nicht gespeichert.
 * **Standard- oder Expertenstufe** — der Haken „Expertenmodus“ oben im
-  Spielerbereich, in allen drei Kampagnen an derselben Stelle. Auf Standardstufe
+  Spielerbereich, in allen vier Kampagnen an derselben Stelle. Auf Standardstufe
   blendet der Bogen aus, was es dort nicht gibt, statt danach zu fragen:
   * *Fear No Evil (MC60)* — die verbleibenden Lebenspunkte.
   * *The Rise of Red Skull (MC10)* — die verbleibenden Lebenspunkte **und** die
@@ -44,12 +57,15 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     Expertenstufe.
   * *The Mad Titan's Shadow (MC21)* — die verbleibenden Lebenspunkte. Die neun
     Kästchen bleiben auf beiden Stufen stehen.
+  * *Sinister Motives (MC27)* — die verbleibenden Lebenspunkte; das ist auch das
+    einzige Feld, das der gedruckte MC27-Bogen mit „Expert Mode Only“
+    kennzeichnet. Alles andere bleibt auf beiden Stufen stehen.
 
   **Ausblenden ist nicht Löschen**: wer versehentlich umschaltet, findet nach dem
   Zurückschalten alles wieder vor. Gedruckt wird der Haken mit, weil er
   entscheidet, was der Bogen überhaupt bedeutet.
-* **Karten statt Freitext** (MC10) — wo auf Papier eine leere Zeile steht, stehen hier
-  die tatsächlichen Karten. Jedes dieser Felder hat genau vier gedruckte
+* **Karten statt Freitext** (MC10, MC27) — wo auf Papier eine leere Zeile steht, stehen
+  hier die tatsächlichen Karten. Bei MC10 hat jedes dieser Felder genau vier gedruckte
   Möglichkeiten, und jedes trägt seine eigene Regel aus der Kampagne:
   * *Verpflichtungen* — jeder Spieler hat seinen eigenen Satz aller vier, zwei
     Spieler können also dieselbe haben.
@@ -60,6 +76,13 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     statt verschwunden, mit dem Namen des Besitzers als Sperrgrund.
   * *Experimentalwaffen* — der Bogen will die Namen, nicht die Anzahl: Szenario 2
     mischt genau die aufgeschriebenen wieder ins Begegnungsdeck.
+
+  Bei MC27 sind es die vier Kartensätze der Kampagne, und dort ist zusätzlich die
+  **Position** Teil der Eintragung: der Bogen druckt Zellgitter, und in welcher Zelle
+  eine Karte steht, sagt aus, aus welchem Szenario sie kommt. Deshalb werden diese
+  Listen nicht sortiert. Aspect Advantage und Planning Ahead bleiben dort Freitext,
+  weil die Karte aus der eigenen Sammlung beziehungsweise dem eigenen Deck kommt und
+  keine endliche gedruckte Liste ist.
 * **Ein bis vier Spieler** — Karten werden hinzugefügt, wenn jemand mitspielt, statt
   vier feste Plätze zu zeigen. Der gedruckte Bogen muss alle vier vorhalten; ein
   Bildschirm nicht.
@@ -234,7 +257,8 @@ auch über `file://` und direkt aus dem Repo-Root über GitHub Pages.
 | `heroes.js` | 68 Helden (Name, Lebenspunkte) als Vorschlagsliste für die Identitätsfelder |
 | `campaigns/fear-no-evil.js` | die Kampagne MC60: eigenes Datenmodell, eigenes Rendering, eigene Strings |
 | `campaigns/rise-of-red-skull.js` | die Kampagne MC10: feste Kartenpools mit ihren Eindeutigkeitsregeln und drei Szenariofelder; bewusst ohne Szenario-Tabelle |
-| `campaigns/mad-titans-shadow.js` | die Kampagne MC21: Spieler und neun benannte Kästchen in vier Szenario-Abschnitten; das schlankeste der drei Module |
+| `campaigns/mad-titans-shadow.js` | die Kampagne MC21: Spieler und neun benannte Kästchen in vier Szenario-Abschnitten; das schlankeste der vier Module |
+| `campaigns/sinister-motives.js` | die Kampagne MC27: feste Kartensätze in den Zellgittern des Bogens, drei Belohnungsabschnitte je Spieler und die Reputationsleiste mit abgeleiteten Freischaltungen; das einzige Modul ohne ein einziges gedrucktes Kästchen |
 | `test/lint.js` | Prüfungen ohne Browser: Wörterbücher, Kampagnendefinition, Datenmodell, Paketierung |
 | `test/selftest.html`, `test/run-browser.js` | Selbsttest, der die echte Seite in einem iframe fernsteuert |
 | `fonts/` | Exo 2 (OFL, selbst gehostet), `OFL.txt` daneben |
@@ -288,10 +312,14 @@ gekostet haben.
    spezifischer als das bloße `:root` in der Dark-Media-Query und würde im Dunkelmodus
    die helle Palette malen.
 
-Als Vorlagen dienen die beiden vorhandenen Module, und sie sind bewusst
+Als Vorlagen dienen die vier vorhandenen Module, und sie sind bewusst
 unterschiedlich: `campaigns/fear-no-evil.js` zeigt abgeleiteten Zustand, gegenseitige
 Sperren, eine Auslosung und ein `migrate()`; `campaigns/rise-of-red-skull.js` ist das
-schlanke Gegenstück — reine Eingabefelder, kein `migrate()`, keine erfundenen Felder.
+schlanke Gegenstück — reine Eingabefelder, kein `migrate()`, keine erfundenen Felder;
+`campaigns/mad-titans-shadow.js` ist das kürzeste — Spieler plus benannte Kästchen;
+`campaigns/sinister-motives.js` zeigt feste Kartensätze in Zellgittern, in denen die
+*Position* Teil der Eintragung ist, und einen abgeleiteten Zustand, der aus einer
+einzigen Zahl fällt.
 
 `ctx` liefert `{ state, lang, t(key, …args), save(), rerender(), toast(msg), w }`;
 `w` ist die Widget-Sammlung aus `widgets.js`.
@@ -308,20 +336,22 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (322 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (415 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   langpath | print | import | lock |
                                     #   lockconflict | random | randomspread |
                                     #   appearance | players | migrate | expert |
                                     #   round | roundlast | roundspread |
                                     #   rrs | rrsdialog | rrsprint | rrspools |
-                                    #   rrsexpert | mts | mtsexpert | mtsprint
+                                    #   rrsexpert | mts | mtsexpert | mtsprint |
+                                    #   sm | smrep | smexpert | smprint
 BROWSER_LANG=de-DE node test/run-browser.js   # unter einer anderen Browser-Sprache
 ```
 
 `test/seed.html` legt einen ausgefüllten Beispielbogen an und springt in die App —
-praktisch für Screenshots und für den Druckvergleich. `?c=mc10` nimmt den MC10-Bogen
-und `?c=mc21` den MC21-Bogen statt MC60, `?expert=0` stellt den Bogen auf
+praktisch für Screenshots und für den Druckvergleich. `?c=mc10` nimmt den MC10-Bogen,
+`?c=mc21` den MC21-Bogen und `?c=mc27` den MC27-Bogen statt MC60, `?expert=0` stellt
+den Bogen auf
 Standardstufe, und `?theme=dark` nagelt das
 Theme fest; letzteres braucht man, um zu prüfen, dass der Druck auch aus einer
 Dark-Mode-Sitzung schwarz auf weiß bleibt.
@@ -388,8 +418,9 @@ Theme sonst hell und dunkel gegeneinander verdreht.
 
 **Jede Kampagne bringt ihre eigene Palette mit**, gesetzt über
 `[data-campaign]` am `<html>`: MC60 ist comic-orange auf Dunkelrot, MC10 salbeigrün
-auf Tiefgrün mit Senfgelb, MC21 Indigo und Lavendel auf Rostorange mit Gold —
-alle drei aus dem jeweiligen Bogen-PDF gemessen. Ein
+auf Tiefgrün mit Senfgelb, MC21 Indigo und Lavendel auf Rostorange mit Gold, MC27
+Karminrot und Altrosa auf Violett mit Pink — alle vier aus dem jeweiligen
+Bogen-PDF gemessen. Ein
 solcher Skin muss dieselben **vier** Blöcke spiegeln. Ein einzelner
 `[data-campaign]`-Block wäre spezifischer als das bloße `:root` in der
 Dark-Media-Query und würde im Dunkelmodus die helle Palette malen; umgekehrt muss

@@ -2120,7 +2120,325 @@
         });
       }
 
-      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint };
+      // ----------------------------------------------------------- MC27
+      /* The MC27 sheet is the one with no checkbox on it at all: every field is
+         a write-in, and where the line means a card from a printed set it is a
+         dropdown here. So these cases are mostly about the cells being the ones
+         the paper sheet prints, the sets being the right sets, and the one
+         thing the sheet does NOT print — the reputation — driving what the
+         track panel says is in force. */
+      function smLog() {
+        return {
+          schemaVersion: 1, id: "sm1", campaignId: "sinister-motives", stateVersion: 1,
+          title: "Sinister Motives",
+          createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-02T00:00:00.000Z",
+          state: {
+            /* Expert, because the hit points only exist there. caseSmExpert is
+               the one that starts at standard. */
+            expert: true,
+            reputation: null,
+            players: [{ hero: "", hp: null, shieldTech: "",
+                        aspectAdvantage: "", planningAhead: "" }],
+            /* Deliberately absent: normalize() has to build every cell of every
+               section out of a state that mentions none of them. */
+          },
+        };
+      }
+
+      /* The sections the printed sheet has, by their stable data-section keys —
+         not by their labels, which are still to be translated. */
+      var SM_SECTIONS = ["players", "reputation", "community-service",
+        "waking-nightmare", "last-ones-standing", "final-score", "shield-tech",
+        "aspect-advantage", "planning-ahead", "osborn-tech"];
+
+      function caseSm() {
+        seed({ sm1: smLog() }, "sm1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var app = d.getElementById("campaign");
+
+          var found = SM_SECTIONS.filter(function (id) {
+            return !!app.querySelector('[data-section="' + id + '"]');
+          });
+          log("every printed section has a panel",
+            found.length === SM_SECTIONS.length, found.join());
+          log("and no panel beyond them",
+            app.querySelectorAll("[data-section]").length === SM_SECTIONS.length,
+            app.querySelectorAll("[data-section]").length);
+
+          /* The distinguishing fact of this sheet: not one printed checkbox.
+             The only one on screen is the level switch, which is the app's, not
+             the sheet's — so it has to be the one in the player panel head. */
+          var boxes = app.querySelectorAll(".sheet-check");
+          log("the sheet itself has no checkbox at all", boxes.length === 1, boxes.length);
+          log("the only one is the level switch in the player panel head",
+            !!app.querySelector('[data-section="players"] .panel-head .flag .sheet-check'));
+
+          /* Four, six and three cells — the grids the sheet prints. */
+          var cs = app.querySelectorAll('[data-section="community-service"] .pool-select');
+          var los = app.querySelectorAll('[data-section="last-ones-standing"] .pool-select');
+          var ot = app.querySelectorAll('[data-section="osborn-tech"] .pool-select');
+          var split = [cs.length, los.length, ot.length].join();
+          log("cells split 4 / 6 / 3 as printed", split === "4,6,3", split);
+
+          /* Five side schemes in the set, plus the placeholder. */
+          log("the Community Service set offers its five cards",
+            cs[0].options.length === 6, cs[0].options.length);
+          log("the Sinister Six set offers its six villains",
+            los[0].options.length === 7, los[0].options.length);
+          log("and the cells are named by the cards of that set",
+            /Cat in a Tree/.test(cs[0].textContent) &&
+            /Kraven the Hunter/.test(los[0].textContent));
+
+          /* One row, both languages: the German names are still to be entered,
+             so every option is shown in English and tagged as such. Written as
+             an equivalence, so it stays true once a name is filled in. */
+          log("the language tag follows the name actually shown",
+            Array.prototype.every.call(cs[0].options, function (opt) {
+              if (!opt.value) return true;                 // the placeholder
+              return (opt.getAttribute("lang") === "en") ===
+                (["Back Alley Burglary", "Cat in a Tree", "Henchmen Heist",
+                  "Off the Rails", "Rubble Rescue"].indexOf(opt.textContent) !== -1);
+            }));
+
+          /* Each card exists once, so a cell that takes one takes it away from
+             the cells beside it. */
+          cs[0].value = "cat-in-a-tree";
+          fire(cs[0], "change");
+          log("a card taken by one cell is closed to the next",
+            cs[1].querySelector('option[value="cat-in-a-tree"]').disabled);
+          log("but the cell holding it keeps it selectable",
+            !cs[0].querySelector('option[value="cat-in-a-tree"]').disabled);
+          cs[2].value = "rubble-rescue";
+          fire(cs[2], "change");
+          ot[0].value = "arm-cannon";
+          fire(ot[0], "change");
+          los[1].value = "electro";
+          fire(los[1], "change");
+
+          /* The three reward panels carry one row per player, and only the
+             S.H.I.E.L.D. Tech one is a set. */
+          log("S.H.I.E.L.D. Tech is a set, one row per player",
+            app.querySelectorAll('[data-section="shield-tech"] .pool-select').length === 1);
+          log("Aspect Advantage and Planning Ahead stay free text",
+            app.querySelectorAll('[data-section="aspect-advantage"] .text-input').length === 1 &&
+            app.querySelectorAll('[data-section="planning-ahead"] .pool-select').length === 0);
+
+          var hero = app.querySelector('[data-section="players"] .text-input');
+          hero.value = "Ghost-Spider";
+          fire(hero, "input");
+          log("the reward rows follow the identity field",
+            /Ghost-Spider/.test(
+              app.querySelector('[data-section="shield-tech"] .field-label').textContent),
+            app.querySelector('[data-section="shield-tech"] .field-label').textContent);
+
+          var tech = app.querySelector('[data-section="shield-tech"] .pool-select');
+          tech.value = "laser-goggles";
+          fire(tech, "change");
+          var aspect = app.querySelector('[data-section="aspect-advantage"] .text-input');
+          aspect.value = "Enhanced Reflexes";
+          fire(aspect, "input");
+          fire(aspect, "blur");
+
+          d.querySelector(".btn-add").click();
+          log("a second player brings a second row to every reward panel",
+            app.querySelectorAll('[data-section="planning-ahead"] .text-input').length === 2,
+            app.querySelectorAll('[data-section="planning-ahead"] .text-input').length);
+          log("and the card the first player took is closed to the second",
+            app.querySelectorAll('[data-section="shield-tech"] .pool-select')[1]
+              .querySelector('option[value="laser-goggles"]').disabled);
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).sm1.state;
+            log("the cells were stored in the cells they were entered in",
+              JSON.stringify(st.communityService) ===
+                JSON.stringify(["cat-in-a-tree", "", "rubble-rescue", ""]),
+              JSON.stringify(st.communityService));
+            log("the empty cells are empty strings, not missing",
+              st.lastOnesStanding.length === 6 && st.osbornTech.length === 3 &&
+              st.lastOnesStanding[1] === "electro" && st.osbornTech[0] === "arm-cannon",
+              JSON.stringify([st.lastOnesStanding, st.osbornTech]));
+            log("the identity and the three rewards were stored",
+              st.players[0].hero === "Ghost-Spider" &&
+              st.players[0].shieldTech === "laser-goggles" &&
+              st.players[0].aspectAdvantage === "Enhanced Reflexes",
+              JSON.stringify(st.players[0]));
+            finish();
+          }, 500);
+        });
+      }
+
+      /* The reputation is the one piece of state the log page does not print —
+         it comes off the track on page 1 — and everything the panel says about
+         what is in force is derived from it. So: is it derived, and is it
+         derived without stealing the focus out of the field being typed in. */
+      function caseSmRep() {
+        var seeded = smLog();
+        seeded.state.reputation = 11;
+        seed({ sm1: seeded }, "sm1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var panel = d.querySelector('[data-section="reputation"]');
+          var field = panel.querySelector(".num-input");
+          var rows = function () { return panel.querySelectorAll("[data-threshold]"); };
+          var at = function () {
+            return Array.prototype.map.call(rows(), function (tr) {
+              return tr.getAttribute("data-threshold");
+            }).join();
+          };
+          var reached = function () {
+            return Array.prototype.filter.call(rows(), function (tr) {
+              return tr.classList.contains("is-reached");
+            }).map(function (tr) { return tr.getAttribute("data-threshold"); }).join();
+          };
+
+          log("the track has one editable number and nothing else",
+            panel.querySelectorAll("input, select, textarea").length === 1,
+            panel.querySelectorAll("input, select, textarea").length);
+          log("the field carries the seeded value", field.value === "11", field.value);
+          /* Measured off the sheet: the seven rules that cross the track run
+             through the centres of exactly these circles. */
+          log("seven rungs at 1, 5, 9, 13, 17, 21, 25",
+            at() === "1,5,9,13,17,21,25", at());
+          log("at 11 the first three are in force", reached() === "1,5,9", reached());
+
+          /* The legend from the foot of the track page: six ways to score. */
+          log("the conditions legend is complete",
+            panel.querySelectorAll(".rep-conditions li").length === 6,
+            panel.querySelectorAll(".rep-conditions li").length);
+
+          field.focus();
+          field.value = "25";
+          fire(field, "input");
+          log("raising the marker puts every rung in force",
+            reached() === "1,5,9,13,17,21,25", reached());
+          /* Repainted in place, not re-rendered: a re-render would replace the
+             field and the caret would be gone mid-number. */
+          log("and the field being typed in keeps the focus",
+            d.activeElement === field);
+
+          field.value = "3";
+          fire(field, "input");
+          log("lowering it takes the later ones out again",
+            reached() === "1", reached());
+          field.value = "";
+          fire(field, "input");
+          log("an empty track has nothing in force", reached() === "", reached());
+
+          field.value = "17";
+          fire(field, "input");
+          fire(field, "blur");
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).sm1.state;
+            log("the reputation was stored", st.reputation === 17, st.reputation);
+            finish();
+          }, 500);
+        });
+      }
+
+      function caseSmExpert() {
+        var seeded = smLog();
+        seeded.state.expert = false;
+        /* Filled in, but not visible at standard level — exactly the state that
+           would lose data if hiding were clearing. */
+        seeded.state.players = [{ hero: "Ghost-Spider", hp: 6, shieldTech: "",
+                                  aspectAdvantage: "", planningAhead: "" }];
+        seed({ sm1: seeded }, "sm1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var card = function () { return d.querySelector(".player-card"); };
+          var toggle = function () {
+            return d.querySelector("[data-section=players] .panel-head .flag .sheet-check");
+          };
+
+          log("the switch is in the player panel head", !!toggle());
+          log("it starts unticked", toggle().checked === false);
+          log("standard hides the hit points", !card().querySelector(".num-input"));
+          log("the identity field is not hidden with them",
+            !!card().querySelector(".text-input"));
+          /* The level governs the hit points and nothing else on this sheet, so
+             every other field stays put either way. */
+          log("standard leaves the reputation field",
+            !!d.querySelector('[data-section="reputation"] .num-input'));
+          log("and leaves all thirteen cells",
+            d.querySelectorAll('[data-section="community-service"] .pool-select,' +
+              '[data-section="last-ones-standing"] .pool-select,' +
+              '[data-section="osborn-tech"] .pool-select').length === 13,
+            d.querySelectorAll('[data-section="community-service"] .pool-select,' +
+              '[data-section="last-ones-standing"] .pool-select,' +
+              '[data-section="osborn-tech"] .pool-select').length);
+
+          toggle().checked = true;
+          fire(toggle(), "change");
+
+          log("expert reveals the hit points", !!card().querySelector(".num-input"));
+          log("and the value was still there",
+            card().querySelector(".num-input").value === "6",
+            card().querySelector(".num-input").value);
+
+          toggle().checked = false;
+          fire(toggle(), "change");
+          log("switching back hides them again", !card().querySelector(".num-input"));
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).sm1.state;
+            log("the sheet is back at standard", st.expert === false);
+            log("but the hidden hit points survived", st.players[0].hp === 6,
+              st.players[0].hp);
+            finish();
+          }, 500);
+        });
+      }
+
+      function caseSmPrint() {
+        var seeded = smLog();
+        seeded.state.reputation = 11;
+        seeded.state.players = [
+          { hero: "Ghost-Spider", hp: 8, shieldTech: "laser-goggles",
+            aspectAdvantage: "Enhanced Reflexes", planningAhead: "Swinging Web Kick" },
+          { hero: "Spider-Man", hp: 5, shieldTech: "shock-knuckles",
+            aspectAdvantage: "", planningAhead: "" },
+        ];
+        seeded.state.communityService = ["cat-in-a-tree", "", "rubble-rescue", ""];
+        seeded.state.osbornTech = ["arm-cannon", "", ""];
+        seed({ sm1: seeded }, "sm1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          w.dispatchEvent(new w.Event("beforeprint"));
+          var pv = d.getElementById("print-view");
+          var text = pv.textContent;
+          log("print view built", pv.children.length > 0, pv.children.length);
+          log("print names the campaign", /Sinister Motives \(MC27\)/.test(text));
+          log("print says which level was played",
+            /\[x\] Expertenmodus/.test(text), text.slice(0, 120));
+          /* Named, not just the bare number: textContent runs the lines
+             together, so a digit on its own proves nothing about where it sat. */
+          log("print carries the hit points",
+            /Lebenspunkte: 8/.test(text) && /Lebenspunkte: 5/.test(text));
+          log("print carries each player's three rewards",
+            /Laser Goggles/.test(text) && /Enhanced Reflexes/.test(text) &&
+            /Swinging Web Kick/.test(text));
+          log("print carries the reputation and which rungs it reached",
+            /11/.test(text) && /1, 5, 9/.test(text), text);
+          /* An empty cell is a statement too, so the place is printed either
+             way — three Osborn Tech lines for three printed cells. */
+          log("print keeps the empty cells visible",
+            (text.match(/—/g) || []).length >= 3, (text.match(/—/g) || []).length);
+          log("print carries the recorded cards",
+            /Cat in a Tree/.test(text) && /Rubble Rescue/.test(text) &&
+            /Arm Cannon/.test(text));
+          /* The printout is a record of a campaign, not a copy of the rulebook
+             page: the rungs' wording stays on screen. */
+          log("but not the wording of the rungs",
+            !/additional mulligan/.test(text) && !/Helicarrier/.test(text));
+          finish();
+        });
+      }
+
+      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint };
       (cases[CASE] || caseBasic)();
     </script>
   </body>

@@ -385,6 +385,141 @@ for (const def of campaigns) {
     check(p + "and the boxes nobody touched stay unticked",
       ticked.flags.shawarma === false && ticked.flags.towerDamaged === false);
   }
+
+  if (def.id === "sinister-motives") {
+    /* The generic fixture feeds MC60's `scenarios`, `removed` and `flags`, none
+       of which is a field on this sheet. None of it may land. */
+    check(p + "no scenarios key on this sheet", once.scenarios === undefined);
+    check(p + "no removed key on this sheet", once.removed === undefined);
+    check(p + "no flags key on this sheet", once.flags === undefined);
+    check(p + "a notes field is not part of this sheet",
+      def.normalize({ notes: "anything" }).notes === undefined);
+
+    /* The level is a real boolean, and standard is the default: a sheet that
+       says nothing is not an expert campaign. */
+    check(p + "the level defaults to standard", empty.expert === false);
+    check(p + "a tolerant truthy level reads as expert",
+      def.normalize({ expert: "true" }).expert === true);
+    /* Hiding is not clearing: the hit points have to survive a sheet that is
+       currently standard, or toggling by accident would cost data. */
+    check(p + "a standard sheet keeps its hidden hit points",
+      def.normalize({ expert: false, players: [{ hero: "Ghost-Spider", hp: 6 }] })
+        .players[0].hp === 6);
+
+    check(p + "player list capped at 4", once.players.length === 4, once.players.length);
+    check(p + "an empty player list still yields one player",
+      def.normalize({ players: [] }).players.length === 1);
+    /* The three "Reputation Track Reward" sections live on the player, so the
+       key set says so — a parallel list would let a removed player shift the
+       entries out from under the names. */
+    check(p + "a player carries the identity, the hit points and three rewards",
+      eq(Object.keys(once.players[0]).sort(),
+        ["aspectAdvantage", "hero", "hp", "planningAhead", "shieldTech"]),
+      JSON.stringify(Object.keys(once.players[0])));
+    check(p + "hero trimmed, hp clamped",
+      once.players[0].hero === "Daredevil" && once.players[0].hp === 99,
+      once.players[0].hero + "/" + once.players[0].hp);
+    check(p + "a blank hit point field stays null",
+      def.normalize({ players: [{ hp: "" }] }).players[0].hp === null);
+
+    /* The reputation is the only state here that page 2 does not print, and
+       everything the panel says about what is unlocked is derived from it — so
+       an out-of-range number must be pulled back onto the track, not stored. */
+    check(p + "the reputation starts blank", empty.reputation === null);
+    check(p + "a blank reputation stays null",
+      def.normalize({ reputation: "" }).reputation === null);
+    check(p + "the reputation is clamped to the length of the track",
+      def.normalize({ reputation: "99" }).reputation === 35 &&
+      def.normalize({ reputation: -3 }).reputation === 0,
+      JSON.stringify([def.normalize({ reputation: "99" }).reputation,
+        def.normalize({ reputation: -3 }).reputation]));
+    check(p + "an unreadable reputation reads as blank, not as zero",
+      def.normalize({ reputation: "nope" }).reputation === null);
+    /* Both scores are reputation values too, so they share the range. */
+    check(p + "the two scores are clamped the same way",
+      def.normalize({ wakingNightmare: 999, finalScore: -1 }).wakingNightmare === 35 &&
+      def.normalize({ wakingNightmare: 999, finalScore: -1 }).finalScore === 0);
+
+    /* Every cell of every named section, in sheet order. A missing cell would
+       read as empty on screen and then be written back on the next save, which
+       is how a cell silently disappears from a stored sheet. */
+    check(p + "the cell counts are the ones the sheet prints",
+      empty.communityService.length === 4 && empty.lastOnesStanding.length === 6 &&
+      empty.osbornTech.length === 3,
+      JSON.stringify([empty.communityService.length, empty.lastOnesStanding.length,
+        empty.osbornTech.length]));
+    check(p + "and they start empty",
+      [].concat(empty.communityService, empty.lastOnesStanding, empty.osbornTech)
+        .every((v) => v === ""));
+
+    /* A fixture of the sheet's own fields: unknown slugs, repeats within a
+       section, a repeat across two players, a too-long list and a too-short
+       one. The generic fixture above touches none of these. */
+    const dirtySm = {
+      players: [
+        { hero: "Ghost-Spider", hp: "500", shieldTech: "laser-goggles",
+          aspectAdvantage: "  Enhanced Reflexes  ",
+          planningAhead: "y".repeat(500) },
+        { hero: "Spider-Man", shieldTech: "laser-goggles",   // already taken
+          aspectAdvantage: 7, planningAhead: null },
+        { hero: "Venom", shieldTech: "not-a-card" },
+        "not even an object",
+      ],
+      expert: 1,
+      reputation: 13,
+      /* Too long, with an unknown slug and a repeat of an earlier cell. */
+      communityService: ["cat-in-a-tree", "made-up", "cat-in-a-tree",
+                         "off-the-rails", "rubble-rescue"],
+      wakingNightmare: "4",
+      /* Too short: the missing cells have to come back as empty ones. */
+      lastOnesStanding: ["vulture", 7, "electro"],
+      finalScore: "28",
+      osbornTech: ["tracking-display", "arm-cannon", "tracking-display"],
+      scenarios: [{ slug: "does-not-exist" }],
+      flags: { invented: true },
+      somethingUnknown: { nested: [1, 2, 3] },
+    };
+    const m1 = def.normalize(dirtySm);
+    check(p + "MC27 fixture is idempotent", eq(m1, def.normalize(m1)), JSON.stringify(m1));
+
+    /* The cell an entry sits in is part of what was written down, so unlike
+       MC10's pools these lists are NOT reordered — an unknown slug and a repeat
+       empty their own cell and leave the rest where they were. */
+    check(p + "an unknown slug empties its cell, not the row",
+      eq(m1.communityService, ["cat-in-a-tree", "", "", "off-the-rails"]),
+      JSON.stringify(m1.communityService));
+    check(p + "a row longer than the sheet is cut to the printed cells",
+      m1.communityService.length === 4, m1.communityService.length);
+    check(p + "a row shorter than the sheet is filled up with empty cells",
+      eq(m1.lastOnesStanding, ["vulture", "", "electro", "", "", ""]),
+      JSON.stringify(m1.lastOnesStanding));
+    check(p + "a card recorded twice keeps only its first cell",
+      eq(m1.osbornTech, ["tracking-display", "arm-cannon", ""]),
+      JSON.stringify(m1.osbornTech));
+
+    check(p + "the reputation and both scores survive the fixture",
+      m1.reputation === 13 && m1.wakingNightmare === 4 && m1.finalScore === 28,
+      JSON.stringify([m1.reputation, m1.wakingNightmare, m1.finalScore]));
+
+    /* Each S.H.I.E.L.D. Tech upgrade exists once in the campaign. */
+    check(p + "the same upgrade cannot go to two players",
+      m1.players[0].shieldTech === "laser-goggles" && m1.players[1].shieldTech === "",
+      JSON.stringify([m1.players[0].shieldTech, m1.players[1].shieldTech]));
+    check(p + "an unknown upgrade slug is cleared",
+      m1.players[2].shieldTech === "", m1.players[2].shieldTech);
+    /* Free text, because the card comes from the player's own collection or
+       deck — trimmed and capped like every other name field here. */
+    check(p + "the free-text rewards are trimmed and capped",
+      m1.players[0].aspectAdvantage === "Enhanced Reflexes" &&
+      m1.players[0].planningAhead.length === 60,
+      m1.players[0].aspectAdvantage + "/" + m1.players[0].planningAhead.length);
+    /* Same tolerance every text field on every sheet has: a null is nothing,
+       a number is its digits. Asserted here so a change to coerceText() shows
+       up as a failing expectation rather than as quietly different data. */
+    check(p + "a free-text reward tolerates a null and a number alike",
+      m1.players[1].planningAhead === "" && m1.players[1].aspectAdvantage === "7",
+      JSON.stringify([m1.players[1].aspectAdvantage, m1.players[1].planningAhead]));
+  }
 }
 
 // ------------------------------------------------------------------- roster

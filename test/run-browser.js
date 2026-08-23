@@ -35,6 +35,7 @@ const CASES = {
   appearance: 19, players: 23, migrate: 13, round: 12, roundlast: 8,
   roundspread: 3, rrs: 24, rrsdialog: 24, rrsprint: 18, rrspools: 14,
   rrsexpert: 13, expert: 10, mts: 15, mtsexpert: 10, mtsprint: 9,
+  sm: 19, smrep: 10, smexpert: 11, smprint: 9,
 };
 const cases = process.argv.slice(2).length ? process.argv.slice(2) : Object.keys(CASES);
 const PORT = Number(process.env.PORT || 8139);

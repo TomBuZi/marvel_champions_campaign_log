@@ -390,6 +390,136 @@
   color-scheme: dark;
 }
 
+/* ---------- Campaign skin: MC27, Sinister Motives ----------
+   Sampled from mc27_sinister_motives_campaignlog.pdf the same way the three
+   palettes above were sampled from their sheets: the fill colours of the vector
+   areas in the page content stream, weighted by how much area each covers.
+   Violet #50225f carries 19.6% of the area and the dark plum frame #26171e
+   another 19.6%, the pale pink panels #f3dadb 7%, with crimson #c41e5d for
+   every outline and a hot pink #cf4398 on the sheet's own title. Violet and
+   crimson also keep MC27 apart from MC10's green and MC21's indigo at a glance.
+
+   One is lightened from what was sampled, for the mirror image of the reason
+   MC10's --brick and MC21's --page are darkened: --zap is a surface that carries
+   text — the notice bar and the badge set --on-zap on it — and the printed
+   #cf4398 holds only 4.0 against that ink. #ee8ac5 holds 7.4, and 5.2 against
+   the page for the badge's own outline.
+
+   Dark mode keeps all of the sheet's colours rather than only the violet: the
+   page field stays a deep violet, the panels go to the plum of the printed
+   frame so the crimson side of the sheet is still there, the accent stays hot
+   pink, and the text is a warm pink-white. An all-violet dark mode reads as a
+   different campaign than its own light mode. The accent lives in the tick
+   here, so --check-on carries it rather than --bar.
+
+   Four blocks, mirroring the four above, and for the reason spelled out there:
+   a single [data-campaign] block outranks the bare :root inside the dark media
+   query and would paint the light palette in dark mode. */
+:root[data-campaign="sm"] {
+  --page:      #50225f;   /* violet page field                            */
+  --bar:       #c41e5d;   /* crimson: bars, borders, ink outlines         */
+  --brick:     #6b3378;   /* mid violet, table body — derived and kept
+                             dark enough that the text on it holds 7.3    */
+  --panel-1:   #f7e5e6;   /* panel gradient, top                         */
+  --panel-2:   #f3dadb;   /* … bottom                                    */
+  --pill:      #e8b9be;   /* heading pill, table header row              */
+  --check:     #ebc9cc;   /* empty checkbox                              */
+  --zap:       #ee8ac5;   /* accent pink: focus, ticks, counters —
+                             lightened from the sampled #cf4398, which
+                             cannot carry the ink                        */
+  --ink:       #26171e;   /* near-black plum text                        */
+
+  --bg-input: #fffafb;
+  --text-dim: #5e3a52;
+  --accent-strong: #3a1746;
+  --accent-2: #8e2554;
+  /* Stays red: here the colour carries meaning, not identity. */
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(238, 138, 197, 0.55);
+  --halftone: rgba(196, 30, 93, 0.16);
+  --hatch: rgba(196, 30, 93, 0.10);
+  --on-brick: #f7e5e6;
+  --on-page: #f7e5e6;
+  --on-zap: #26171e;
+  --on-danger: #fff4ef;
+  /* Cream on crimson, the way the sheet sets its own title: the printed pink
+     would vanish on the crimson box. */
+  --tick: #f9f2f0;
+  --title-shadow: #f7e5e6;
+  --zap-strong: #fba2d6;
+  --input-settled: #dcc3c6;
+  --backdrop: rgba(20, 6, 16, 0.55);
+}
+/* --accent, --panel-border and --ink-shadow are left alone on purpose: they
+   are already defined as var(--bar) and follow it by themselves. */
+@media (prefers-color-scheme: dark) {
+  :root[data-campaign="sm"] {
+    --page: #1e0c2b; --bar: #e9a8c6; --brick: #3d1830;
+    --panel-1: #2c1226; --panel-2: #220e1e; --pill: #46203f;
+    --check: #2a1024; --zap: #f58cc4; --ink: #f5e4ea; --check-on: #f58cc4;
+    --bg-input: #1c0a18; --panel-border: #6b3a5e; --text-dim: #c79bb4;
+    --accent: #e9a8c6; --accent-strong: #f6cfe0; --accent-2: #f0a0c8;
+    --danger: #ff6b5c;
+    --glow: 0 0 0 3px rgba(245, 140, 196, 0.40);
+    --halftone: rgba(255, 255, 255, 0.06);
+    --hatch: rgba(255, 255, 255, 0.05);
+    --ink-shadow: 4px 4px 0 0 #0d0410;
+    --on-brick: #f5e4ea;
+    --on-page: #f5e4ea;
+    --on-zap: #26171e;
+    --on-danger: #2b0a07;
+    --tick: #1e0c2b;
+    --title-shadow: #0d0410;
+    --zap-strong: #fba5d2;
+    --input-settled: #140819;
+    --backdrop: rgba(10, 4, 14, 0.6);
+  }
+}
+:root[data-campaign="sm"][data-theme="light"] {
+  --page: #50225f; --bar: #c41e5d; --brick: #6b3378;
+  --panel-1: #f7e5e6; --panel-2: #f3dadb; --pill: #e8b9be;
+  --check: #ebc9cc; --zap: #ee8ac5; --ink: #26171e;
+  --bg-input: #fffafb; --panel-border: var(--bar); --text-dim: #5e3a52;
+  --accent: var(--bar); --accent-strong: #3a1746; --accent-2: #8e2554;
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(238, 138, 197, 0.55);
+  --halftone: rgba(196, 30, 93, 0.16);
+  --hatch: rgba(196, 30, 93, 0.10);
+  --ink-shadow: 4px 4px 0 0 var(--bar);
+  --on-brick: #f7e5e6;
+  --on-page: #f7e5e6;
+  --on-zap: #26171e;
+  --on-danger: #fff4ef;
+  --tick: #f9f2f0;
+  --title-shadow: #f7e5e6;
+  --zap-strong: #fba2d6;
+  --input-settled: #dcc3c6;
+  --backdrop: rgba(20, 6, 16, 0.55);
+  color-scheme: light;
+}
+:root[data-campaign="sm"][data-theme="dark"] {
+  --page: #1e0c2b; --bar: #e9a8c6; --brick: #3d1830;
+  --panel-1: #2c1226; --panel-2: #220e1e; --pill: #46203f;
+  --check: #2a1024; --zap: #f58cc4; --ink: #f5e4ea; --check-on: #f58cc4;
+  --bg-input: #1c0a18; --panel-border: #6b3a5e; --text-dim: #c79bb4;
+  --accent: #e9a8c6; --accent-strong: #f6cfe0; --accent-2: #f0a0c8;
+  --danger: #ff6b5c;
+  --glow: 0 0 0 3px rgba(245, 140, 196, 0.40);
+  --halftone: rgba(255, 255, 255, 0.06);
+  --hatch: rgba(255, 255, 255, 0.05);
+  --ink-shadow: 4px 4px 0 0 #0d0410;
+  --on-brick: #f5e4ea;
+  --on-page: #f5e4ea;
+  --on-zap: #26171e;
+  --on-danger: #2b0a07;
+  --tick: #1e0c2b;
+  --title-shadow: #0d0410;
+  --zap-strong: #fba5d2;
+  --input-settled: #140819;
+  --backdrop: rgba(10, 4, 14, 0.6);
+  color-scheme: dark;
+}
+
 /* ---------- Base ---------- */
 * { box-sizing: border-box; }
 
@@ -673,6 +803,62 @@ button:focus-visible {
 .scenario-row { display: grid; gap: 1rem; }
 @media (min-width: 48rem) {
   .scenario-row { grid-template-columns: 1fr 1fr; }
+}
+
+/* MC27 prints its three "Reputation Track Reward" sections across, so they get
+   a three-column row of their own rather than being squeezed into the
+   two-column .scenario-row above. */
+.reward-row { display: grid; gap: 1rem; }
+@media (min-width: 64rem) {
+  .reward-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* MC27's unlabelled cell grids. Keyed on the number of cells, the way
+   .player-grid is keyed on the number of players, so the sheet's own shape
+   survives — Community Service 2x2, Last Ones Standing 3x2, Osborn Tech 1x3 —
+   instead of being whatever happens to fit. The breakpoints are where the card
+   names stop being readable in a narrower cell, not where they stop fitting. */
+.cell-row {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 34rem) {
+  .cell-row[data-cells="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cell-row[data-cells="6"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 62rem) {
+  .cell-row[data-cells="3"],
+  .cell-row[data-cells="6"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* The "Conditions" legend from the track page. Two columns where there is room,
+   like the printed grid, one where there is not. */
+.rep-conditions {
+  margin: 0 0 0.8rem;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  column-width: 15rem;
+  column-gap: 1.5rem;
+}
+
+/* The reputation thresholds. Scoped to .rep-table so the MC60 scenario table
+   is untouched: its cells hold controls and centre well, these hold prose and
+   do not. */
+.rep-table td { text-align: left; }
+.rep-table .rep-at { text-align: center; white-space: nowrap; }
+.rep-table .rep-rule { margin: 0; }
+.rep-table .rep-rule + .rep-rule { margin-top: 0.4rem; }
+/* A threshold already reached is in force, and says so twice over: the number
+   goes bold and the row gets an accent edge. The ones still ahead are dimmed —
+   but only to 0.72, the same figure MC60 uses for a failed row, because that is
+   where the text on --brick still holds 4.5. They are reference, not history:
+   nothing is taken away, and a marker can move back down. */
+.rep-table tbody tr:not(.is-reached) { opacity: 0.72; }
+.rep-table tbody tr.is-reached .rep-at {
+  font-weight: 700;
+  box-shadow: inset 4px 0 0 0 var(--zap);
 }
 
 /* Two field groups stacked in one panel — MC21's scenario 2 and 3 put the
