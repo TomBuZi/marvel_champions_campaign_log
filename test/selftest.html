@@ -2523,12 +2523,21 @@
           log("print carries each player's three rewards",
             /Laser Goggles/.test(text) && /Enhanced Reflexes/.test(text) &&
             /Swinging Web Kick/.test(text));
-          /* A record of what was written down: Planning Ahead is closed at 11,
-             and it still prints. */
+          /* A record of what was written down: Planning Ahead opens at 17 and
+             the marker is at 11, so that field is closed on screen and its entry
+             still prints. Asserted through the field's own state rather than
+             through its label, which is a translated word. */
+          var shut = d.querySelector('[data-unlock="17"] .text-input');
           log("including one the reputation has closed again",
-            /Planning Ahead: Swinging Web Kick/.test(text));
+            shut.disabled && /Swinging Web Kick/.test(text),
+            shut.disabled + " / " + shut.value);
+          /* The label is read off the sheet, not written out here: it moves with
+             the translation and the assertion should not. */
+          var repLabel = d.querySelector('[data-section="reputation"] .field-label')
+            .firstChild.nodeValue.trim();
           log("print carries the reputation and which rungs it reached",
-            /Aktuelle Reputation: 11/.test(text) && /1, 5, 9/.test(text));
+            text.indexOf(repLabel + ": 11") !== -1 && /1, 5, 9/.test(text),
+            repLabel);
           /* Which cards were NOT recorded matters as much as which were, so the
              whole set prints either way. */
           log("print ticks the recorded cards",
@@ -2541,9 +2550,18 @@
              bounded by the track's length. */
           log("print carries a score above the track's length", /42/.test(text));
           /* The printout is a record of a campaign, not a copy of the rulebook
-             page: the rungs' wording stays on screen. */
+             page: the rungs' wording stays on screen. Taken from the table on
+             screen rather than from a phrase written out here — an English
+             phrase can no longer appear in a German sheet, so a written-out one
+             would have stopped checking anything the moment the rungs were
+             translated. The floor is two lines per rung, one each side. */
+          var rungs = Array.prototype.map.call(
+            d.querySelectorAll('[data-section="reputation"] .rep-rule'),
+            function (p) { return p.textContent.trim(); });
           log("but not the wording of the rungs",
-            !/additional mulligan/.test(text) && !/Helicarrier/.test(text));
+            rungs.length >= 14 && rungs.every(function (line) {
+              return text.indexOf(line) === -1;
+            }), rungs.length);
           finish();
         });
       }

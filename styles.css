@@ -926,8 +926,20 @@ button:focus-visible {
 /* The reputation thresholds. Scoped to .rep-table so the MC60 scenario table
    is untouched: its cells hold controls and centre well, these hold prose and
    do not. */
-.rep-table td { text-align: left; }
-.rep-table .rep-at { text-align: center; white-space: nowrap; }
+/* Left and top. Both cells hold prose of very different lengths, so centring
+   them left a short rung floating in the middle of a tall row, and the number
+   column goes with them so every row starts on the same line.
+
+   Written as .sheet-table.rep-table rather than .rep-table, so it does not
+   depend on where in this file the rule sits: the generic .sheet-table rule
+   further down centres its cells, and at equal specificity the later rule wins
+   — which is exactly how the first attempt at this ended up doing nothing. */
+.sheet-table.rep-table th,
+.sheet-table.rep-table td {
+  text-align: left;
+  vertical-align: top;
+}
+.rep-table .rep-at { white-space: nowrap; }
 .rep-table .rep-rule { margin: 0; }
 .rep-table .rep-rule + .rep-rule { margin-top: 0.4rem; }
 /* A threshold already reached is in force, and says so twice over: the number
@@ -1395,10 +1407,11 @@ body[class*="dnd-"] .entry-list { min-height: 2.2rem; outline: 1px dashed var(--
   to   { opacity: 1; transform: translate(-50%, 0); }
 }
 
-/* The picker's "start another run" rows. A native select popup may ignore this
-   — which is why the angle brackets around the label carry the distinction and
-   the italics are only a hint. */
-.opt-new { font-style: italic; }
+/* The picker's "start another run" rows. Set light and italic against the log
+   titles they sit among — a native select popup may ignore either, which is why
+   the angle brackets around the label carry the distinction and the styling is
+   only a hint. */
+.opt-new { font-style: italic; font-weight: 400; }
 
 /* ---------- Footer ---------- */
 .footer {
