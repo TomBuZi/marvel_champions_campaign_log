@@ -82,6 +82,22 @@ for (const def of campaigns) {
 }
 
 // ------------------------------------------------------------------- campaigns
+/* Display names in a campaign's own tables — scenario names, card pools —
+   carry an `en` and a `de`. A `de` of null means "no German name on record"
+   and the English one is shown instead; an EMPTY string means exactly the
+   same thing while LOOKING like a filled-in translation, so it is almost
+   certainly a slip. This is source-level on purpose: those tables are
+   private to their module, and exporting them just to test them would be
+   the tail wagging the dog. */
+section("Display names");
+for (const def of campaigns) {
+  const src = read("campaigns/" + def.id + ".js");
+  const empties = [...src.matchAll(/^.*\bde:\s*(""|'')/gm)]
+    .map((m) => m[0].trim());
+  check(def.id + ": no empty de in a name table",
+    empties.length === 0, empties.join(" | "));
+}
+
 section("Campaign definitions");
 const seenIds = new Set();
 for (const def of campaigns) {
@@ -187,8 +203,131 @@ for (const def of campaigns) {
       eq(def.normalize(def.migrate(JSON.parse(JSON.stringify(empty)), def.stateVersion)), empty));
     check(p + "flags are booleans",
       Object.values(once.flags).every((v) => typeof v === "boolean"));
+    /* The level is a real boolean, and standard is the default: a sheet that
+       says nothing is not an expert campaign. */
+    check(p + "the level defaults to standard", empty.expert === false);
+    check(p + "a tolerant truthy level reads as expert",
+      def.normalize({ expert: 1 }).expert === true);
+    /* Hiding is not clearing: the hit points have to survive a sheet that is
+       currently standard, or toggling by accident would cost data. */
+    check(p + "a standard sheet keeps its hidden hit points",
+      def.normalize({ expert: false, players: [{ hero: "Echo", hp: 7 }] })
+        .players[0].hp === 7);
+    /* Version 3 added the flag. An older sheet that records hit points was an
+       expert game — reading it as standard would hide numbers its owner had
+       entered — while one that never recorded any is a standard game. */
+    check(p + "a version 2 sheet with hit points migrates to expert level",
+      def.normalize(def.migrate({ players: [{ hero: "Echo", hp: 7 }] }, 2)).expert === true);
+    check(p + "a version 2 sheet without hit points stays standard",
+      def.normalize(def.migrate({ players: [{ hero: "Echo", hp: null }] }, 2)).expert === false);
+    /* Zero is a recorded value: a hero downed at the end of a scenario. */
+    check(p + "a recorded zero counts as recorded",
+      def.normalize(def.migrate({ players: [{ hero: "Echo", hp: 0 }] }, 2)).expert === true);
     check(p + "list entries trimmed, blanks dropped",
       eq(once.removed, ["keep", "~struck", "42"]), JSON.stringify(once.removed));
+  }
+
+  if (def.id === "rise-of-red-skull") {
+    /* The generic fixture above feeds `scenarios` and `flags`, which this sheet
+       does not have. They must land nowhere. */
+    check(p + "no scenarios key on this sheet", once.scenarios === undefined);
+    check(p + "no flags key on this sheet", once.flags === undefined);
+    /* The level is a real boolean, and standard is the default: a sheet that
+       says nothing is not an expert campaign. */
+    check(p + "the level defaults to standard", empty.expert === false);
+    check(p + "the level is a real boolean", once.expert === false, once.expert);
+    check(p + "a tolerant truthy level reads as expert",
+      def.normalize({ expert: "true" }).expert === true);
+    check(p + "player list capped at 4", once.players.length === 4, once.players.length);
+    check(p + "an empty player list still yields one player",
+      def.normalize({ players: [] }).players.length === 1);
+    check(p + "list entries trimmed, blanks dropped",
+      eq(once.removed, ["keep", "~struck", "42"]), JSON.stringify(once.removed));
+    check(p + "the delay counter stays null when nothing said otherwise",
+      once.delayCounters === null, once.delayCounters);
+
+    /* Every card field on this sheet draws from a printed pool of four, so the
+       fixture is about slugs that are wrong rather than text that is dirty. */
+    const dirtyRrs = {
+      players: [
+        { hero: "  Captain America  ", hp: "500",
+          obligations: ["martial-law", "not-a-card", "martial-law", 7, null],
+          techUpgrade: "laser-cannon",
+          basicUpgrade: "Combat Training",          // free text, not a slug
+          rescuedAllies: ["white-tiger", "elektra", "nope"],
+          engagedWithMinion: "true" },
+        { hero: "Black Widow",
+          obligations: ["martial-law"],             // same obligation: allowed
+          techUpgrade: "laser-cannon",              // same upgrade: not allowed
+          basicUpgrade: "basic-attack",
+          rescuedAllies: ["elektra", "shang-chi"],  // Elektra already taken
+          engagedWithMinion: 0 },
+        "not even an object",
+      ],
+      expert: 1,
+      experimentalWeapons: ["exo-suit", "laser-rifle", "exo-suit", "made-up"],
+      delayCounters: -5,
+      removed: 42,
+      scenarios: [{ slug: "does-not-exist" }],
+      flags: { invented: true },
+      somethingUnknown: { nested: [1, 2, 3] },
+    };
+    const r1 = def.normalize(dirtyRrs);
+    check(p + "MC10 fixture is idempotent", eq(r1, def.normalize(r1)), JSON.stringify(r1));
+    check(p + "hero trimmed, hp clamped",
+      r1.players[0].hero === "Captain America" && r1.players[0].hp === 99);
+
+    /* Unknown slugs out, duplicates out, and the survivors in the pool's own
+       order — that ordering is what makes normalize a fixpoint. */
+    check(p + "obligations reduced to known cards",
+      eq(r1.players[0].obligations, ["martial-law"]),
+      JSON.stringify(r1.players[0].obligations));
+    check(p + "two players may hold the SAME obligation",
+      r1.players[0].obligations.indexOf("martial-law") !== -1 &&
+      r1.players[1].obligations.indexOf("martial-law") !== -1);
+    check(p + "an unknown upgrade slug is cleared",
+      r1.players[0].basicUpgrade === "", r1.players[0].basicUpgrade);
+    check(p + "the same upgrade cannot go to two players",
+      r1.players[0].techUpgrade === "laser-cannon" && r1.players[1].techUpgrade === "",
+      JSON.stringify([r1.players[0].techUpgrade, r1.players[1].techUpgrade]));
+    check(p + "an upgrade the first player does not hold is left alone",
+      r1.players[1].basicUpgrade === "basic-attack", r1.players[1].basicUpgrade);
+    check(p + "rescued allies come back in pool order",
+      eq(r1.players[0].rescuedAllies, ["elektra", "white-tiger"]),
+      JSON.stringify(r1.players[0].rescuedAllies));
+    check(p + "an ally already rescued by someone else is dropped",
+      eq(r1.players[1].rescuedAllies, ["shang-chi"]),
+      JSON.stringify(r1.players[1].rescuedAllies));
+    check(p + "but a player may hold several allies",
+      r1.players[0].rescuedAllies.length === 2);
+    check(p + "engaged flag is a real boolean",
+      r1.players[0].engagedWithMinion === true &&
+      r1.players[1].engagedWithMinion === false &&
+      r1.players[2].engagedWithMinion === false);
+    check(p + "experimental weapons deduped and in pool order",
+      eq(r1.experimentalWeapons, ["laser-rifle", "exo-suit"]),
+      JSON.stringify(r1.experimentalWeapons));
+    check(p + "the delay counter is clamped", r1.delayCounters === 0, r1.delayCounters);
+    check(p + "the level survives as a boolean", r1.expert === true, r1.expert);
+    /* Hiding is not clearing: the expert-only fields have to survive a sheet
+       that is currently standard, or toggling by accident would cost data. */
+    const standard = def.normalize({
+      expert: false,
+      players: [{ hero: "Echo", hp: 7, obligations: ["martial-law"] }],
+    });
+    check(p + "a standard sheet keeps its hidden hit points",
+      standard.players[0].hp === 7, standard.players[0].hp);
+    check(p + "a standard sheet keeps its hidden obligations",
+      eq(standard.players[0].obligations, ["martial-law"]),
+      JSON.stringify(standard.players[0].obligations));
+    /* Neither an array nor a string, so there is nothing to read as a list —
+       an empty one is the honest answer. */
+    check(p + "a bare number yields no list at all", eq(r1.removed, []),
+      JSON.stringify(r1.removed));
+
+    /* This sheet has no free-text notes, so an arriving one has nowhere to go. */
+    check(p + "a notes field is not part of this sheet",
+      def.normalize({ notes: "anything" }).notes === undefined);
   }
 }
 
@@ -216,7 +355,46 @@ check("no absolute asset paths in index.html", absolute.length === 0, absolute.j
 check("every script referenced by index.html exists",
   [...html.matchAll(/<script src="([^"]+)"/g)]
     .every((m) => fs.existsSync(path.join(root, m[1]))));
+
+/* The other direction, and the one that was missing: lint discovers the
+   campaigns by reading the directory, the browser only ever runs what
+   index.html names. Without this a new campaign passes every check above and
+   still never loads on the page. */
+for (const def of campaigns) {
+  check("index.html loads campaigns/" + def.id + ".js",
+    html.includes('<script src="campaigns/' + def.id + '.js"'));
+}
 check("stylesheet exists", fs.existsSync(path.join(root, "styles.css")));
+
+/* applyLanguage() (core.js) translates by writing node.textContent, so a
+   data-i18n on an element that CONTAINS other elements deletes them. That is
+   how the new-log dialog lost its title input — silently, because the dialog
+   only becomes reachable once a second campaign is registered. The caption
+   belongs in a <span> of its own.
+
+   Walked by hand rather than matched with a regexp: the pattern needs a
+   backreference to the tag name, and that is easy to get subtly wrong here. */
+const MARKER = 'data-i18n="';
+const i18nWithChildren = [];
+for (let i = html.indexOf(MARKER); i !== -1; i = html.indexOf(MARKER, i + 1)) {
+  const keyStart = i + MARKER.length;
+  const key = html.slice(keyStart, html.indexOf('"', keyStart));
+  let j = html.lastIndexOf("<", i) + 1;
+  let name = "";
+  /* Everything up to the first whitespace, ">" or "/" is the tag name. */
+  while (j < html.length && html[j] > " " && html[j] !== ">" && html[j] !== "/") {
+    name += html[j];
+    j++;
+  }
+  const openEnd = html.indexOf(">", i);
+  const closeAt = html.indexOf("</" + name, openEnd);
+  if (openEnd === -1 || closeAt === -1) continue;         // void element, nothing to lose
+  if (html.slice(openEnd + 1, closeAt).indexOf("<") !== -1) {
+    i18nWithChildren.push(name + "[" + key + "]");
+  }
+}
+check("no data-i18n on an element with child elements",
+  i18nWithChildren.length === 0, i18nWithChildren.join(", "));
 
 /* /de/ and /en/ are pretty entry points: a real directory per language, because
    GitHub Pages cannot rewrite paths. Each one only forwards to index.html with

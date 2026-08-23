@@ -100,8 +100,11 @@
           <legend data-i18n="chooseCampaignLabel">Kampagne</legend>
           <div id="campaign-choices"></div>
         </fieldset>
-        <label class="field-label" data-i18n="logTitleLabel">
-          Name des Bogens
+        <!-- The caption sits in its own <span>: applyLanguage() writes
+             textContent, so a data-i18n on the <label> itself would delete the
+             input inside it. Same reason the title in the topbar is wrapped. -->
+        <label class="field-label">
+          <span data-i18n="logTitleLabel">Name des Bogens</span>
           <input id="new-log-title" type="text" maxlength="80" />
         </label>
         <div class="dialog-actions">
@@ -197,5 +200,6 @@
     <!-- One script per campaign; registration order is the order they appear in
          the log picker and the new-log dialog. -->
     <script src="campaigns/fear-no-evil.js"></script>
+    <script src="campaigns/rise-of-red-skull.js"></script>
   </body>
 </html>

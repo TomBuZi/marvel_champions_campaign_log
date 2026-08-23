@@ -56,6 +56,7 @@
   --title-shadow: #fdece4;/* hard offset behind the display title    */
   --zap-strong: #ffe500;  /* the yellow where it has to carry a state */
   --input-settled: #ddc4ba;/* a field whose row is done, one way or the other */
+  --backdrop: rgba(20, 6, 6, 0.55);
 
   /* Comic geometry. */
   --rule: 2px;
@@ -96,6 +97,7 @@
     --title-shadow: #0d0505;
     --zap-strong: #ffe94a;
     --input-settled: #170908;
+    --backdrop: rgba(20, 6, 6, 0.55);
     color-scheme: dark;
   }
 }
@@ -118,6 +120,7 @@
   --title-shadow: #fdece4;
   --zap-strong: #ffe500;
   --input-settled: #ddc4ba;
+  --backdrop: rgba(20, 6, 6, 0.55);
   color-scheme: light;
 }
 :root[data-theme="dark"] {
@@ -139,6 +142,122 @@
   --title-shadow: #0d0505;
   --zap-strong: #ffe94a;
   --input-settled: #170908;
+  --backdrop: rgba(20, 6, 6, 0.55);
+  color-scheme: dark;
+}
+
+/* ---------- Campaign skin: The Rise of Red Skull (MC10) ----------
+   Sampled from mc10_the_rise_of_red_skull_campaign-log.pdf the same way the
+   MC60 palette above was sampled from its sheet: the fill colours of the
+   vector areas in the page content stream, weighted by how much area each
+   covers. MC10 is green and olive with a mustard accent, which also keeps the
+   two campaigns apart at a glance.
+
+   Four blocks, mirroring the four above. A single [data-campaign] block would
+   be more specific than the bare :root inside the dark media query and would
+   therefore paint the light palette in dark mode; and [data-campaign] alone
+   cannot beat an explicit [data-theme], so the two combinations are spelled
+   out. The repetition is deliberate for the same reason it is above: a
+   delta-only block drifts apart the next time a theme changes. */
+:root[data-campaign="trors"] {
+  --page:      #607e64;   /* sage page field                          */
+  --bar:       #115632;   /* deep green: bars, borders, ink outlines   */
+  --brick:     #5b7861;   /* mid green, table body — derived, and kept
+                             darker than sampled so the text on it holds
+                             contrast (4.5 instead of 3.4)             */
+  --panel-1:   #f9f5f2;   /* panel gradient, top                      */
+  --panel-2:   #e6f0cb;   /* … bottom                                 */
+  --pill:      #d9ecd4;   /* heading pill, table header row           */
+  --check:     #cfe3ca;   /* empty checkbox                           */
+  --zap:       #cec313;   /* accent mustard: focus, ticks, counters    */
+  --ink:       #27171e;   /* near-black text                          */
+
+  --bg-input: #fbfdfa;
+  --text-dim: #3d5442;
+  --accent-strong: #0a3a21;
+  --accent-2: #2f7346;
+  /* Stays red: here the colour carries meaning, not identity. */
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(206, 195, 19, 0.55);
+  --halftone: rgba(17, 86, 50, 0.16);
+  --hatch: rgba(17, 86, 50, 0.10);
+  --on-brick: #f2f7f0;
+  --on-page: #f9f5f2;
+  --on-zap: #27171e;
+  --on-danger: #fff4ef;
+  --tick: #cec313;
+  --title-shadow: #f9f5f2;
+  --zap-strong: #e3d81a;
+  --input-settled: #c6d6c2;
+  --backdrop: rgba(6, 16, 10, 0.55);
+}
+/* --accent, --panel-border and --ink-shadow are left alone on purpose: they
+   are already defined as var(--bar) and follow it by themselves. */
+@media (prefers-color-scheme: dark) {
+  :root[data-campaign="trors"] {
+    --page: #0c1710; --bar: #a8cdae; --brick: #24382a;
+    --panel-1: #182a1e; --panel-2: #12211a; --pill: #26402d;
+    --check: #1c2f22; --zap: #e4d95a; --ink: #e6f0e4;
+    --bg-input: #101c14; --panel-border: #35563c; --text-dim: #9bb8a0;
+    --accent: #a8cdae; --accent-strong: #cbe4cf; --accent-2: #8cc79c;
+    --danger: #ff6b5c;
+    --glow: 0 0 0 3px rgba(228, 217, 90, 0.40);
+    --halftone: rgba(255, 255, 255, 0.06);
+    --hatch: rgba(255, 255, 255, 0.05);
+    --ink-shadow: 4px 4px 0 0 #040a06;
+    --on-brick: #e6f0e4;
+    --on-page: #e6f0e4;
+    --on-zap: #27171e;
+    --on-danger: #2b0a07;
+    --tick: #0c1710;
+    --title-shadow: #040a06;
+    --zap-strong: #f0e46a;
+    --input-settled: #0a140d;
+    --backdrop: rgba(4, 10, 6, 0.6);
+  }
+}
+:root[data-campaign="trors"][data-theme="light"] {
+  --page: #607e64; --bar: #115632; --brick: #5b7861;
+  --panel-1: #f9f5f2; --panel-2: #e6f0cb; --pill: #d9ecd4;
+  --check: #cfe3ca; --zap: #cec313; --ink: #27171e;
+  --bg-input: #fbfdfa; --panel-border: var(--bar); --text-dim: #3d5442;
+  --accent: var(--bar); --accent-strong: #0a3a21; --accent-2: #2f7346;
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(206, 195, 19, 0.55);
+  --halftone: rgba(17, 86, 50, 0.16);
+  --hatch: rgba(17, 86, 50, 0.10);
+  --ink-shadow: 4px 4px 0 0 var(--bar);
+  --on-brick: #f2f7f0;
+  --on-page: #f9f5f2;
+  --on-zap: #27171e;
+  --on-danger: #fff4ef;
+  --tick: #cec313;
+  --title-shadow: #f9f5f2;
+  --zap-strong: #e3d81a;
+  --input-settled: #c6d6c2;
+  --backdrop: rgba(6, 16, 10, 0.55);
+  color-scheme: light;
+}
+:root[data-campaign="trors"][data-theme="dark"] {
+  --page: #0c1710; --bar: #a8cdae; --brick: #24382a;
+  --panel-1: #182a1e; --panel-2: #12211a; --pill: #26402d;
+  --check: #1c2f22; --zap: #e4d95a; --ink: #e6f0e4;
+  --bg-input: #101c14; --panel-border: #35563c; --text-dim: #9bb8a0;
+  --accent: #a8cdae; --accent-strong: #cbe4cf; --accent-2: #8cc79c;
+  --danger: #ff6b5c;
+  --glow: 0 0 0 3px rgba(228, 217, 90, 0.40);
+  --halftone: rgba(255, 255, 255, 0.06);
+  --hatch: rgba(255, 255, 255, 0.05);
+  --ink-shadow: 4px 4px 0 0 #040a06;
+  --on-brick: #e6f0e4;
+  --on-page: #e6f0e4;
+  --on-zap: #27171e;
+  --on-danger: #2b0a07;
+  --tick: #0c1710;
+  --title-shadow: #040a06;
+  --zap-strong: #f0e46a;
+  --input-settled: #0a140d;
+  --backdrop: rgba(4, 10, 6, 0.6);
   color-scheme: dark;
 }
 
@@ -360,7 +479,7 @@ button:focus-visible {
   margin: 0;
   padding: 0.8rem 1rem;
   background: var(--zap);
-  color: #241012;
+  color: var(--on-zap);
   border: var(--rule-heavy) solid var(--bar);
   border-radius: var(--radius);
   box-shadow: var(--ink-shadow);
@@ -390,6 +509,15 @@ button:focus-visible {
   margin: -0.2rem 0 0.8rem;
 }
 
+/* More than one control in a panel head: .panel-head itself is a
+   space-between row, so the controls need a row of their own to sit in. */
+.panel-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
+
 .panel-head h2 {
   font-size: 0.95rem;
   text-transform: uppercase;
@@ -407,6 +535,15 @@ button:focus-visible {
 }
 @media (min-width: 60rem) {
   .sheet-columns { grid-template-columns: minmax(0, 3fr) minmax(11rem, 1fr); }
+}
+
+/* The MC10 sheet prints its scenario boxes side by side, so the two that hold a
+   single number each do the same here once there is room. The scenario 4 box
+   stays full width: it carries a checkbox per player and a list, and it is the
+   wider box on the paper sheet too. */
+.scenario-row { display: grid; gap: 1rem; }
+@media (min-width: 48rem) {
+  .scenario-row { grid-template-columns: 1fr 1fr; }
 }
 
 /* ---------- Player cards ---------- */
@@ -780,7 +917,7 @@ body[class*="dnd-"] .entry-list { min-height: 2.2rem; outline: 1px dashed var(--
   max-height: calc(100vh - 3rem);
   box-shadow: var(--ink-shadow);
 }
-.dialog::backdrop, .help-dialog::backdrop { background: rgba(20, 6, 6, 0.55); }
+.dialog::backdrop, .help-dialog::backdrop { background: var(--backdrop); }
 
 .dialog fieldset {
   border: var(--rule) solid var(--bar);
@@ -958,7 +1095,10 @@ body[class*="dnd-"] .entry-list { min-height: 2.2rem; outline: 1px dashed var(--
 @media print {
   /* A fourth token set: the printout is black on white regardless of the
      screen theme, so a dark-mode session does not print a dark page. */
-  :root, :root[data-theme="light"], :root[data-theme="dark"] {
+  /* Also has to out-specify a campaign skin: [data-campaign][data-theme] is
+     a three-part selector, so the old two-part list here would lose to it
+     and a dark-mode session would print the campaign's colours. */
+  :root, :root[data-theme], :root[data-campaign], :root[data-campaign][data-theme] {
     --page: #fff; --bar: #000; --brick: #fff;
     --panel-1: #fff; --panel-2: #fff; --pill: #fff;
     --check: #fff; --zap: #000; --ink: #000;

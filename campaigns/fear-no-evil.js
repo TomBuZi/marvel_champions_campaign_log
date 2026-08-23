@@ -7,6 +7,12 @@
    The expansion has six scenarios; the sixth (the Kingpin finale) has no row on
    the sheet, so it has none here either.
 
+   The campaign is played at standard or expert level, and the remaining hit
+   points are only carried between scenarios at expert level. A standard game
+   therefore hides that field rather than asking for it. Hides, not clears —
+   see `expert` below. (The MC10 module does the same, with obligations on top
+   of the hit points; the switch sits in the same place in both.)
+
    emptyState(), normalize() and migrate() must not touch the DOM — not at load
    time and not when called. CI exercises them headlessly to prove that
    normalize() is idempotent and that a fresh state round-trips unchanged.
@@ -129,6 +135,10 @@
   // ---- Data ----------------------------------------------------------------
   function emptyState() {
     return {
+      /* Standard or expert level. Only the display follows this: switching back
+         to standard HIDES the remaining hit points, it does not clear them, so
+         a sheet toggled by accident loses nothing. */
+      expert: false,
       /* A fresh sheet starts with a single player; more are added as needed. */
       players: [{ hero: "", hp: null }],
       scenarios: SCENARIOS.map(function (s) {
@@ -145,6 +155,8 @@
   function normalize(raw) {
     raw = (raw && typeof raw === "object") ? raw : {};
     var out = emptyState();
+
+    out.expert = W.coerceBool(raw.expert);
 
     /* One to four, whatever arrived: a sheet with nobody on it has no meaning,
        and more than four is not a thing the game does. */
@@ -195,7 +207,12 @@
      entries, most of them empty on a solo or two-player game; version 2 holds
      only the players that exist. Trailing empties are dropped — one always
      remains — while an empty card between two filled ones is kept, so the
-     numbering of the players who ARE on the sheet does not shift under them. */
+     numbering of the players who ARE on the sheet does not shift under them.
+
+     2 -> 3 adds the `expert` flag. Defaulting it to false would be wrong for
+     a sheet already in use: the hit points are only ever asked for at expert
+     level, so a sheet that records them was an expert game, and reading it as
+     standard would hide numbers the owner had entered. */
   function migrate(raw, fromVersion) {
     raw = (raw && typeof raw === "object") ? raw : {};
     if (fromVersion < 2 && Array.isArray(raw.players)) {
@@ -207,6 +224,12 @@
         if (filled) lastUsed = i;
       });
       raw.players = players.slice(0, Math.max(1, lastUsed + 1));
+    }
+    if (fromVersion < 3 && Array.isArray(raw.players)) {
+      var recorded = raw.players.some(function (p) {
+        return p && typeof p === "object" && p.hp != null;
+      });
+      if (recorded) raw.expert = true;
     }
     return raw;
   }
@@ -257,7 +280,30 @@
       ctx.rerender();
     });
 
-    var section = panel("players", t("secPlayers"), addBtn);
+    /* The expert switch sits here rather than with the campaign flags below:
+       the field it governs is in these cards, so the cause is next to what it
+       reveals — and the MC10 sheet puts it in the same place. A re-render,
+       because a field appears and disappears. */
+    var expertFlag = W.el("label", "flag");
+    var expertText = W.el("span");
+    expertText.textContent = t("lblExpert");
+    expertFlag.appendChild(expertText);
+    expertFlag.appendChild(W.checkbox({
+      checked: state.expert,
+      label: t("lblExpert"),
+      onChange: function (next) {
+        state.expert = next;
+        ctx.save();
+        ctx.rerender();
+      },
+    }));
+    expertFlag.title = t("expertHint");
+
+    var actions = W.el("div", "panel-actions");
+    actions.appendChild(expertFlag);
+    actions.appendChild(addBtn);
+
+    var section = panel("players", t("secPlayers"), actions);
     /* Drives the column count in styles.css, so the layout follows how many
        players there are instead of how much room happens to be left. */
     var grid = W.el("div", "player-grid", { "data-players": String(state.players.length) });
@@ -321,24 +367,30 @@
       idText.appendChild(heroInput);
       card.appendChild(idRow);
 
-      var hpRow = W.el("div", "player-field");
-      var hpText = W.el("label", "field-label");
-      hpText.textContent = t("colHp");
-      var hpField = W.numberField({
-        value: player.hp,
-        min: 0, max: HP_MAX,
-        label: caption + " – " + t("colHp"),
-        hint: startingHealth(player.hero, lang),
-        onChange: function (next) { player.hp = next; ctx.save(); },
-      });
-      hpText.appendChild(hpField);
-      hpRow.appendChild(hpText);
-      card.appendChild(hpRow);
+      /* Expert only: the remaining hit points are what a scenario hands to the
+         next one, and the standard campaign does not carry them over. */
+      var hpField = null;
+      if (state.expert) {
+        var hpRow = W.el("div", "player-field");
+        var hpText = W.el("label", "field-label");
+        hpText.textContent = t("colHp");
+        hpField = W.numberField({
+          value: player.hp,
+          min: 0, max: HP_MAX,
+          label: caption + " – " + t("colHp"),
+          hint: startingHealth(player.hero, lang),
+          onChange: function (next) { player.hp = next; ctx.save(); },
+        });
+        hpText.appendChild(hpField);
+        hpRow.appendChild(hpText);
+        card.appendChild(hpRow);
+      }
 
       /* The hero's printed starting hit points, as a reminder of what full
          health was. Rewritten in place rather than by re-rendering the panel,
          which would take the focus out of the field being typed in. */
       function updateHpHint() {
+        if (!hpField) return;               // standard level: no such field
         var hint = hpField.querySelector(".num-hint");
         var h = startingHealth(player.hero, lang);
         hint.textContent = h ? "/ " + h : "";
@@ -611,12 +663,19 @@
     var t = ctx.t, lang = ctx.lang, state = ctx.state;
 
     var players = printSection(root, t("secPlayers"));
+    /* First, because it decides whether the hit points below mean anything. */
+    var level = W.el("p", "print-line");
+    level.textContent = (state.expert ? "[x] " : "[ ] ") + t("lblExpert");
+    players.appendChild(level);
     state.players.forEach(function (p, i) {
       if (!p.hero && p.hp == null) return;
       var line = W.el("p", "print-line");
-      line.textContent = t("playerRow", String(i + 1)) + ": " +
-        (p.hero || "—") + " · " + t("colHp") + ": " +
-        (p.hp == null ? "—" : String(p.hp));
+      /* The hidden field stays out of the printout too, so a standard sheet
+         does not print a number it is not playing with. */
+      line.textContent = t("playerRow", String(i + 1)) + ": " + (p.hero || "—") +
+        (state.expert
+          ? " · " + t("colHp") + ": " + (p.hp == null ? "—" : String(p.hp))
+          : "");
       players.appendChild(line);
     });
 
@@ -676,8 +735,10 @@
     /* No official German title: MC60 has not been released in German. */
     titleDe: "Fear No Evil",
     theme: "fne",
-    /* 2: players went from four fixed places to a list of one to four. */
-    stateVersion: 2,
+    /* 2: players went from four fixed places to a list of one to four.
+       3: standard or expert level, which decides whether the remaining hit
+          points are asked for at all. */
+    stateVersion: 3,
     scenarioCount: SCENARIOS.length,
 
     emptyState: emptyState,
@@ -686,8 +747,8 @@
     render: render,
     renderPrint: renderPrint,
 
-    helpDe: "Spieler werden einzeln hinzugefügt — von einem bis vier —, der Bogen zeigt also nur die, die wirklich mitspielen. Jede Runde werden zwei Szenarien gezogen, die weder abgeschlossen noch gescheitert sind; beide erhalten einen Fortschrittspunkt. „Nächste Runde“ macht genau das mit einem Klick und nennt anschließend die gezogenen Szenarien; ist nur noch eines im Spiel, bekommt es beide Punkte. Der dritte Punkt bedeutet: Das Szenario ist gescheitert. Deshalb sind „1“, „2“ und „Gescheitert“ ein Zähler und keine drei einzelnen Kästchen — ein Klick auf das jeweils oberste gefüllte Kästchen nimmt einen Punkt zurück. „Abgeschlossen“ und „Gescheitert“ schließen sich aus: Ein abgeschlossenes Szenario friert seinen Fortschritt ein, ein gescheitertes sperrt den Abgeschlossen-Haken — die gesetzten Haken bleiben dabei sichtbar. Jeder der fünf Schurken wird genau einem Szenario zugeordnet; ein gewählter Schurke verschwindet aus den übrigen Zeilen und wird in der Schurkenliste durchgestrichen. Der Würfel neben einem leeren Schurken-Feld lost einen der noch freien Schurken aus.",
-    helpEn: "Players are added one at a time, from one to four, so the sheet only shows the ones actually playing. Each round two scenarios that are neither completed nor failed are drawn, and both take one progress point. “Next round” does exactly that in one click and then names the scenarios it drew; if only one is still in play it takes both points. The third point means the scenario has failed. So “1”, “2” and “Failed” are one counter rather than three separate boxes — clicking the topmost filled box takes a point back. “Completed” and “Failed” are mutually exclusive: a completed scenario freezes its progress and a failed one locks the Completed box, with the existing marks left visible either way. Each of the five villains is assigned to exactly one scenario; a chosen villain disappears from the other rows and is struck through in the villain list. The die next to an empty villain field rolls one of the villains still free.",
+    helpDe: "Spieler werden einzeln hinzugefügt — von einem bis vier —, der Bogen zeigt also nur die, die wirklich mitspielen. Der Haken „Expertenmodus“ oben im Spielerbereich entscheidet über die verbleibenden Trefferpunkte: die gibt es nur auf Expertenstufe, auf Standardstufe blendet der Bogen das Feld aus, statt danach zu fragen. Ausblenden heißt nicht löschen — wer versehentlich umschaltet, verliert nichts. Jede Runde werden zwei Szenarien gezogen, die weder abgeschlossen noch gescheitert sind; beide erhalten einen Fortschrittspunkt. „Nächste Runde“ macht genau das mit einem Klick und nennt anschließend die gezogenen Szenarien; ist nur noch eines im Spiel, bekommt es beide Punkte. Der dritte Punkt bedeutet: Das Szenario ist gescheitert. Deshalb sind „1“, „2“ und „Gescheitert“ ein Zähler und keine drei einzelnen Kästchen — ein Klick auf das jeweils oberste gefüllte Kästchen nimmt einen Punkt zurück. „Abgeschlossen“ und „Gescheitert“ schließen sich aus: Ein abgeschlossenes Szenario friert seinen Fortschritt ein, ein gescheitertes sperrt den Abgeschlossen-Haken — die gesetzten Haken bleiben dabei sichtbar. Jeder der fünf Schurken wird genau einem Szenario zugeordnet; ein gewählter Schurke verschwindet aus den übrigen Zeilen und wird in der Schurkenliste durchgestrichen. Der Würfel neben einem leeren Schurken-Feld lost einen der noch freien Schurken aus.",
+    helpEn: "Players are added one at a time, from one to four, so the sheet only shows the ones actually playing. The “Expert level” box at the top of the player area decides about the remaining hit points: they exist only at expert level, and at standard level the sheet hides the field rather than asking for it. Hiding is not clearing — switching by accident loses nothing. Each round two scenarios that are neither completed nor failed are drawn, and both take one progress point. “Next round” does exactly that in one click and then names the scenarios it drew; if only one is still in play it takes both points. The third point means the scenario has failed. So “1”, “2” and “Failed” are one counter rather than three separate boxes — clicking the topmost filled box takes a point back. “Completed” and “Failed” are mutually exclusive: a completed scenario freezes its progress and a failed one locks the Completed box, with the existing marks left visible either way. Each of the five villains is assigned to exactly one scenario; a chosen villain disappears from the other rows and is struck through in the villain list. The die next to an empty villain field rolls one of the villains still free.",
 
     i18n: {
       de: {
@@ -702,6 +763,8 @@
         colIdentity: "Identität",
         colHp: "Verbleibende Trefferpunkte",
         identityPlaceholder: "Held …",
+        lblExpert: "Expertenmodus",
+        expertHint: "Nur auf Expertenstufe werden verbleibende Trefferpunkte festgehalten. Ausschalten blendet sie aus, löscht sie aber nicht.",
         addPlayer: "+ Spieler",
         addPlayerFull: "Mehr als vier Spieler kennt das Spiel nicht.",
         removePlayer: "Spieler entfernen",
@@ -749,6 +812,8 @@
         colIdentity: "Identity",
         colHp: "Remaining hit points",
         identityPlaceholder: "Hero …",
+        lblExpert: "Expert level",
+        expertHint: "Remaining hit points are only recorded at expert level. Switching this off hides them without clearing them.",
         addPlayer: "+ Player",
         addPlayerFull: "The game does not go beyond four players.",
         removePlayer: "Remove player",

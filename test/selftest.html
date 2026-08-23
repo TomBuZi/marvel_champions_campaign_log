@@ -77,6 +77,19 @@
           log("log title auto-named", log0 && log0.title === "Fear No Evil", log0 && log0.title);
           log("state has 5 scenarios", log0 && log0.state.scenarios.length === 5);
 
+          /* Standard level is the default, and it has no hit-point field. The
+             rest of this case is about that field, so switch to expert first —
+             the hint lives inside it. */
+          log("a fresh sheet starts at standard level",
+            log0 && log0.state.expert === false, log0 && log0.state.expert);
+          log("standard level shows no hit points",
+            !d.querySelector(".player-card .num-input"));
+          var expertBox = d.querySelector("[data-section=players] .panel-head .flag .sheet-check");
+          expertBox.checked = true;
+          fire(expertBox, "change");
+          log("expert level reveals the hit points",
+            !!d.querySelector(".player-card .num-input"));
+
           // Type a hero, check the starting-hit-points hint appears.
           var hero = d.querySelectorAll(".player-card .text-input")[0];
           hero.value = "She-Hulk";
@@ -165,7 +178,10 @@
           log("add enabled again once filled", !d.querySelector(".entry-add").disabled);
 
           // Flags.
-          var flagBoxes = d.querySelectorAll(".flag .sheet-check");
+          /* Scoped to the campaign-state panel: the expert switch in the
+             player panel head is a .flag too, and it comes first in the
+             document. */
+          var flagBoxes = d.querySelectorAll("[data-section=flags] .flag .sheet-check");
           flagBoxes[1].checked = true;
           fire(flagBoxes[1], "change");
 
@@ -199,7 +215,11 @@
           return base;
         };
         var future = mk({ id: "aaa", title: "Future schema", schemaVersion: 99 });
-        var unknown = mk({ id: "bbb", title: "Unknown campaign", campaignId: "rise-of-red-skull" });
+        /* A campaign that will never exist — "mutant-genesis", same id as in
+           caseImport. This once named a real campaign that had not shipped
+           yet; the day it shipped it became known, and this case silently
+           stopped testing quarantine at all. Keep the id fictional. */
+        var unknown = mk({ id: "bbb", title: "Unknown campaign", campaignId: "mutant-genesis" });
         var newerSheet = mk({ id: "ccc", title: "Newer sheet", stateVersion: 42 });
         var before = { aaa: JSON.stringify(future), bbb: JSON.stringify(unknown), ccc: JSON.stringify(newerSheet) };
         seed({ aaa: future, bbb: unknown, ccc: newerSheet }, "aaa");
@@ -215,13 +235,13 @@
           log("picker marks quarantined logs",
             (d.getElementById("log-select").textContent.match(/⚠/g) || []).length === 3);
           log("unknown campaign gets its own optgroup",
-            /rise-of-red-skull/.test(d.getElementById("log-select").innerHTML));
+            /mutant-genesis/.test(d.getElementById("log-select").innerHTML));
 
           var sel = d.getElementById("log-select");
           sel.value = "bbb";
           fire(sel, "change");
           log("unknown-campaign notice names the campaign",
-            /rise-of-red-skull/.test(d.getElementById("notice").textContent),
+            /mutant-genesis/.test(d.getElementById("notice").textContent),
             d.getElementById("notice").textContent.slice(0, 70));
           sel.value = "ccc";
           fire(sel, "change");
@@ -447,7 +467,10 @@
           entry.value = "~Foggy Nelson";
           fire(entry, "input");
           fire(entry, "blur");
-          var flagBoxes = d.querySelectorAll(".flag .sheet-check");
+          /* Scoped to the campaign-state panel: the expert switch in the
+             player panel head is a .flag too, and it comes first in the
+             document. */
+          var flagBoxes = d.querySelectorAll("[data-section=flags] .flag .sheet-check");
           flagBoxes[0].checked = true;
           fire(flagBoxes[0], "change");
 
@@ -456,6 +479,12 @@
           var text = pv.textContent;
           log("print view built", pv.children.length > 0, pv.children.length);
           log("print names the campaign", /Fear No Evil \(MC60\)/.test(text));
+          log("print says which level was played",
+            /\[ \] Expertenmodus/.test(text), text.slice(0, 130));
+          /* Standard level, so the hit points are not on the sheet and must
+             not be on the printout either. */
+          log("print omits the hit points at standard level",
+            !/Verbleibende Trefferpunkte/.test(text));
           log("print carries the hero", /Daredevil/.test(text));
           log("print marks the villain", /Typhoid Mary/.test(text));
           log("print shows the failed scenario", /Gescheitert/.test(text));
@@ -482,12 +511,18 @@
         f.onload = function () { setTimeout(start, 120); };
         document.body.appendChild(f);
 
-        /* FileReader is asynchronous, so wait for the store to actually change
-           instead of guessing a delay — a fixed sleep made assertions read the
-           state from before the import. */
-        function drop(obj, then) {
+        /* FileReader is asynchronous, so wait for the store instead of guessing
+           a delay — a fixed sleep made assertions read the state from before
+           the import.
+
+           `ready(store)` has to name what THIS drop is waiting for. Waiting for
+           "the store changed at all" is not enough: saving is debounced by
+           350ms, so a write left over from the previous step can land inside
+           the window, and the callback then runs before the file has even been
+           parsed. That made CI fail intermittently on a later assertion, which
+           is a miserable place to learn about it. */
+        function drop(obj, ready, then) {
           var w = f.contentWindow, d = f.contentDocument;
-          var before = localStorage.getItem("mcclog:logs");
           var file = new w.File([JSON.stringify(obj, null, 2)], "log.json", { type: "application/json" });
           var dt = new w.DataTransfer();
           dt.items.add(file);
@@ -496,7 +531,16 @@
           input.dispatchEvent(new w.Event("change", { bubbles: true }));
           var waited = 0;
           (function poll() {
-            if (localStorage.getItem("mcclog:logs") !== before || waited > 3000) return then();
+            var store;
+            try { store = JSON.parse(localStorage.getItem("mcclog:logs") || "{}"); }
+            catch (e) { store = {}; }
+            if (ready(store)) return then();
+            if (waited > 3000) {
+              /* Fail here rather than letting the next assertion report
+                 something confusing: not settling is its own bug. */
+              log("import settled within 3s", false, Object.keys(store).join(","));
+              return then();
+            }
             waited += 25;
             setTimeout(poll, 25);
           })();
@@ -524,7 +568,8 @@
           var startingIds = Object.keys(JSON.parse(localStorage.getItem("mcclog:logs")));
 
           // 1) A brand-new log is added alongside the one that already exists.
-          drop(mk("imp-1", "Aus der Datei"), function () {
+          drop(mk("imp-1", "Aus der Datei"),
+            function (s) { return !!s["imp-1"]; }, function () {
             var store = JSON.parse(localStorage.getItem("mcclog:logs"));
             log("new log imported", !!store["imp-1"], Object.keys(store).join(","));
             log("existing log untouched", !!store[startingIds[0]]);
@@ -535,8 +580,14 @@
               localStorage.getItem("mcclog:activeId") === "imp-1");
 
             // 2) Same GUID -> updates in place rather than duplicating.
+            /* Same id, so the id being present says nothing — wait for the
+               content that only this import brings. */
             drop(mk("imp-1", "Aus der Datei", { state: {
               players: [{ hero: "Daredevil", hp: 9 }], scenarios: [], removed: [], flags: {} } }),
+              function (s) {
+                return !!s["imp-1"] && s["imp-1"].state.players[0] &&
+                  s["imp-1"].state.players[0].hero === "Daredevil";
+              },
               function () {
                 var s2 = JSON.parse(localStorage.getItem("mcclog:logs"));
                 log("same GUID updates in place", Object.keys(s2).length === 2, Object.keys(s2).length);
@@ -545,7 +596,8 @@
                   s2["imp-1"].state.players[0].hero);
 
                 // 3) Same title, different GUID, confirmed -> replaces it.
-                drop(mk("imp-2", "Aus der Datei"), function () {
+                drop(mk("imp-2", "Aus der Datei"),
+                  function (s) { return !!s["imp-2"] && !s["imp-1"]; }, function () {
                   var s3 = JSON.parse(localStorage.getItem("mcclog:logs"));
                   log("same title accepted replaces the old log",
                     !s3["imp-1"] && !!s3["imp-2"] && Object.keys(s3).length === 2,
@@ -553,7 +605,8 @@
 
                   // 4) Same title, declined -> kept side by side.
                   answer = false;
-                  drop(mk("imp-3", "Aus der Datei"), function () {
+                  drop(mk("imp-3", "Aus der Datei"),
+                    function (s) { return !!s["imp-3"]; }, function () {
                     var s4 = JSON.parse(localStorage.getItem("mcclog:logs"));
                     log("same title declined keeps both",
                       !!s4["imp-2"] && !!s4["imp-3"], Object.keys(s4).join(","));
@@ -563,7 +616,7 @@
                     var alien = mk("imp-4", "Fremde Kampagne", { campaignId: "mutant-genesis" });
                     alien.somethingWeDoNotKnow = 7;
                     var alienJson = JSON.stringify(alien);
-                    drop(alien, function () {
+                    drop(alien, function (s) { return !!s["imp-4"]; }, function () {
                       var s5 = JSON.parse(localStorage.getItem("mcclog:logs"));
                       log("unknown-campaign import kept", !!s5["imp-4"]);
                       log("unknown-campaign blob byte-identical",
@@ -973,6 +1026,12 @@
             });
           }
 
+          /* This case checks the hit-point hint at the end, and that field only
+             exists at expert level. */
+          var expertBox = d.querySelector("[data-section=players] .panel-head .flag .sheet-check");
+          expertBox.checked = true;
+          fire(expertBox, "change");
+
           log("a fresh sheet starts with one player", cards().length === 1, cards().length);
           log("the add button is offered", !!addBtn() && !addBtn().disabled);
           log("the only player cannot be removed", removeBtn(0).disabled);
@@ -1043,7 +1102,58 @@
         });
       }
 
-      // ------------------------------------------------------- migrate v1 -> v2
+      // ------------------------------------------------------------ expert level
+      /* Standard hides the remaining hit points; switching back has to hide
+         them without throwing them away. */
+      function caseExpert() {
+        var sheet = {
+          schemaVersion: 1, id: "exp-1", campaignId: "fear-no-evil", stateVersion: 3,
+          title: "Standardstufe", createdAt: "2026-04-01T00:00:00.000Z",
+          updatedAt: "2026-04-02T00:00:00.000Z",
+          state: {
+            expert: false,
+            /* Filled in but not visible — exactly the state that would lose
+               data if hiding were clearing. */
+            players: [{ hero: "Daredevil", hp: 6 }],
+            scenarios: [], removed: [],
+            flags: { trustEstablished: false, maryDefeated: false },
+          },
+        };
+        seed({ "exp-1": sheet }, "exp-1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          function card() { return d.querySelector(".player-card"); }
+          function toggle() { return d.querySelector("[data-section=players] .panel-head .flag .sheet-check"); }
+
+          log("the switch is in the player panel head", !!toggle());
+          log("it starts unticked", toggle().checked === false);
+          log("standard hides the hit points", !card().querySelector(".num-input"));
+          log("the identity field is not hidden", !!card().querySelector(".text-input"));
+          log("the scenario table is not hidden", !!d.querySelector(".sheet-table"));
+
+          toggle().checked = true;
+          fire(toggle(), "change");
+          log("expert reveals the hit points", !!card().querySelector(".num-input"));
+          log("and the value was still there",
+            card().querySelector(".num-input").value === "6",
+            card().querySelector(".num-input").value);
+
+          toggle().checked = false;
+          fire(toggle(), "change");
+          log("switching back hides it again", !card().querySelector(".num-input"));
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs"))["exp-1"].state;
+            log("the sheet is back at standard", st.expert === false);
+            log("but the hidden hit points survived", st.players[0].hp === 6,
+              st.players[0].hp);
+            finish();
+          }, 500);
+        });
+      }
+
+      // ------------------------------------------------------- migrate v1 -> v3
       /* Version 1 sheets always carried four player entries. Opening one now has
          to leave only the players who were actually on it, without losing them
          and without renumbering the ones that stay. */
@@ -1065,19 +1175,28 @@
         seed({ "old-1": v1 }, "old-1");
         boot("", function (frame, w, d) {
           f0 = w;
-          var cards = d.querySelectorAll(".player-card");
+          /* A function, because an edit can re-render the cards. */
+          function cards() { return d.querySelectorAll(".player-card"); }
           log("the old sheet opens without a notice", d.getElementById("notice").hidden);
-          log("only the two real players are shown", cards.length === 2, cards.length);
+          log("only the two real players are shown", cards().length === 2, cards().length);
           log("their heroes survived",
-            cards[0].querySelector(".text-input").value === "Daredevil" &&
-            cards[1].querySelector(".text-input").value === "Echo");
-          log("their hit points survived",
-            cards[0].querySelector(".num-input").value === "8" &&
-            cards[1].querySelector(".num-input").value === "11");
+            cards()[0].querySelector(".text-input").value === "Daredevil" &&
+            cards()[1].querySelector(".text-input").value === "Echo");
           log("the rest of the sheet came along",
             d.querySelectorAll("tbody tr").length === 5 &&
             d.querySelector(".entry-input").value === "Karen Page");
           log("the add button is available again", !d.querySelector(".btn-add").disabled);
+          /* A version 1 sheet never carried the level, but it did carry hit
+             points — and those are only ever kept at expert level, so the
+             migration reads it as an expert game rather than hiding numbers
+             its owner had entered. */
+          log("an old sheet with hit points opens at expert level",
+            !!d.querySelector(".player-card .num-input"));
+          log("their hit points survived the migration",
+            cards()[0].querySelector(".num-input").value === "8" &&
+            cards()[1].querySelector(".num-input").value === "11",
+            cards()[0].querySelector(".num-input").value + "/" +
+            cards()[1].querySelector(".num-input").value);
 
           /* Migration happens on read; the stored blob is only rewritten by the
              next actual edit. A visit that changes nothing therefore leaves it
@@ -1089,8 +1208,9 @@
           log("and leaves its four stored entries alone",
             onLoad.state.players.length === 4, onLoad.state.players.length);
 
-          // The first edit writes it out in the current shape.
-          var hp = cards[0].querySelector(".num-input");
+          /* Editing a hit point is the first real edit, so it is what carries
+             the stored sheet up to the current version. */
+          var hp = cards()[0].querySelector(".num-input");
           hp.value = "6";
           fire(hp, "input");
           fire(hp, "blur");
@@ -1098,7 +1218,7 @@
           setTimeout(function () {
             var stored = JSON.parse(localStorage.getItem("mcclog:logs"))["old-1"];
             log("an edit carries the stored sheet up to the current version",
-              stored.stateVersion === 2, stored.stateVersion);
+              stored.stateVersion === 3, stored.stateVersion);
             log("and stores two players, not four",
               stored.state.players.length === 2, JSON.stringify(stored.state.players));
             log("the edit itself landed", stored.state.players[0].hp === 6, stored.state.players[0].hp);
@@ -1282,7 +1402,431 @@
         });
       }
 
-      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict };
+      /* The MC10 sheet groups its fields into panels rather than a table, so
+         the cases below address them through their section names. */
+      var SEC1_BOX = "[data-section=scenario-1] .flag .sheet-check";
+      var SEC2_NUM = "[data-section=scenario-2] .num-input";
+      var SEC4_BOX = "[data-section=scenario-4] .flag .sheet-check";
+
+      // -------------------------------------------- The Rise of Red Skull
+      /* The chooser dialog only exists once a second campaign is registered, so
+         until now nothing exercised it at all. */
+      function caseRrsDialog() {
+        localStorage.clear();
+        pinLang("de");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var store = function () { return JSON.parse(localStorage.getItem("mcclog:logs")); };
+          var ids = Object.keys(store());
+          log("a fresh visit still opens Fear No Evil",
+            ids.length === 1 && store()[ids[0]].campaignId === "fear-no-evil",
+            JSON.stringify(ids.map(function (k) { return store()[k].campaignId; })));
+
+          var dlg = d.getElementById("campaign-dialog");
+          log("dialog starts closed", !dlg.open);
+          d.getElementById("btn-new").click();
+          log("a second campaign makes the dialog appear", dlg.open);
+
+          var choices = d.getElementById("campaign-choices");
+          var radios = choices.querySelectorAll("input[type=radio]");
+          log("one choice per campaign", radios.length === 2, radios.length);
+          log("Fear No Evil stays preselected",
+            radios[0].checked && radios[0].value === "fear-no-evil", radios[0].value);
+          log("the dialog names MC10",
+            /The Rise of Red Skull \(MC10\)/.test(choices.textContent));
+          log("the dialog names the scenario count", /5 Szenarien/.test(choices.textContent));
+
+          d.getElementById("btn-campaign-cancel").click();
+          log("cancel closes the dialog", !dlg.open);
+          log("cancel creates nothing", Object.keys(store()).length === 1);
+
+          /* Second pass: pick MC10. The dialog rebuilds its choices every time,
+             so the nodes have to be looked up again. */
+          d.getElementById("btn-new").click();
+          var again = d.getElementById("campaign-choices").querySelectorAll("input[type=radio]");
+          again[1].checked = true;
+          fire(again[1], "change");
+          log("picking a campaign renames the log",
+            d.getElementById("new-log-title").value === "The Rise of Red Skull",
+            d.getElementById("new-log-title").value);
+          fire(d.getElementById("campaign-form"), "submit");
+
+          log("the chosen campaign is the one created", Object.keys(store()).length === 2,
+            Object.keys(store()).length);
+          var active = store()[localStorage.getItem("mcclog:activeId")];
+          log("the active log is the MC10 one", active.campaignId === "rise-of-red-skull",
+            active.campaignId);
+          log("the skin hook follows the campaign",
+            d.documentElement.getAttribute("data-campaign") === "trors",
+            d.documentElement.getAttribute("data-campaign"));
+          log("the subtitle names MC10",
+            /\(MC10\)/.test(d.getElementById("subtitle").textContent),
+            d.getElementById("subtitle").textContent);
+          log("the picker groups by campaign",
+            d.getElementById("log-select").querySelectorAll("optgroup").length === 2);
+          log("this sheet has no scenario table", !d.querySelector(".sheet-table"));
+          log("a fresh sheet starts at standard level",
+            active.state.expert === false, active.state.expert);
+          log("standard level shows no hit points",
+            !d.querySelector(".player-card .num-input"));
+          finish();
+        });
+      }
+
+      /* Every field of the MC10 sheet, set through the real controls and then
+         read back out of storage. */
+      function caseRrs() {
+        seed({ rrs1: rrsLog() }, "rrs1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var card = d.querySelectorAll(".player-card")[0];
+
+          var hero = card.querySelector(".text-input");
+          log("identity is the only free-text field on the card",
+            card.querySelectorAll(".text-input").length === 1,
+            card.querySelectorAll(".text-input").length);
+          hero.value = "Captain America";
+          fire(hero, "input");
+          log("the hit point hint follows the hero",
+            /11/.test(card.querySelector(".num-hint").textContent),
+            card.querySelector(".num-hint").textContent);
+
+          var hp = card.querySelector(".num-input");
+          hp.value = "9";
+          fire(hp, "input");
+          fire(hp, "blur");
+
+          /* Obligations first, rescued allies second — the order they are
+             rendered in on the card. */
+          var rows = card.querySelectorAll(".flag-row");
+          log("two card sets per player, four boxes each",
+            rows.length === 2 && rows[0].querySelectorAll(".sheet-check").length === 4 &&
+            rows[1].querySelectorAll(".sheet-check").length === 4, rows.length);
+          log("the boxes carry the printed card names",
+            /Zolas Algorithmus/.test(rows[0].textContent) &&
+            /Kriegsrecht/.test(rows[0].textContent), rows[0].textContent);
+          /* A card with no German name of its own shows the English one, and
+             only then may it be tagged lang="en" — tagging a German string as
+             English misleads hyphenation and screen readers. The obligations
+             are translated, the allies keep their English names by decision,
+             so this pins both directions at once. */
+          function langMatchesName(row, english) {
+            return Array.prototype.every.call(row.querySelectorAll(".flag > span"),
+              function (span, n) {
+                return (span.textContent === english[n]) ===
+                  (span.getAttribute("lang") === "en");
+              });
+          }
+          log("translated names are not tagged as English",
+            langMatchesName(rows[0], ["Zola's Algorithm", "Medical Emergency",
+                                      "Martial Law", "Anti-Hero Propaganda"]));
+          log("names left in English are tagged as English",
+            langMatchesName(rows[1], ["Elektra", "Moon Knight: Marc Spector",
+                                      "Shang-Chi", "White Tiger: Angela Del Toro"]));
+          log("the ally boxes carry their printed names",
+            /Moon Knight: Marc Spector/.test(rows[1].textContent) &&
+            /White Tiger: Angela Del Toro/.test(rows[1].textContent), rows[1].textContent);
+          tick(rows[0].querySelectorAll(".sheet-check")[2]);   // Martial Law
+          tick(rows[1].querySelectorAll(".sheet-check")[0]);   // Elektra
+          tick(rows[1].querySelectorAll(".sheet-check")[3]);   // White Tiger
+
+          var pools = card.querySelectorAll(".pool-select");
+          log("one dropdown each for the two upgrades", pools.length === 2, pools.length);
+          log("the tech pool lists all four cards plus the placeholder",
+            pools[0].options.length === 5, pools[0].options.length);
+          pools[0].value = "laser-cannon";
+          fire(pools[0], "change");
+          pools[1].value = "basic-attack";
+          fire(pools[1], "change");
+
+          var weapons = d.querySelectorAll(SEC1_BOX);
+          log("four experimental weapons to record", weapons.length === 4, weapons.length);
+          log("scenario 1 names the weapons, not a count",
+            /Lasergewehr/.test(d.querySelector("[data-section=scenario-1]").textContent));
+          tick(weapons[0]);   // Laser Rifle
+          tick(weapons[3]);   // Exo-Suit
+
+          var delay = d.querySelector(SEC2_NUM);
+          delay.value = "120";
+          fire(delay, "input");
+          fire(delay, "blur");
+          log("the delay counter clamps to the sheet's range", delay.value === "99", delay.value);
+
+          var engaged = d.querySelectorAll(SEC4_BOX);
+          log("one engaged box per player", engaged.length === 1, engaged.length);
+          log("the engaged box names the hero",
+            /Captain America/.test(d.querySelector("[data-player-name]").textContent),
+            d.querySelector("[data-player-name]").textContent);
+          tick(engaged[0]);
+
+          addEntry(d, "trors-removed", "Nick Fury");
+
+          log("this sheet has no notes field", !d.querySelector(".notes-input"));
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).rrs1.state;
+            var p0 = st.players[0];
+            log("hero and hit points stored", p0.hero === "Captain America" && p0.hp === 9,
+              JSON.stringify([p0.hero, p0.hp]));
+            log("the obligation stored as a slug",
+              JSON.stringify(p0.obligations) === JSON.stringify(["martial-law"]),
+              JSON.stringify(p0.obligations));
+            log("both upgrades stored as slugs",
+              p0.techUpgrade === "laser-cannon" && p0.basicUpgrade === "basic-attack",
+              JSON.stringify([p0.techUpgrade, p0.basicUpgrade]));
+            /* Ticked in the order Elektra, White Tiger — and Elektra comes
+               first in the pool, so the stored order matches either way. */
+            log("both rescued allies stored, in pool order",
+              JSON.stringify(p0.rescuedAllies) === JSON.stringify(["elektra", "white-tiger"]),
+              JSON.stringify(p0.rescuedAllies));
+            log("the engaged flag stored", p0.engagedWithMinion === true);
+            log("the recorded weapons stored in pool order",
+              JSON.stringify(st.experimentalWeapons) ===
+                JSON.stringify(["laser-rifle", "exo-suit"]),
+              JSON.stringify(st.experimentalWeapons));
+            log("the delay counter stored", st.delayCounters === 99, st.delayCounters);
+            log("the removed list stored",
+              JSON.stringify(st.removed) === JSON.stringify(["Nick Fury"]),
+              JSON.stringify(st.removed));
+            log("no notes key reached storage", st.notes === undefined);
+            finish();
+          }, 500);
+        });
+      }
+
+      /* The three different pool rules on one sheet. This is the case that
+         would catch an upgrade handed to two players, or an ally that stops
+         being exclusive. */
+      function caseRrsPools() {
+        var seeded = rrsLog();
+        seeded.state.players = [
+          rrsPlayer("Captain America", 11),
+          rrsPlayer("Black Widow", 9),
+        ];
+        seed({ rrs1: seeded }, "rrs1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          w.confirm = function () { return true; };
+          var cards = function () { return d.querySelectorAll(".player-card"); };
+          var techOf = function (i) { return cards()[i].querySelectorAll(".pool-select")[0]; };
+          var obligOf = function (i) { return cards()[i].querySelectorAll(".flag-row")[0]; };
+          var alliesOf = function (i) { return cards()[i].querySelectorAll(".flag-row")[1]; };
+          var optOf = function (sel, value) {
+            return Array.prototype.filter.call(sel.options, function (o) {
+              return o.value === value;
+            })[0];
+          };
+
+          /* --- Upgrades: one card, one player. --- */
+          log("nothing is locked to begin with", !optOf(techOf(1), "laser-cannon").disabled);
+          techOf(0).value = "laser-cannon";
+          fire(techOf(0), "change");
+          log("a chosen upgrade is disabled for the other player",
+            optOf(techOf(1), "laser-cannon").disabled === true);
+          log("but stays selectable for its own holder",
+            optOf(techOf(0), "laser-cannon").disabled === false);
+          techOf(0).value = "";
+          fire(techOf(0), "change");
+          log("clearing it hands it back", optOf(techOf(1), "laser-cannon").disabled === false);
+          techOf(0).value = "laser-cannon";
+          fire(techOf(0), "change");
+
+          /* --- Obligations: everyone has their own set. --- */
+          tick(obligOf(0).querySelectorAll(".sheet-check")[2]);
+          log("an obligation of one player locks nothing for the other",
+            obligOf(1).querySelectorAll(".sheet-check")[2].disabled === false);
+          tick(obligOf(1).querySelectorAll(".sheet-check")[2]);
+
+          /* --- Allies: one holder each, several per holder. --- */
+          tick(alliesOf(0).querySelectorAll(".sheet-check")[0]);   // Elektra
+          tick(alliesOf(0).querySelectorAll(".sheet-check")[2]);   // Shang-Chi
+          var elektraOfP2 = alliesOf(1).querySelectorAll(".sheet-check")[0];
+          log("an ally taken by one player locks for the other",
+            elektraOfP2.disabled === true);
+          log("the lock says who has it",
+            /Black Widow|Captain America/.test(elektraOfP2.title), elektraOfP2.title);
+          log("an untaken ally stays free for the other player",
+            alliesOf(1).querySelectorAll(".sheet-check")[1].disabled === false);
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).rrs1.state;
+            log("the upgrade sits on exactly one player",
+              st.players[0].techUpgrade === "laser-cannon" && st.players[1].techUpgrade === "",
+              JSON.stringify([st.players[0].techUpgrade, st.players[1].techUpgrade]));
+            log("both players hold the same obligation",
+              st.players[0].obligations[0] === "martial-law" &&
+              st.players[1].obligations[0] === "martial-law",
+              JSON.stringify([st.players[0].obligations, st.players[1].obligations]));
+            log("one player holds two allies, the other none",
+              st.players[0].rescuedAllies.length === 2 &&
+              st.players[1].rescuedAllies.length === 0,
+              JSON.stringify([st.players[0].rescuedAllies, st.players[1].rescuedAllies]));
+
+            /* Removing the holder has to give the whole pool back. */
+            d.querySelectorAll(".player-remove")[0].click();
+            log("removing a player frees their upgrade",
+              optOf(techOf(0), "laser-cannon").disabled === false);
+            log("and frees their allies",
+              alliesOf(0).querySelectorAll(".sheet-check")[0].disabled === false);
+            /* The hero sits in an <input value>, which textContent does not
+               reach — so ask the field, not the card. */
+            log("the survivor is the second player",
+              cards()[0].querySelector(".text-input").value === "Black Widow",
+              cards()[0].querySelector(".text-input").value);
+            finish();
+          }, 500);
+        });
+      }
+
+      /* The expert switch, and the promise that switching it off hides the two
+         fields rather than clearing them. */
+      function caseRrsExpert() {
+        var seeded = rrsLog();
+        seeded.state.expert = false;
+        /* Filled in, but not visible at standard level — exactly the state that
+           would lose data if hiding were clearing. */
+        seeded.state.players = [{
+          hero: "Captain America", hp: 7, obligations: ["martial-law"],
+          techUpgrade: "laser-cannon", basicUpgrade: "", rescuedAllies: [],
+          engagedWithMinion: false,
+        }];
+        seed({ rrs1: seeded }, "rrs1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var card = function () { return d.querySelector(".player-card"); };
+          var toggle = function () {
+            return d.querySelector("[data-section=players] .panel-head .flag .sheet-check");
+          };
+          var rows = function () { return card().querySelectorAll(".flag-row").length; };
+
+          log("the switch is in the player panel head", !!toggle());
+          log("it starts unticked", toggle().checked === false);
+          log("standard hides the hit points", !card().querySelector(".num-input"));
+          log("standard leaves one card set — the allies", rows() === 1, rows());
+          log("the upgrades are not hidden",
+            card().querySelectorAll(".pool-select").length === 2);
+
+          toggle().checked = true;
+          fire(toggle(), "change");
+
+          log("expert reveals the hit points", !!card().querySelector(".num-input"));
+          log("and the value was still there",
+            card().querySelector(".num-input").value === "7",
+            card().querySelector(".num-input").value);
+          log("expert reveals the obligations", rows() === 2, rows());
+          log("and the ticked one was still ticked",
+            card().querySelectorAll(".flag-row")[0]
+              .querySelectorAll(".sheet-check")[2].checked === true);
+
+          toggle().checked = false;
+          fire(toggle(), "change");
+          log("switching back hides them again",
+            !card().querySelector(".num-input") && rows() === 1);
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).rrs1.state;
+            log("the sheet is back at standard", st.expert === false);
+            log("but the hidden hit points survived", st.players[0].hp === 7,
+              st.players[0].hp);
+            log("and so did the hidden obligation",
+              JSON.stringify(st.players[0].obligations) ===
+                JSON.stringify(["martial-law"]),
+              JSON.stringify(st.players[0].obligations));
+            finish();
+          }, 500);
+        });
+      }
+
+      function caseRrsPrint() {
+        var seeded = rrsLog();
+        seeded.state.players = [
+          { hero: "Captain America", hp: 11, obligations: ["martial-law"],
+            techUpgrade: "laser-cannon", basicUpgrade: "basic-attack",
+            rescuedAllies: ["elektra", "white-tiger"], engagedWithMinion: true },
+          { hero: "Black Widow", hp: 9, obligations: [], techUpgrade: "",
+            basicUpgrade: "", rescuedAllies: [], engagedWithMinion: false },
+        ];
+        seeded.state.experimentalWeapons = ["laser-rifle", "exo-suit"];
+        seeded.state.delayCounters = 3;
+        seeded.state.removed = ["~Nick Fury"];
+        seed({ rrs1: seeded }, "rrs1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          w.dispatchEvent(new w.Event("beforeprint"));
+          var pv = d.getElementById("print-view");
+          var text = pv.textContent;
+          log("print view built", pv.children.length > 0, pv.children.length);
+          log("print names the campaign", /The Rise of Red Skull \(MC10\)/.test(text));
+          log("print carries both heroes",
+            /Captain America/.test(text) && /Black Widow/.test(text));
+          log("print names the upgrades", /Laserkanone/.test(text) &&
+            /Basis-Upgrade: Angriff/.test(text));
+          log("print names the obligation", /Kriegsrecht/.test(text));
+          log("print says which level was played",
+            /\[x\] Expertenmodus/.test(text), text.slice(0, 120));
+          log("print names both rescued allies",
+            /Elektra/.test(text) && /White Tiger: Angela Del Toro/.test(text));
+          /* Which weapons did NOT enter play matters too, so all four print. */
+          log("print ticks the recorded weapons", /\[x\] Lasergewehr/.test(text));
+          log("print leaves the others unticked", /\[ \] Energieschild/.test(text));
+          log("print carries the delay counter", /Hauptplan: 3/.test(text));
+          log("print ticks the engaged player",
+            /\[x\] Spieler #1 . Captain America/.test(text));
+          log("print leaves the other player unticked",
+            /\[ \] Spieler #2 . Black Widow/.test(text));
+          log("print keeps the struck entry", /Nick Fury/.test(text));
+          log("print strikes it visually", !!pv.querySelector(".print-list .struck"));
+          log("print hides the tilde", text.indexOf("~") === -1);
+          log("print has no notes section", !/Notizen/.test(text));
+          /* Field-faithful means the MC60 vocabulary must NOT turn up here. */
+          log("print has no progress wording", !/Gescheitert|Abgeschlossen/.test(text));
+          log("print keeps the disclaimer", /MARVEL/.test(text));
+          finish();
+        });
+      }
+
+      /* A bare MC10 log with one empty player — the shape emptyState() makes. */
+      function rrsLog() {
+        return {
+          schemaVersion: 1, id: "rrs1", campaignId: "rise-of-red-skull", stateVersion: 1,
+          title: "The Rise of Red Skull",
+          createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-02T00:00:00.000Z",
+          state: {
+            /* Expert, because two of the fields these cases drive exist only
+               there. caseRrsExpert is the one that starts at standard. */
+            expert: true,
+            players: [rrsPlayer("", null)],
+            experimentalWeapons: [], delayCounters: null, removed: [],
+          },
+        };
+      }
+      function rrsPlayer(hero, hp) {
+        return { hero: hero, hp: hp, obligations: [], techUpgrade: "",
+                 basicUpgrade: "", rescuedAllies: [], engagedWithMinion: false };
+      }
+
+      /* Tick a checkbox the way a click would: the widget listens for change. */
+      function tick(box) {
+        box.checked = true;
+        fire(box, "change");
+      }
+
+      /* Add one entry to the list with this id: press its own add button, then
+         fill the row that appeared. */
+      function addEntry(d, listId, value) {
+        var list = d.querySelector("[data-list-id=" + JSON.stringify(listId) + "]");
+        list.parentNode.querySelector(".entry-add").click();
+        var inputs = list.querySelectorAll(".entry-input");
+        var input = inputs[inputs.length - 1];
+        input.value = value;
+        fire(input, "input");
+        fire(input, "blur");
+      }
+
+      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert };
       (cases[CASE] || caseBasic)();
     </script>
   </body>
