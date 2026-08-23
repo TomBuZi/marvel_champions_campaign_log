@@ -1505,20 +1505,26 @@
             rows.length === 2 && rows[0].querySelectorAll(".sheet-check").length === 4 &&
             rows[1].querySelectorAll(".sheet-check").length === 4, rows.length);
           log("the boxes carry the printed card names",
-            /Zola's Algorithm/.test(rows[0].textContent) &&
-            /Martial Law/.test(rows[0].textContent), rows[0].textContent);
-          /* A card without a German name yet shows the English one — and only
-             then may it be tagged lang="en", because tagging a German string as
-             English misleads hyphenation and screen readers. Written as an
-             equivalence, so it stays true once the de names are filled in. */
-          var EN_OBLIGATIONS = ["Zola's Algorithm", "Medical Emergency",
-                                "Martial Law", "Anti-Hero Propaganda"];
-          log("the language tag follows the name actually shown",
-            Array.prototype.every.call(rows[0].querySelectorAll(".flag > span"),
+            /Zolas Algorithmus/.test(rows[0].textContent) &&
+            /Kriegsrecht/.test(rows[0].textContent), rows[0].textContent);
+          /* A card with no German name of its own shows the English one, and
+             only then may it be tagged lang="en" — tagging a German string as
+             English misleads hyphenation and screen readers. The obligations
+             are translated, the allies keep their English names by decision,
+             so this pins both directions at once. */
+          function langMatchesName(row, english) {
+            return Array.prototype.every.call(row.querySelectorAll(".flag > span"),
               function (span, n) {
-                return (span.textContent === EN_OBLIGATIONS[n]) ===
+                return (span.textContent === english[n]) ===
                   (span.getAttribute("lang") === "en");
-              }));
+              });
+          }
+          log("translated names are not tagged as English",
+            langMatchesName(rows[0], ["Zola's Algorithm", "Medical Emergency",
+                                      "Martial Law", "Anti-Hero Propaganda"]));
+          log("names left in English are tagged as English",
+            langMatchesName(rows[1], ["Elektra", "Moon Knight: Marc Spector",
+                                      "Shang-Chi", "White Tiger: Angela Del Toro"]));
           log("the ally boxes carry their printed names",
             /Moon Knight: Marc Spector/.test(rows[1].textContent) &&
             /White Tiger: Angela Del Toro/.test(rows[1].textContent), rows[1].textContent);
@@ -1538,7 +1544,7 @@
           var weapons = d.querySelectorAll(SEC1_BOX);
           log("four experimental weapons to record", weapons.length === 4, weapons.length);
           log("scenario 1 names the weapons, not a count",
-            /Laser Rifle/.test(d.querySelector("[data-section=scenario-1]").textContent));
+            /Lasergewehr/.test(d.querySelector("[data-section=scenario-1]").textContent));
           tick(weapons[0]);   // Laser Rifle
           tick(weapons[3]);   // Exo-Suit
 
@@ -1758,16 +1764,16 @@
           log("print names the campaign", /The Rise of Red Skull \(MC10\)/.test(text));
           log("print carries both heroes",
             /Captain America/.test(text) && /Black Widow/.test(text));
-          log("print names the upgrades", /Laser Cannon/.test(text) &&
-            /Basic Attack Upgrade/.test(text));
-          log("print names the obligation", /Martial Law/.test(text));
+          log("print names the upgrades", /Laserkanone/.test(text) &&
+            /Basis-Upgrade: Angriff/.test(text));
+          log("print names the obligation", /Kriegsrecht/.test(text));
           log("print says which level was played",
             /\[x\] Expertenmodus/.test(text), text.slice(0, 120));
           log("print names both rescued allies",
             /Elektra/.test(text) && /White Tiger: Angela Del Toro/.test(text));
           /* Which weapons did NOT enter play matters too, so all four print. */
-          log("print ticks the recorded weapons", /\[x\] Laser Rifle/.test(text));
-          log("print leaves the others unticked", /\[ \] Energy Shield/.test(text));
+          log("print ticks the recorded weapons", /\[x\] Lasergewehr/.test(text));
+          log("print leaves the others unticked", /\[ \] Energieschild/.test(text));
           log("print carries the delay counter", /Hauptplan: 3/.test(text));
           log("print ticks the engaged player",
             /\[x\] Spieler #1 . Captain America/.test(text));

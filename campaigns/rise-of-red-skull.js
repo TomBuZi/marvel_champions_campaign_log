@@ -65,40 +65,41 @@
      ones back into the encounter deck, which is why it is the names that
      matter and not a count. */
   var EXPERIMENTAL_WEAPONS = [
-    { slug: "laser-rifle",     en: "Laser Rifle",     de: null },
-    { slug: "energy-shield",   en: "Energy Shield",   de: null },
-    { slug: "power-gauntlets", en: "Power Gauntlets", de: null },
-    { slug: "exo-suit",        en: "Exo-Suit",        de: null },
+    { slug: "laser-rifle",     en: "Laser Rifle",     de: "Lasergewehr" },
+    { slug: "energy-shield",   en: "Energy Shield",   de: "Energieschild" },
+    { slug: "power-gauntlets", en: "Power Gauntlets", de: "Energiehandschuhe" },
+    { slug: "exo-suit",        en: "Exo-Suit",        de: "Exo-Anzug" },
   ];
 
   var TECH_UPGRADES = [
-    { slug: "adrenal-stims",        en: "Adrenal Stims",        de: null },
-    { slug: "tactical-scanner",     en: "Tactical Scanner",     de: null },
-    { slug: "emergency-teleporter", en: "Emergency Teleporter", de: null },
-    { slug: "laser-cannon",         en: "Laser Cannon",         de: null },
+    { slug: "adrenal-stims",        en: "Adrenal Stims",        de: "Adrenalin-Stimulierung" },
+    { slug: "tactical-scanner",     en: "Tactical Scanner",     de: "Taktischer Scanner" },
+    { slug: "emergency-teleporter", en: "Emergency Teleporter", de: "Notfall-Teleporter" },
+    { slug: "laser-cannon",         en: "Laser Cannon",         de: "Laserkanone" },
   ];
 
   /* These really are the printed names: the Condition upgrades in the campaign
      set are called "Basic <stat> Upgrade", and flip to an "Improved" side. */
   var BASIC_UPGRADES = [
-    { slug: "basic-thwart",   en: "Basic Thwart Upgrade",   de: null },
-    { slug: "basic-attack",   en: "Basic Attack Upgrade",   de: null },
-    { slug: "basic-defense",  en: "Basic Defense Upgrade",  de: null },
-    { slug: "basic-recovery", en: "Basic Recovery Upgrade", de: null },
+    { slug: "basic-thwart",   en: "Basic Thwart Upgrade",   de: "Basis-Upgrade: Widerstand" },
+    { slug: "basic-attack",   en: "Basic Attack Upgrade",   de: "Basis-Upgrade: Angriff" },
+    { slug: "basic-defense",  en: "Basic Defense Upgrade",  de: "Basis-Upgrade: Verteidigung" },
+    { slug: "basic-recovery", en: "Basic Recovery Upgrade", de: "Basis-Upgrade: Erholung" },
   ];
 
   /* Every player is dealt their own copy of the same four, so unlike the
      upgrades these are not shared out — two players can both carry Martial
      Law. */
   var OBLIGATIONS = [
-    { slug: "zolas-algorithm",      en: "Zola's Algorithm",      de: null },
-    { slug: "medical-emergency",    en: "Medical Emergency",     de: null },
-    { slug: "martial-law",          en: "Martial Law",           de: null },
-    { slug: "anti-hero-propaganda", en: "Anti-Hero Propaganda",  de: null },
+    { slug: "zolas-algorithm",      en: "Zola's Algorithm",      de: "Zolas Algorithmus" },
+    { slug: "medical-emergency",    en: "Medical Emergency",     de: "Medizinischer Notfall" },
+    { slug: "martial-law",          en: "Martial Law",           de: "Kriegsrecht" },
+    { slug: "anti-hero-propaganda", en: "Anti-Hero Propaganda",  de: "Anti-Helden-Propaganda" },
   ];
 
-  /* Character names are the one group that may well stay English even in the
-     German edition, the way the MC60 villains do. */
+  /* These four keep their English names in the German edition, the way the MC60
+     villains do, so their `de` stays null on purpose — it is a decision, not a
+     translation still to be done. */
   var RESCUABLE_ALLIES = [
     { slug: "elektra",     en: "Elektra",                      de: null },
     { slug: "moon-knight", en: "Moon Knight: Marc Spector",    de: null },
@@ -826,10 +827,10 @@
         /* "%s" = Spielernummer. */
         playerRow: "Spieler #%s",
         colIdentity: "Identität",
-        colHp: "Verbleibende Trefferpunkte",
+        colHp: "Verbleibende Lebenspunkte",
         identityPlaceholder: "Held …",
         lblExpert: "Expertenmodus",
-        expertHint: "Nur auf Expertenstufe werden verbleibende Trefferpunkte und Verpflichtungen festgehalten. Ausschalten blendet beide aus, löscht sie aber nicht.",
+        expertHint: "Nur auf Expertenstufe werden verbleibende Lebenspunkte und Verpflichtungen festgehalten. Ausschalten blendet beide aus, löscht sie aber nicht.",
         addPlayer: "+ Spieler",
         addPlayerFull: "Mehr als vier Spieler kennt das Spiel nicht.",
         removePlayer: "Spieler entfernen",
@@ -838,19 +839,16 @@
         duplicateHero: "Dieser Held ist schon einem anderen Spieler zugeordnet.",
 
         lblObligations: "Verpflichtungen",
-        /* Zu bestätigen: Wortlaut der deutschen Ausgabe. */
-        lblTechUpgrade: "Tech-Verbesserung",
-        /* Zu bestätigen: Wortlaut der deutschen Ausgabe. */
-        lblBasicUpgrade: "Basis-Verbesserung",
-        lblRescuedAllies: "Gerettete Verbündete",
-        upgradePlaceholder: "— Verbesserung wählen —",
+        lblTechUpgrade: "Tech-Upgrade",
+        lblBasicUpgrade: "Basis-Upgrade",
+        lblRescuedAllies: "Befreite Verbündete",
+        upgradePlaceholder: "— Upgrade wählen —",
         /* "%s" = der Spieler, der den Verbündeten schon hat. */
         allyTakenBy: "Schon zugeordnet: %s",
 
-        /* Zu bestätigen: deutscher Kartentyp der „Experimental Weapons“. */
-        lblExperimentalWeapons: "Dem Begegnungsdeck hinzugefügte Experimentalwaffen",
+        lblExperimentalWeapons: "Dem Begegnungsdeck hinzugefügte Experimentelle Waffen",
         lblDelayCounters: "Verzögerungsmarker auf dem Hauptplan",
-        lblEngaged: "Spieler im Gefecht mit Handlangern",
+        lblEngaged: "Spieler im Gefecht mit Schergen",
 
         cardNamePlaceholder: "Kartenname …",
       },
@@ -878,7 +876,7 @@
         lblTechUpgrade: "Tech Upgrade",
         lblBasicUpgrade: "Basic Upgrade",
         lblRescuedAllies: "Rescued Allies",
-        upgradePlaceholder: "— choose an upgrade —",
+        upgradePlaceholder: "— choose an Upgrade —",
         allyTakenBy: "Already assigned to: %s",
 
         lblExperimentalWeapons: "Experimental Weapons added to encounter deck",
