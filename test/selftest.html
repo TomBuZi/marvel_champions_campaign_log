@@ -482,9 +482,11 @@
           log("print says which level was played",
             /\[ \] Expertenmodus/.test(text), text.slice(0, 130));
           /* Standard level, so the hit points are not on the sheet and must
-             not be on the printout either. */
+             not be on the printout either. Matched on the bare word rather than
+             the full label: a negative assertion on an exact caption stops
+             testing anything the moment the caption is reworded. */
           log("print omits the hit points at standard level",
-            !/Verbleibende Trefferpunkte/.test(text));
+            !/Lebenspunkte/.test(text));
           log("print carries the hero", /Daredevil/.test(text));
           log("print marks the villain", /Typhoid Mary/.test(text));
           log("print shows the failed scenario", /Gescheitert/.test(text));

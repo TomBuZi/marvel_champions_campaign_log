@@ -20,7 +20,7 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
 * **Der ganze Bogen, je Kampagne der ihre.** Jedes Modul folgt seiner Vorlage Feld
   für Feld, und die drei Vorlagen sind sehr verschieden:
   * *Fear No Evil (MC60)* — Spielerplätze mit Identität und verbleibenden
-    Trefferpunkten, die fünf Szenarien mit Schurken-Zuordnung und Fortschritt, die
+    Lebenspunkten, die fünf Szenarien mit Schurken-Zuordnung und Fortschritt, die
     aus der Kampagne entfernten Verbündeten und Persona-Unterstützungen, und die
     beiden Kampagnen-Marken.
   * *The Rise of Red Skull (MC10)* — je Spieler Identität, Lebenspunkte,
@@ -38,7 +38,7 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
 * **Standard- oder Expertenstufe** — der Haken „Expertenmodus“ oben im
   Spielerbereich, in allen drei Kampagnen an derselben Stelle. Auf Standardstufe
   blendet der Bogen aus, was es dort nicht gibt, statt danach zu fragen:
-  * *Fear No Evil (MC60)* — die verbleibenden Trefferpunkte.
+  * *Fear No Evil (MC60)* — die verbleibenden Lebenspunkte.
   * *The Rise of Red Skull (MC10)* — die verbleibenden Lebenspunkte **und** die
     Verpflichtungen; das MC10-Regelheft nennt beides ausdrücklich als Sache der
     Expertenstufe.
@@ -231,7 +231,7 @@ auch über `file://` und direkt aus dem Repo-Root über GitHub Pages.
 | `core.js` | Speichern, mehrere Bögen, Quarantäne, Export/Import, Share-Link, Druck, Sprache, Theme, Kampagnen-Registry |
 | `widgets.js` | wiederverwendbare Bausteine: Checkbox, Zahlenfeld, Textfeld, Auswahl mit Ausschluss, Fortschrittszähler, Icon-Button, String-Liste mit Drag&Drop — jeweils mit optionalem gesperrten Zustand |
 | `i18n.js` | `window.I18N = { de, en }` — nur Strings des Rahmens |
-| `heroes.js` | 68 Helden (Name, Trefferpunkte) als Vorschlagsliste für die Identitätsfelder |
+| `heroes.js` | 68 Helden (Name, Lebenspunkte) als Vorschlagsliste für die Identitätsfelder |
 | `campaigns/fear-no-evil.js` | die Kampagne MC60: eigenes Datenmodell, eigenes Rendering, eigene Strings |
 | `campaigns/rise-of-red-skull.js` | die Kampagne MC10: feste Kartenpools mit ihren Eindeutigkeitsregeln und drei Szenariofelder; bewusst ohne Szenario-Tabelle |
 | `campaigns/mad-titans-shadow.js` | die Kampagne MC21: Spieler und neun benannte Kästchen in vier Szenario-Abschnitten; das schlankeste der drei Module |
@@ -457,10 +457,10 @@ im Footer der Seite. Der Ko-fi-Link öffnet in einem neuen Tab und trägt
 * **Helden mit zwei Trägern stehen einzeln in der Liste**, mit `*` getrennt:
   „Spider-Man * Peter Parker“ und „Spider-Man * Miles Morales“, „Black Panther *
   T'Challa“ und „Black Panther * Shuri“. Die Kartendaten führen sie unter einem Namen,
-  die Trefferpunkte unterscheiden sich aber.
+  die Lebenspunkte unterscheiden sich aber.
 * **Das Identitätsfeld ist Freitext**, `heroes.js` liefert nur Vorschläge. Ein Umbenennen
   in der Liste ändert also nie einen bestehenden Bogen — dort bleibt der eingetippte
-  Name stehen, höchstens der Trefferpunkte-Hinweis daneben findet keine Entsprechung
+  Name stehen, höchstens der Lebenspunkte-Hinweis daneben findet keine Entsprechung
   mehr. Es gibt deshalb nichts zu migrieren, wenn die Liste wächst oder sich ändert.
 * `health` darf `null` sein, wenn ein Wert nicht belegt ist; der Hinweis neben dem Feld
   bleibt dann leer. Ein erfundener Wert wäre schlechter als keiner.
