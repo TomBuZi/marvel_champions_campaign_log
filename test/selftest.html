@@ -69,9 +69,23 @@
         pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
+          /* A first visit asks which campaign rather than picking one, so
+             this case has to answer before it has a sheet to test. */
+          var dlg0 = d.getElementById("campaign-dialog");
+          log("a fresh visit asks which campaign", dlg0.open);
+          log("and writes nothing until it is answered",
+            Object.keys(JSON.parse(localStorage.getItem("mcclog:logs") || "{}")).length === 0,
+            localStorage.getItem("mcclog:logs"));
+          /* Nothing to go back to, so no way out — cancelling would leave an
+             empty page. */
+          log("the way out is removed on a first visit",
+            d.getElementById("btn-campaign-cancel").hidden);
+          pick(d, "fear-no-evil");
+          fire(d.getElementById("campaign-form"), "submit");
+
           var store = JSON.parse(localStorage.getItem("mcclog:logs") || "{}");
           var ids = Object.keys(store);
-          log("a fresh visit creates one log", ids.length === 1, ids.length);
+          log("answering it creates one log", ids.length === 1, ids.length);
           var log0 = store[ids[0]];
           log("log carries campaignId", log0 && log0.campaignId === "fear-no-evil", log0 && log0.campaignId);
           log("log title auto-named", log0 && log0.title === "Fear No Evil", log0 && log0.title);
@@ -320,6 +334,7 @@
         pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
+          answerCampaignDialog(d, "fear-no-evil");
           log("stored preference wins", d.documentElement.lang === "de", d.documentElement.lang);
           log("German section heading",
             /Spieler-Informationen/.test(d.getElementById("campaign").textContent));
@@ -407,6 +422,14 @@
         var waited = 0;
         function poll() {
           var d = f.contentDocument;
+          /* Ready means either a rendered sheet or the question being asked: a
+             first visit shows the campaign dialog and leaves the sheet empty,
+             so waiting only for content would wait forever. */
+          var dlg = d && d.getElementById("campaign-dialog");
+          if (dlg && dlg.open) {
+            then(f, f.contentWindow, d);
+            return;
+          }
           var panel = d && d.getElementById("campaign");
           if (panel && panel.textContent.trim().length > 0) {
             then(f, f.contentWindow, d);
@@ -429,6 +452,7 @@
         pinLang("de");
         bootVia("../en/index.html", function (frame, w, d) {
           f0 = w;
+          answerCampaignDialog(d, "fear-no-evil");
           log("/en/ lands on the app",
             /\/index\.html$/.test(w.location.pathname), w.location.pathname);
           log("/en/ arrives with ?lang=en", w.location.search === "?lang=en", w.location.search);
@@ -454,6 +478,7 @@
         pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
+          answerCampaignDialog(d, "fear-no-evil");
           var hero = d.querySelectorAll(".player-card .text-input")[0];
           hero.value = "Daredevil";
           fire(hero, "input");
@@ -567,6 +592,7 @@
           clearInterval(iv);
           f.contentWindow.confirm = function () { return answer; };
           var d = f.contentDocument;
+          answerCampaignDialog(d, "fear-no-evil");
           var startingIds = Object.keys(JSON.parse(localStorage.getItem("mcclog:logs")));
 
           // 1) A brand-new log is added alongside the one that already exists.
@@ -657,6 +683,7 @@
         pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
+          answerCampaignDialog(d, "fear-no-evil");
           function rows() { return d.querySelectorAll("tbody tr"); }
           function done(i) { return rows()[i].querySelector(".sheet-check"); }
           function boxes(i) { return rows()[i].querySelectorAll(".progress-box"); }
@@ -794,6 +821,7 @@
         pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
+          answerCampaignDialog(d, "fear-no-evil");
           function rows() { return d.querySelectorAll("tbody tr"); }
           function die(i) { return rows()[i].querySelector(".villain-die"); }
           function sel(i) { return rows()[i].querySelector(".pool-select"); }
@@ -876,6 +904,7 @@
         pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
+          answerCampaignDialog(d, "fear-no-evil");
           var seen = {}, rolls = 40;
           for (var i = 0; i < rolls; i++) {
             var row = d.querySelectorAll("tbody tr")[0];
@@ -918,6 +947,7 @@
         localStorage.setItem("mcclog:theme", "dark");
         boot("", function (frame, w, d) {
           f0 = w;
+          answerCampaignDialog(d, "fear-no-evil");
           function rows() { return d.querySelectorAll("tbody tr"); }
           function sel(i) { return rows()[i].querySelector(".pool-select"); }
           function bg(node) { return w.getComputedStyle(node).backgroundColor; }
@@ -1018,6 +1048,7 @@
         pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
+          answerCampaignDialog(d, "fear-no-evil");
           function cards() { return d.querySelectorAll(".player-card"); }
           function addBtn() { return d.querySelector('[data-section="players"] .btn-add'); }
           function removeBtn(i) { return cards()[i].querySelector(".player-remove"); }
@@ -1242,6 +1273,7 @@
         pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
+          answerCampaignDialog(d, "fear-no-evil");
           function rows() { return d.querySelectorAll("tbody tr"); }
           function btn() { return d.querySelector('[data-section="scenarios"] .btn-add'); }
           function progress() {
@@ -1360,6 +1392,7 @@
         pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
+          answerCampaignDialog(d, "fear-no-evil");
           var pairs = {}, rounds = 20;
 
           /* Every click re-renders the panel, so a node grabbed before the
@@ -1418,16 +1451,15 @@
         pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
-          var store = function () { return JSON.parse(localStorage.getItem("mcclog:logs")); };
-          var ids = Object.keys(store());
-          log("a fresh visit still opens Fear No Evil",
-            ids.length === 1 && store()[ids[0]].campaignId === "fear-no-evil",
-            JSON.stringify(ids.map(function (k) { return store()[k].campaignId; })));
-
+          var store = function () {
+            return JSON.parse(localStorage.getItem("mcclog:logs") || "{}");
+          };
           var dlg = d.getElementById("campaign-dialog");
-          log("dialog starts closed", !dlg.open);
-          d.getElementById("btn-new").click();
-          log("a second campaign makes the dialog appear", dlg.open);
+          log("a fresh visit opens the dialog itself", dlg.open);
+          log("and nothing is stored yet", Object.keys(store()).length === 0,
+            JSON.stringify(Object.keys(store())));
+          log("with no way out, having nothing to go back to",
+            d.getElementById("btn-campaign-cancel").hidden);
 
           var choices = d.getElementById("campaign-choices");
           var radios = choices.querySelectorAll("input[type=radio]");
@@ -1457,6 +1489,19 @@
           log("the dialog no longer counts scenarios",
             !/Szenarien/.test(choices.textContent), choices.textContent);
 
+          /* Answer it with MC60, so the rest of the case has the same two
+             campaigns on the sheet list as before. */
+          pick(d, "fear-no-evil");
+          fire(d.getElementById("campaign-form"), "submit");
+          log("answering it creates the chosen campaign",
+            Object.keys(store()).length === 1 &&
+            store()[localStorage.getItem("mcclog:activeId")].campaignId === "fear-no-evil");
+
+          /* Now there IS something to go back to, so the way out is offered
+             again — and it still creates nothing. */
+          d.getElementById("btn-new").click();
+          log("reopening offers the way out again",
+            dlg.open && !d.getElementById("btn-campaign-cancel").hidden);
           d.getElementById("btn-campaign-cancel").click();
           log("cancel closes the dialog", !dlg.open);
           log("cancel creates nothing", Object.keys(store()).length === 1);
@@ -1466,18 +1511,11 @@
              by position, because the order is a feature now and an index would
              break the next time a campaign lands. */
           d.getElementById("btn-new").click();
-          var box = {};
-          Array.prototype.forEach.call(
-            d.getElementById("campaign-choices").querySelectorAll("input[type=radio]"),
-            function (r) { box[r.value] = r; });
-
-          box["mad-titans-shadow"].checked = true;
-          fire(box["mad-titans-shadow"], "change");
+          pick(d, "mad-titans-shadow");
           log("picking a campaign renames the log",
             d.getElementById("new-log-title").value === "The Mad Titan's Shadow",
             d.getElementById("new-log-title").value);
-          box["rise-of-red-skull"].checked = true;
-          fire(box["rise-of-red-skull"], "change");
+          pick(d, "rise-of-red-skull");
           log("and renames it again when the choice changes back",
             d.getElementById("new-log-title").value === "The Rise of Red Skull",
             d.getElementById("new-log-title").value);
@@ -1841,6 +1879,34 @@
       function rrsPlayer(hero, hp) {
         return { hero: hero, hp: hp, obligations: [], techUpgrade: "",
                  basicUpgrade: "", rescuedAllies: [], engagedWithMinion: false };
+      }
+
+      /* Choose a campaign in the new-log dialog by id. By value rather than by
+         position, because the order of the choices is a feature of its own now
+         and an index would break the next time a campaign lands. */
+      function pick(d, campaignId) {
+        var boxes = d.getElementById("campaign-choices")
+          .querySelectorAll("input[type=radio]");
+        for (var i = 0; i < boxes.length; i++) {
+          if (boxes[i].value === campaignId) {
+            boxes[i].checked = true;
+            fire(boxes[i], "change");
+            return boxes[i];
+          }
+        }
+        return null;
+      }
+
+      /* A first visit asks which campaign instead of creating a sheet, so a case
+         that wants one has to answer. Idempotent: does nothing when the dialog
+         is not open, e.g. because the case seeded a log or followed a share
+         link. Cases about the dialog itself answer it by hand. */
+      function answerCampaignDialog(d, campaignId) {
+        var dlg = d.getElementById("campaign-dialog");
+        if (!dlg || !dlg.open) return false;
+        pick(d, campaignId);
+        fire(d.getElementById("campaign-form"), "submit");
+        return true;
       }
 
       /* Tick a checkbox the way a click would: the widget listens for change. */
