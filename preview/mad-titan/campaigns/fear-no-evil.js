@@ -739,7 +739,6 @@
        3: standard or expert level, which decides whether the remaining hit
           points are asked for at all. */
     stateVersion: 3,
-    scenarioCount: SCENARIOS.length,
 
     emptyState: emptyState,
     normalize: normalize,
