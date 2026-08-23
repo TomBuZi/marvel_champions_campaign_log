@@ -664,6 +664,13 @@ button:focus-visible {
   .scenario-row { grid-template-columns: 1fr 1fr; }
 }
 
+/* Two field groups stacked in one panel — MC21's scenario 2 and 3 put the
+   pooled cards over a box with its own wording — would otherwise touch: .panel
+   is padding, not a grid, and only .player-card carries a gap. Scoped to direct
+   children so the fields inside a player card keep following that gap instead
+   of adding to it. */
+.panel > .player-field + .player-field { margin-top: 0.75rem; }
+
 /* ---------- Player cards ---------- */
 /* The column count follows the number of players, not the available width.
    auto-fit decides how many tracks fit and then wraps, which put four players
