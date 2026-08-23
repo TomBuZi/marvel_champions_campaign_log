@@ -52,7 +52,12 @@
   --on-page: #fdece4;     /* text directly on the page (footer)      */
   --on-zap: #241012;      /* text on the accent yellow               */
   --on-danger: #fff4ef;   /* text on the danger red                  */
-  --tick: #e7d810;        /* the checkbox tick, drawn on --bar       */
+  --check-on: var(--bar); /* a ticked checkbox — its own token, because a
+                             campaign whose accent lives in the tick has no
+                             accent left once the tick goes dark in the other
+                             theme; defaults to --bar, so a campaign that does
+                             not set it looks exactly as before */
+  --tick: #e7d810;        /* the checkbox tick, drawn on --check-on  */
   --title-shadow: #fdece4;/* hard offset behind the display title    */
   --zap-strong: #ffe500;  /* the yellow where it has to carry a state */
   --input-settled: #ddc4ba;/* a field whose row is done, one way or the other */
@@ -274,6 +279,12 @@
    tones are too light to hold 4.5 against it. Every pair here matches or beats
    the MC10 palette's contrast.
 
+   Dark mode keeps all four of the sheet's colours rather than only the indigo:
+   the page field goes to a dark rust instead of another blue, the heading pills
+   carry the gold of the printed badges, the panel gradient ends on a warm tone
+   the way the light one ends on cream, and the text is a warm off-white. An
+   all-indigo dark mode reads as a different campaign than its own light mode.
+
    Four blocks, mirroring the four above, and for the reason spelled out there:
    a single [data-campaign] block outranks the bare :root inside the dark media
    query and would paint the light palette in dark mode. */
@@ -313,25 +324,25 @@
    are already defined as var(--bar) and follow it by themselves. */
 @media (prefers-color-scheme: dark) {
   :root[data-campaign="tmts"] {
-    --page: #0d0f1f; --bar: #a9adf0; --brick: #2a2d55;
-    --panel-1: #1a1c33; --panel-2: #14162a; --pill: #262a4d;
-    --check: #1e2140; --zap: #f0c04a; --ink: #e8e7f5;
-    --bg-input: #12142a; --panel-border: #3b3f6b; --text-dim: #a5a3c8;
+    --page: #1e1208; --bar: #a9adf0; --brick: #2f2a4e;
+    --panel-1: #1c1e36; --panel-2: #251f2e; --pill: #3d3118;
+    --check: #232647; --zap: #f0c04a; --ink: #f1ece4; --check-on: #f0c04a;
+    --bg-input: #15172c; --panel-border: #3b3f6b; --text-dim: #bdb6a8;
     --accent: #a9adf0; --accent-strong: #cfd2fb; --accent-2: #8f96e8;
     --danger: #ff6b5c;
     --glow: 0 0 0 3px rgba(240, 192, 74, 0.40);
     --halftone: rgba(255, 255, 255, 0.06);
     --hatch: rgba(255, 255, 255, 0.05);
-    --ink-shadow: 4px 4px 0 0 #05060f;
-    --on-brick: #e8e7f5;
-    --on-page: #e8e7f5;
+    --ink-shadow: 4px 4px 0 0 #0c0703;
+    --on-brick: #f1ece4;
+    --on-page: #f6e9d8;
     --on-zap: #231f20;
     --on-danger: #2b0a07;
-    --tick: #0d0f1f;
-    --title-shadow: #05060f;
+    --tick: #231f20;
+    --title-shadow: #0c0703;
     --zap-strong: #f7cf62;
-    --input-settled: #0a0b18;
-    --backdrop: rgba(5, 6, 15, 0.6);
+    --input-settled: #0e1020;
+    --backdrop: rgba(12, 7, 3, 0.6);
   }
 }
 :root[data-campaign="tmts"][data-theme="light"] {
@@ -357,25 +368,25 @@
   color-scheme: light;
 }
 :root[data-campaign="tmts"][data-theme="dark"] {
-  --page: #0d0f1f; --bar: #a9adf0; --brick: #2a2d55;
-  --panel-1: #1a1c33; --panel-2: #14162a; --pill: #262a4d;
-  --check: #1e2140; --zap: #f0c04a; --ink: #e8e7f5;
-  --bg-input: #12142a; --panel-border: #3b3f6b; --text-dim: #a5a3c8;
+  --page: #1e1208; --bar: #a9adf0; --brick: #2f2a4e;
+  --panel-1: #1c1e36; --panel-2: #251f2e; --pill: #3d3118;
+  --check: #232647; --zap: #f0c04a; --ink: #f1ece4; --check-on: #f0c04a;
+  --bg-input: #15172c; --panel-border: #3b3f6b; --text-dim: #bdb6a8;
   --accent: #a9adf0; --accent-strong: #cfd2fb; --accent-2: #8f96e8;
   --danger: #ff6b5c;
   --glow: 0 0 0 3px rgba(240, 192, 74, 0.40);
   --halftone: rgba(255, 255, 255, 0.06);
   --hatch: rgba(255, 255, 255, 0.05);
-  --ink-shadow: 4px 4px 0 0 #05060f;
-  --on-brick: #e8e7f5;
-  --on-page: #e8e7f5;
+  --ink-shadow: 4px 4px 0 0 #0c0703;
+  --on-brick: #f1ece4;
+  --on-page: #f6e9d8;
   --on-zap: #231f20;
   --on-danger: #2b0a07;
-  --tick: #0d0f1f;
-  --title-shadow: #05060f;
+  --tick: #231f20;
+  --title-shadow: #0c0703;
   --zap-strong: #f7cf62;
-  --input-settled: #0a0b18;
-  --backdrop: rgba(5, 6, 15, 0.6);
+  --input-settled: #0e1020;
+  --backdrop: rgba(12, 7, 3, 0.6);
   color-scheme: dark;
 }
 
@@ -831,7 +842,7 @@ button:focus-visible {
   print-color-adjust: exact;
   -webkit-print-color-adjust: exact;
 }
-.sheet-check:checked { background: var(--bar); }
+.sheet-check:checked { background: var(--check-on); }
 /* A clip-path tick beats content:"✓" — it does not depend on a font subset
    carrying the glyph, and it prints. */
 .sheet-check:checked::after {

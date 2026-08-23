@@ -827,6 +827,15 @@
       list.appendChild(row);
     });
     titleInput.value = nextLogTitle(ordered[0].id);
+
+    /* With nothing stored there is nothing to go back TO, so the way out is
+       removed rather than left as a dead end that empties the page. Esc counts
+       as a way out: <dialog> reports it as a "cancel" event. Assigned rather
+       than added, so reopening the dialog cannot stack listeners. */
+    var stranded = Object.keys(logs).length === 0;
+    document.getElementById("btn-campaign-cancel").hidden = stranded;
+    dlg.oncancel = stranded ? function (e) { e.preventDefault(); } : null;
+
     dlg.showModal();
   }
 
@@ -1031,18 +1040,17 @@
 
     if (!activeId || !logs[activeId]) {
       var ids = Object.keys(logs);
-      if (ids.length) {
-        activeId = ids[0];
-      } else if (campaigns.length) {
-        var first = emptyLog(campaigns[0].id);
-        logs[first.id] = first;
-        activeId = first.id;
-        saveStorage();
-      }
+      if (ids.length) activeId = ids[0];
     }
 
     bind();
     renderAll();
+    /* Nothing stored at all: ask which campaign instead of picking one on the
+       visitor's behalf. Nothing is written until the dialog is answered, and
+       the page behind it stays empty meanwhile — renderCampaign() and
+       applyCampaignChrome() both have a branch for having no active log. After
+       bind(), because the dialog's own buttons are wired there. */
+    if (!activeId) newLog();
     maybeRemindExport();
   }
 
