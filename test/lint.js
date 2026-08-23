@@ -435,22 +435,32 @@ for (const def of campaigns) {
         def.normalize({ reputation: -3 }).reputation]));
     check(p + "an unreadable reputation reads as blank, not as zero",
       def.normalize({ reputation: "nope" }).reputation === null);
-    /* Both scores are reputation values too, so they share the range. */
-    check(p + "the two scores are clamped the same way",
-      def.normalize({ wakingNightmare: 999, finalScore: -1 }).wakingNightmare === 35 &&
-      def.normalize({ wakingNightmare: 999, finalScore: -1 }).finalScore === 0);
+    /* The final score is a place on the track and shares its range; Waking
+       Nightmare is a scenario tally and does not, so a value above the track's
+       length has to survive there and be pulled back here. */
+    check(p + "the final score is bounded by the track",
+      def.normalize({ finalScore: 999 }).finalScore === 35 &&
+      def.normalize({ finalScore: -1 }).finalScore === 0);
+    check(p + "but Waking Nightmare is not",
+      def.normalize({ wakingNightmare: 40 }).wakingNightmare === 40 &&
+      def.normalize({ wakingNightmare: 999 }).wakingNightmare === 99,
+      JSON.stringify([def.normalize({ wakingNightmare: 40 }).wakingNightmare,
+        def.normalize({ wakingNightmare: 999 }).wakingNightmare]));
 
-    /* Every cell of every named section, in sheet order. A missing cell would
-       read as empty on screen and then be written back on the next save, which
-       is how a cell silently disappears from a stored sheet. */
-    check(p + "the cell counts are the ones the sheet prints",
-      empty.communityService.length === 4 && empty.lastOnesStanding.length === 6 &&
-      empty.osbornTech.length === 3,
-      JSON.stringify([empty.communityService.length, empty.lastOnesStanding.length,
-        empty.osbornTech.length]));
-    check(p + "and they start empty",
-      [].concat(empty.communityService, empty.lastOnesStanding, empty.osbornTech)
-        .every((v) => v === ""));
+    /* Two of the three named card sections ask WHICH cards, so they are sets
+       and start out as nothing at all. Osborn Tech asks which card came in on
+       which rung, so it keeps one cell per rung — three of them, and that
+       number is derived in the module from the rungs that take a card, not
+       written down a second time. A missing cell would read as empty on screen
+       and then be written back on the next save, which is how a cell silently
+       disappears from a stored sheet. */
+    check(p + "the two sets start out as nothing at all",
+      eq(empty.communityService, []) && eq(empty.lastOnesStanding, []),
+      JSON.stringify([empty.communityService, empty.lastOnesStanding]));
+    check(p + "Osborn Tech has one cell per rung that takes a card",
+      empty.osbornTech.length === 3, empty.osbornTech.length);
+    check(p + "and its cells start empty",
+      empty.osbornTech.every((v) => v === ""));
 
     /* A fixture of the sheet's own fields: unknown slugs, repeats within a
        section, a repeat across two players, a too-long list and a too-short
@@ -467,11 +477,12 @@ for (const def of campaigns) {
       ],
       expert: 1,
       reputation: 13,
-      /* Too long, with an unknown slug and a repeat of an earlier cell. */
+      /* An unknown slug, a repeat, and a value that is not a string at all —
+         and deliberately in the wrong order, because a set comes back in the
+         pool's order rather than the order it arrived in. */
       communityService: ["cat-in-a-tree", "made-up", "cat-in-a-tree",
                          "off-the-rails", "rubble-rescue"],
       wakingNightmare: "4",
-      /* Too short: the missing cells have to come back as empty ones. */
       lastOnesStanding: ["vulture", 7, "electro"],
       finalScore: "28",
       osbornTech: ["tracking-display", "arm-cannon", "tracking-display"],
@@ -482,17 +493,29 @@ for (const def of campaigns) {
     const m1 = def.normalize(dirtySm);
     check(p + "MC27 fixture is idempotent", eq(m1, def.normalize(m1)), JSON.stringify(m1));
 
-    /* The cell an entry sits in is part of what was written down, so unlike
-       MC10's pools these lists are NOT reordered — an unknown slug and a repeat
-       empty their own cell and leave the rest where they were. */
-    check(p + "an unknown slug empties its cell, not the row",
-      eq(m1.communityService, ["cat-in-a-tree", "", "", "off-the-rails"]),
+    /* The two sets: unknown slugs out, duplicates out, and the survivors in
+       the pool's own order — that ordering is what makes normalize a fixpoint.
+       A blank in the input is simply not a slug, which is also why a sheet
+       stored in the older cell shape reads correctly here. */
+    check(p + "a set drops what it does not know and keeps pool order",
+      eq(m1.communityService, ["cat-in-a-tree", "off-the-rails", "rubble-rescue"]),
       JSON.stringify(m1.communityService));
-    check(p + "a row longer than the sheet is cut to the printed cells",
-      m1.communityService.length === 4, m1.communityService.length);
-    check(p + "a row shorter than the sheet is filled up with empty cells",
-      eq(m1.lastOnesStanding, ["vulture", "", "electro", "", "", ""]),
+    check(p + "a card ticked twice is one entry",
+      m1.communityService.filter((s) => s === "cat-in-a-tree").length === 1);
+    check(p + "the second set behaves the same way",
+      eq(m1.lastOnesStanding, ["electro", "vulture"]),
       JSON.stringify(m1.lastOnesStanding));
+
+    /* Osborn Tech is the one that stays cells: the position says which rung the
+       card came in on, so the row is NOT reordered — an unknown slug and a
+       repeat empty their own cell and leave the rest where they were. */
+    check(p + "an unknown Osborn Tech slug empties its cell, not the row",
+      eq(def.normalize({ osbornTech: ["made-up", "arm-cannon"] }).osbornTech,
+        ["", "arm-cannon", ""]),
+      JSON.stringify(def.normalize({ osbornTech: ["made-up", "arm-cannon"] }).osbornTech));
+    check(p + "a row longer than the sheet is cut to the printed cells",
+      def.normalize({ osbornTech: ["arm-cannon", "ionic-boots", "kinetic-armor",
+        "spiked-gauntlet"] }).osbornTech.length === 3);
     check(p + "a card recorded twice keeps only its first cell",
       eq(m1.osbornTech, ["tracking-display", "arm-cannon", ""]),
       JSON.stringify(m1.osbornTech));

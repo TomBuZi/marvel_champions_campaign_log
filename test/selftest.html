@@ -2121,12 +2121,13 @@
       }
 
       // ----------------------------------------------------------- MC27
-      /* The MC27 sheet is the one with no checkbox on it at all: every field is
-         a write-in, and where the line means a card from a printed set it is a
-         dropdown here. So these cases are mostly about the cells being the ones
-         the paper sheet prints, the sets being the right sets, and the one
-         thing the sheet does NOT print — the reputation — driving what the
-         track panel says is in force. */
+      /* MC27 has no printed checkbox on it at all, so where the sheet's blank
+         lines mean cards, the module supplies the set — as boxes where the
+         sheet asks WHICH cards, and as cells where it asks which card came in
+         on which rung. On top of that, the running reputation opens the fields
+         one rung at a time. These cases are about the sets being the right
+         sets, the cells keeping their positions, and the one number governing
+         what is open without ever emptying anything. */
       function smLog() {
         return {
           schemaVersion: 1, id: "sm1", campaignId: "sinister-motives", stateVersion: 1,
@@ -2136,26 +2137,31 @@
             /* Expert, because the hit points only exist there. caseSmExpert is
                the one that starts at standard. */
             expert: true,
-            reputation: null,
+            /* At the top of the track, so every gated field is open and this
+               case can actually type into them. caseSmRep is the one that
+               starts partway up and checks what is closed. */
+            reputation: 25,
             players: [{ hero: "", hp: null, shieldTech: "",
                         aspectAdvantage: "", planningAhead: "" }],
-            /* Deliberately absent: normalize() has to build every cell of every
-               section out of a state that mentions none of them. */
+            /* Deliberately absent: normalize() has to build every set and every
+               cell out of a state that mentions none of them. */
           },
         };
       }
 
       /* The sections the printed sheet has, by their stable data-section keys —
-         not by their labels, which are still to be translated. */
+         not by their labels, which are still to be translated. The three
+         reward sections are not among them: their P1..P4 column is just the
+         player list again, so their fields sit in the player cards. */
       var SM_SECTIONS = ["players", "reputation", "community-service",
-        "waking-nightmare", "last-ones-standing", "final-score", "shield-tech",
-        "aspect-advantage", "planning-ahead", "osborn-tech"];
+        "waking-nightmare", "last-ones-standing", "final-score", "osborn-tech"];
 
       function caseSm() {
         seed({ sm1: smLog() }, "sm1");
         boot("", function (frame, w, d) {
           f0 = w;
           var app = d.getElementById("campaign");
+          var at = function (sel) { return app.querySelectorAll(sel); };
 
           var found = SM_SECTIONS.filter(function (id) {
             return !!app.querySelector('[data-section="' + id + '"]');
@@ -2163,103 +2169,98 @@
           log("every printed section has a panel",
             found.length === SM_SECTIONS.length, found.join());
           log("and no panel beyond them",
-            app.querySelectorAll("[data-section]").length === SM_SECTIONS.length,
-            app.querySelectorAll("[data-section]").length);
+            at("[data-section]").length === SM_SECTIONS.length,
+            at("[data-section]").length);
 
-          /* The distinguishing fact of this sheet: not one printed checkbox.
-             The only one on screen is the level switch, which is the app's, not
-             the sheet's — so it has to be the one in the player panel head. */
-          var boxes = app.querySelectorAll(".sheet-check");
-          log("the sheet itself has no checkbox at all", boxes.length === 1, boxes.length);
-          log("the only one is the level switch in the player panel head",
-            !!app.querySelector('[data-section="players"] .panel-head .flag .sheet-check'));
-
-          /* Four, six and three cells — the grids the sheet prints. */
-          var cs = app.querySelectorAll('[data-section="community-service"] .pool-select');
-          var los = app.querySelectorAll('[data-section="last-ones-standing"] .pool-select');
-          var ot = app.querySelectorAll('[data-section="osborn-tech"] .pool-select');
-          var split = [cs.length, los.length, ot.length].join();
-          log("cells split 4 / 6 / 3 as printed", split === "4,6,3", split);
-
-          /* Five side schemes in the set, plus the placeholder. */
-          log("the Community Service set offers its five cards",
-            cs[0].options.length === 6, cs[0].options.length);
-          log("the Sinister Six set offers its six villains",
-            los[0].options.length === 7, los[0].options.length);
-          log("and the cells are named by the cards of that set",
-            /Cat in a Tree/.test(cs[0].textContent) &&
-            /Kraven the Hunter/.test(los[0].textContent));
+          /* Which cards, so boxes over the whole set: five side schemes and the
+             six villains of the Sinister Six. */
+          var cs = at('[data-section="community-service"] .sheet-check');
+          var los = at('[data-section="last-ones-standing"] .sheet-check');
+          log("the two sets are boxes, five and six of them",
+            cs.length === 5 && los.length === 6, cs.length + "/" + los.length);
+          /* Which card on which rung, so cells: one per Osborn Tech rung. */
+          var ot = at('[data-section="osborn-tech"] .pool-select');
+          log("Osborn Tech stays cells, one per rung", ot.length === 3, ot.length);
+          log("the boxes are named by the cards of their set",
+            /Cat in a Tree/.test(app.querySelector('[data-section="community-service"]').textContent) &&
+            /Kraven the Hunter/.test(app.querySelector('[data-section="last-ones-standing"]').textContent));
 
           /* One row, both languages: the German names are still to be entered,
-             so every option is shown in English and tagged as such. Written as
-             an equivalence, so it stays true once a name is filled in. */
+             so every name is shown in English and tagged as such. Written as an
+             equivalence, so it stays true once a name is filled in. */
           log("the language tag follows the name actually shown",
-            Array.prototype.every.call(cs[0].options, function (opt) {
-              if (!opt.value) return true;                 // the placeholder
-              return (opt.getAttribute("lang") === "en") ===
-                (["Back Alley Burglary", "Cat in a Tree", "Henchmen Heist",
-                  "Off the Rails", "Rubble Rescue"].indexOf(opt.textContent) !== -1);
-            }));
+            Array.prototype.every.call(
+              at('[data-section="community-service"] .flag > span'),
+              function (span) {
+                return (span.getAttribute("lang") === "en") ===
+                  (["Back Alley Burglary", "Cat in a Tree", "Henchmen Heist",
+                    "Off the Rails", "Rubble Rescue"].indexOf(span.textContent) !== -1);
+              }));
 
-          /* Each card exists once, so a cell that takes one takes it away from
-             the cells beside it. */
-          cs[0].value = "cat-in-a-tree";
-          fire(cs[0], "change");
-          log("a card taken by one cell is closed to the next",
-            cs[1].querySelector('option[value="cat-in-a-tree"]').disabled);
-          log("but the cell holding it keeps it selectable",
-            !cs[0].querySelector('option[value="cat-in-a-tree"]').disabled);
-          cs[2].value = "rubble-rescue";
-          fire(cs[2], "change");
+          /* The three reward fields live in the player card, not in panels of
+             their own — and each of them is gated, so each carries the rung. */
+          var card = app.querySelector(".player-card");
+          log("the three reward fields sit in the player card",
+            card.querySelectorAll("[data-unlock]").length === 3,
+            card.querySelectorAll("[data-unlock]").length);
+          log("and only the S.H.I.E.L.D. Tech one is a set",
+            card.querySelectorAll(".pool-select").length === 1,
+            card.querySelectorAll(".pool-select").length);
+
+          /* Ticked out of pool order on purpose: a set comes back in the pool's
+             order, which is what makes normalize a fixpoint. */
+          tick(cs[4]);                                  // Rubble Rescue
+          tick(cs[1]);                                  // Cat in a Tree
+          tick(los[3]);                                 // Kraven the Hunter
+          log("both boxes stayed ticked",
+            cs[4].checked && cs[1].checked);
+
           ot[0].value = "arm-cannon";
           fire(ot[0], "change");
-          los[1].value = "electro";
-          fire(los[1], "change");
+          log("a card taken by one cell is closed to the next",
+            ot[1].querySelector('option[value="arm-cannon"]').disabled);
+          log("but the cell holding it keeps it selectable",
+            !ot[0].querySelector('option[value="arm-cannon"]').disabled);
+          ot[2].value = "kinetic-armor";
+          fire(ot[2], "change");
 
-          /* The three reward panels carry one row per player, and only the
-             S.H.I.E.L.D. Tech one is a set. */
-          log("S.H.I.E.L.D. Tech is a set, one row per player",
-            app.querySelectorAll('[data-section="shield-tech"] .pool-select').length === 1);
-          log("Aspect Advantage and Planning Ahead stay free text",
-            app.querySelectorAll('[data-section="aspect-advantage"] .text-input').length === 1 &&
-            app.querySelectorAll('[data-section="planning-ahead"] .pool-select').length === 0);
-
-          var hero = app.querySelector('[data-section="players"] .text-input');
+          var hero = card.querySelector(".text-input");
           hero.value = "Ghost-Spider";
           fire(hero, "input");
-          log("the reward rows follow the identity field",
-            /Ghost-Spider/.test(
-              app.querySelector('[data-section="shield-tech"] .field-label').textContent),
-            app.querySelector('[data-section="shield-tech"] .field-label').textContent);
-
-          var tech = app.querySelector('[data-section="shield-tech"] .pool-select');
+          var tech = card.querySelector(".pool-select");
           tech.value = "laser-goggles";
           fire(tech, "change");
-          var aspect = app.querySelector('[data-section="aspect-advantage"] .text-input');
-          aspect.value = "Enhanced Reflexes";
-          fire(aspect, "input");
-          fire(aspect, "blur");
+          /* The identity field is the card's first text input; the two free-text
+             rewards follow it. */
+          var texts = card.querySelectorAll(".text-input");
+          texts[1].value = "Enhanced Reflexes";
+          fire(texts[1], "input");
+          fire(texts[1], "blur");
 
           d.querySelector(".btn-add").click();
-          log("a second player brings a second row to every reward panel",
-            app.querySelectorAll('[data-section="planning-ahead"] .text-input').length === 2,
-            app.querySelectorAll('[data-section="planning-ahead"] .text-input').length);
+          log("a second player brings a second set of reward fields",
+            app.querySelectorAll(".player-card [data-unlock]").length === 6,
+            app.querySelectorAll(".player-card [data-unlock]").length);
           log("and the card the first player took is closed to the second",
-            app.querySelectorAll('[data-section="shield-tech"] .pool-select')[1]
+            app.querySelectorAll(".player-card .pool-select")[1]
               .querySelector('option[value="laser-goggles"]').disabled);
 
           w.dispatchEvent(new w.Event("pagehide"));
           setTimeout(function () {
             var st = JSON.parse(localStorage.getItem("mcclog:logs")).sm1.state;
-            log("the cells were stored in the cells they were entered in",
+            log("the set was stored in pool order, not click order",
               JSON.stringify(st.communityService) ===
-                JSON.stringify(["cat-in-a-tree", "", "rubble-rescue", ""]),
+                JSON.stringify(["cat-in-a-tree", "rubble-rescue"]),
               JSON.stringify(st.communityService));
-            log("the empty cells are empty strings, not missing",
-              st.lastOnesStanding.length === 6 && st.osbornTech.length === 3 &&
-              st.lastOnesStanding[1] === "electro" && st.osbornTech[0] === "arm-cannon",
-              JSON.stringify([st.lastOnesStanding, st.osbornTech]));
-            log("the identity and the three rewards were stored",
+            log("the second set too",
+              JSON.stringify(st.lastOnesStanding) ===
+                JSON.stringify(["kraven-the-hunter"]),
+              JSON.stringify(st.lastOnesStanding));
+            log("the cells were stored in the cells they were entered in",
+              JSON.stringify(st.osbornTech) ===
+                JSON.stringify(["arm-cannon", "", "kinetic-armor"]),
+              JSON.stringify(st.osbornTech));
+            log("the identity and two of the rewards were stored",
               st.players[0].hero === "Ghost-Spider" &&
               st.players[0].shieldTech === "laser-goggles" &&
               st.players[0].aspectAdvantage === "Enhanced Reflexes",
@@ -2270,15 +2271,22 @@
       }
 
       /* The reputation is the one piece of state the log page does not print —
-         it comes off the track on page 1 — and everything the panel says about
-         what is in force is derived from it. So: is it derived, and is it
-         derived without stealing the focus out of the field being typed in. */
+         it comes off the track on page 1 — and it governs two things: which
+         rungs are in force, and which fields are open. Both are derived from
+         it, both are repainted in place, and neither may ever empty a field. */
       function caseSmRep() {
         var seeded = smLog();
         seeded.state.reputation = 11;
+        /* Filled in above the current marker on purpose: Planning Ahead opens
+           at 17, so this entry is in a closed field — exactly the state that
+           would lose data if closing were clearing. */
+        seeded.state.players = [{ hero: "Ghost-Spider", hp: 8,
+          shieldTech: "laser-goggles", aspectAdvantage: "Enhanced Reflexes",
+          planningAhead: "Swinging Web Kick" }];
         seed({ sm1: seeded }, "sm1");
         boot("", function (frame, w, d) {
           f0 = w;
+          var app = d.getElementById("campaign");
           var panel = d.querySelector('[data-section="reputation"]');
           var field = panel.querySelector(".num-input");
           var rows = function () { return panel.querySelectorAll("[data-threshold]"); };
@@ -2291,6 +2299,15 @@
             return Array.prototype.filter.call(rows(), function (tr) {
               return tr.classList.contains("is-reached");
             }).map(function (tr) { return tr.getAttribute("data-threshold"); }).join();
+          };
+          /* The rungs of the gated fields that are currently open, in document
+             order — the player card first, then the Osborn Tech cells. */
+          var open = function () {
+            return Array.prototype.filter.call(app.querySelectorAll("[data-unlock]"),
+              function (row) {
+                var c = row.querySelector(".text-input, .pool-select");
+                return c && !c.disabled;
+              }).map(function (row) { return row.getAttribute("data-unlock"); }).join();
           };
 
           log("the track has one editable number and nothing else",
@@ -2308,23 +2325,39 @@
             panel.querySelectorAll(".rep-conditions li").length === 6,
             panel.querySelectorAll(".rep-conditions li").length);
 
+          /* Six gated fields: three in the player card at 1, 9 and 17, and the
+             three Osborn Tech cells at 1, 13 and 21. */
+          log("six fields are gated in all",
+            app.querySelectorAll("[data-unlock]").length === 6,
+            app.querySelectorAll("[data-unlock]").length);
+          log("at 11 exactly the rungs up to 11 are open", open() === "1,9,1", open());
+          var closed = app.querySelector('[data-unlock="17"]');
+          log("a closed field says which rung opens it",
+            /17/.test(closed.querySelector(".lock-note").textContent),
+            closed.querySelector(".lock-note").textContent);
+          log("but its entry is still there, not cleared",
+            closed.querySelector(".text-input").value === "Swinging Web Kick",
+            closed.querySelector(".text-input").value);
+          log("and an open field carries no note",
+            app.querySelector('[data-unlock="9"] .lock-note').textContent === "");
+
           field.focus();
           field.value = "25";
           fire(field, "input");
           log("raising the marker puts every rung in force",
             reached() === "1,5,9,13,17,21,25", reached());
+          log("and opens every gated field", open() === "1,9,17,1,13,21", open());
           /* Repainted in place, not re-rendered: a re-render would replace the
              field and the caret would be gone mid-number. */
-          log("and the field being typed in keeps the focus",
-            d.activeElement === field);
+          log("the field being typed in keeps the focus", d.activeElement === field);
 
-          field.value = "3";
-          fire(field, "input");
-          log("lowering it takes the later ones out again",
-            reached() === "1", reached());
           field.value = "";
           fire(field, "input");
           log("an empty track has nothing in force", reached() === "", reached());
+          log("and closes every gated field again", open() === "", open());
+          log("without emptying any of them",
+            app.querySelector('[data-unlock="1"] .pool-select').value === "laser-goggles",
+            app.querySelector('[data-unlock="1"] .pool-select').value);
 
           field.value = "17";
           fire(field, "input");
@@ -2333,6 +2366,10 @@
           setTimeout(function () {
             var st = JSON.parse(localStorage.getItem("mcclog:logs")).sm1.state;
             log("the reputation was stored", st.reputation === 17, st.reputation);
+            log("and the entries survived being closed and opened again",
+              st.players[0].shieldTech === "laser-goggles" &&
+              st.players[0].planningAhead === "Swinging Web Kick",
+              JSON.stringify(st.players[0]));
             finish();
           }, 500);
         });
@@ -2359,16 +2396,17 @@
           log("the identity field is not hidden with them",
             !!card().querySelector(".text-input"));
           /* The level governs the hit points and nothing else on this sheet, so
-             every other field stays put either way. */
+             every other field stays put either way — including the three reward
+             fields, whose gate is the reputation and not the level. */
           log("standard leaves the reputation field",
             !!d.querySelector('[data-section="reputation"] .num-input'));
-          log("and leaves all thirteen cells",
-            d.querySelectorAll('[data-section="community-service"] .pool-select,' +
-              '[data-section="last-ones-standing"] .pool-select,' +
-              '[data-section="osborn-tech"] .pool-select').length === 13,
-            d.querySelectorAll('[data-section="community-service"] .pool-select,' +
-              '[data-section="last-ones-standing"] .pool-select,' +
-              '[data-section="osborn-tech"] .pool-select').length);
+          log("and leaves the three reward fields in the card",
+            card().querySelectorAll("[data-unlock]").length === 3,
+            card().querySelectorAll("[data-unlock]").length);
+          log("and leaves both sets and the Osborn cells",
+            d.querySelectorAll('[data-section="community-service"] .sheet-check,' +
+              '[data-section="last-ones-standing"] .sheet-check').length === 11 &&
+            d.querySelectorAll('[data-section="osborn-tech"] .pool-select').length === 3);
 
           toggle().checked = true;
           fire(toggle(), "change");
@@ -2402,8 +2440,10 @@
           { hero: "Spider-Man", hp: 5, shieldTech: "shock-knuckles",
             aspectAdvantage: "", planningAhead: "" },
         ];
-        seeded.state.communityService = ["cat-in-a-tree", "", "rubble-rescue", ""];
+        seeded.state.communityService = ["cat-in-a-tree", "rubble-rescue"];
+        seeded.state.lastOnesStanding = ["electro"];
         seeded.state.osbornTech = ["arm-cannon", "", ""];
+        seeded.state.wakingNightmare = 42;
         seed({ sm1: seeded }, "sm1");
         boot("", function (frame, w, d) {
           f0 = w;
@@ -2421,15 +2461,23 @@
           log("print carries each player's three rewards",
             /Laser Goggles/.test(text) && /Enhanced Reflexes/.test(text) &&
             /Swinging Web Kick/.test(text));
+          /* A record of what was written down: Planning Ahead is closed at 11,
+             and it still prints. */
+          log("including one the reputation has closed again",
+            /Planning Ahead: Swinging Web Kick/.test(text));
           log("print carries the reputation and which rungs it reached",
-            /11/.test(text) && /1, 5, 9/.test(text), text);
-          /* An empty cell is a statement too, so the place is printed either
-             way — three Osborn Tech lines for three printed cells. */
-          log("print keeps the empty cells visible",
-            (text.match(/—/g) || []).length >= 3, (text.match(/—/g) || []).length);
-          log("print carries the recorded cards",
-            /Cat in a Tree/.test(text) && /Rubble Rescue/.test(text) &&
-            /Arm Cannon/.test(text));
+            /Aktuelle Reputation: 11/.test(text) && /1, 5, 9/.test(text));
+          /* Which cards were NOT recorded matters as much as which were, so the
+             whole set prints either way. */
+          log("print ticks the recorded cards",
+            /\[x\] Cat in a Tree/.test(text) && /\[x\] Electro/.test(text));
+          log("print leaves the rest of the set unticked",
+            /\[ \] Henchmen Heist/.test(text) && /\[ \] Vulture/.test(text));
+          log("print keeps the empty Osborn Tech cells visible",
+            /Arm Cannon——/.test(text), text);
+          /* Waking Nightmare is a tally, not a place on the track, so it is not
+             bounded by the track's length. */
+          log("print carries a score above the track's length", /42/.test(text));
           /* The printout is a record of a campaign, not a copy of the rulebook
              page: the rungs' wording stays on screen. */
           log("but not the wording of the rungs",

@@ -39,15 +39,15 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   * *Sinister Motives (MC27)* — der einzige Bogen ohne ein einziges gedrucktes
     Kästchen: alles sind Schreibfelder. Je Spieler Identität, Lebenspunkte und
     die drei Belohnungen der Reputationsleiste (S.H.I.E.L.D. Tech, Aspect
-    Advantage, Planning Ahead), dazu die Zellgitter des Bogens — Community
-    Service (4), Last Ones Standing (6) und Osborn Tech (3) — sowie Waking
-    Nightmare und Final Reputation Score als Zahlen. Und die Reputationsleiste
-    selbst: sie steht auf dem Logbuchblatt gar nicht, sondern auf der ersten
-    Seite des gedruckten Bogens, und ohne sie ließe sich nicht sagen, welche
-    Belohnungen gerade gelten. Deshalb ein Zahlenfeld 0–35 und daneben die
-    sieben Stufen (1, 5, 9, 13, 17, 21, 25) mit Belohnung und Strafe; erreichte
-    Stufen sind hervorgehoben, die offenen abgeblendet. Das ist abgeleitet und
-    wird nicht gespeichert.
+    Advantage, Planning Ahead) direkt in der Spielerkarte; dazu Community
+    Service und Last Ones Standing als Kästchen über dem jeweiligen Kartensatz,
+    Osborn Tech als eine Zelle je Stufe der Leiste, und Waking Nightmare sowie
+    Final Reputation Score als Zahlen. Und die Reputationsleiste selbst: sie
+    steht auf dem Logbuchblatt gar nicht, sondern auf der ersten Seite des
+    gedruckten Bogens, und ohne sie ließe sich nicht sagen, welche Belohnungen
+    gerade gelten. Deshalb ein Zahlenfeld 0–35 und daneben die sieben Stufen
+    (1, 5, 9, 13, 17, 21, 25) mit Belohnung und Strafe; erreichte Stufen sind
+    hervorgehoben, die offenen abgeblendet.
 * **Standard- oder Expertenstufe** — der Haken „Expertenmodus“ oben im
   Spielerbereich, in allen vier Kampagnen an derselben Stelle. Auf Standardstufe
   blendet der Bogen aus, was es dort nicht gibt, statt danach zu fragen:
@@ -64,6 +64,15 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   **Ausblenden ist nicht Löschen**: wer versehentlich umschaltet, findet nach dem
   Zurückschalten alles wieder vor. Gedruckt wird der Haken mit, weil er
   entscheidet, was der Bogen überhaupt bedeutet.
+* **Freischaltung durch Reputation** (MC27) — dieselbe Zahl, die die Stufen der
+  Leiste hervorhebt, öffnet auch die Felder: S.H.I.E.L.D. Tech ab 1, Aspect
+  Advantage ab 9, Planning Ahead ab 17, die drei Osborn-Tech-Zellen ab 1, 13 und
+  21. Ein noch nicht freigeschaltetes Feld ist gesperrt und sagt, ab welcher
+  Stufe es aufgeht. **Gesperrt ist nicht versteckt und nicht geleert**: wer die
+  Reputation nach einem Zahlendreher zurückstellt, verliert keine Eintragung —
+  und ein importierter Bogen darf Eintragungen tragen, die die aktuelle Zahl
+  noch nicht erreicht. Was freigeschaltet ist, wird aus der einen Zahl
+  abgeleitet und nie gespeichert.
 * **Karten statt Freitext** (MC10, MC27) — wo auf Papier eine leere Zeile steht, stehen
   hier die tatsächlichen Karten. Bei MC10 hat jedes dieser Felder genau vier gedruckte
   Möglichkeiten, und jedes trägt seine eigene Regel aus der Kampagne:
@@ -77,10 +86,13 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   * *Experimentalwaffen* — der Bogen will die Namen, nicht die Anzahl: Szenario 2
     mischt genau die aufgeschriebenen wieder ins Begegnungsdeck.
 
-  Bei MC27 sind es die vier Kartensätze der Kampagne, und dort ist zusätzlich die
-  **Position** Teil der Eintragung: der Bogen druckt Zellgitter, und in welcher Zelle
-  eine Karte steht, sagt aus, aus welchem Szenario sie kommt. Deshalb werden diese
-  Listen nicht sortiert. Aspect Advantage und Planning Ahead bleiben dort Freitext,
+  Bei MC27 sind es die vier Kartensätze der Kampagne, und die Form folgt der Frage,
+  die der Bogen stellt. *Community Service* und *Last Ones Standing* fragen, **welche**
+  Karten — deshalb Kästchen über dem ganzen Satz. *Osborn Tech* fragt, welche Karte auf
+  **welcher Stufe** der Leiste hereinkam — deshalb eine Zelle je Stufe, und deshalb wird
+  diese eine Liste nicht sortiert: die Position ist Teil der Eintragung. *S.H.I.E.L.D.
+  Tech* gibt es einmal je Kampagne, eine gewählte Karte verschwindet daher aus den
+  Feldern der anderen Spieler. Aspect Advantage und Planning Ahead bleiben Freitext,
   weil die Karte aus der eigenen Sammlung beziehungsweise dem eigenen Deck kommt und
   keine endliche gedruckte Liste ist.
 * **Ein bis vier Spieler** — Karten werden hinzugefügt, wenn jemand mitspielt, statt
@@ -258,7 +270,7 @@ auch über `file://` und direkt aus dem Repo-Root über GitHub Pages.
 | `campaigns/fear-no-evil.js` | die Kampagne MC60: eigenes Datenmodell, eigenes Rendering, eigene Strings |
 | `campaigns/rise-of-red-skull.js` | die Kampagne MC10: feste Kartenpools mit ihren Eindeutigkeitsregeln und drei Szenariofelder; bewusst ohne Szenario-Tabelle |
 | `campaigns/mad-titans-shadow.js` | die Kampagne MC21: Spieler und neun benannte Kästchen in vier Szenario-Abschnitten; das schlankeste der vier Module |
-| `campaigns/sinister-motives.js` | die Kampagne MC27: feste Kartensätze in den Zellgittern des Bogens, drei Belohnungsabschnitte je Spieler und die Reputationsleiste mit abgeleiteten Freischaltungen; das einzige Modul ohne ein einziges gedrucktes Kästchen |
+| `campaigns/sinister-motives.js` | die Kampagne MC27: die vier Kartensätze der Kampagne, drei Belohnungsfelder in der Spielerkarte und die Reputationsleiste, die Stufen *und* Felder freischaltet |
 | `test/lint.js` | Prüfungen ohne Browser: Wörterbücher, Kampagnendefinition, Datenmodell, Paketierung |
 | `test/selftest.html`, `test/run-browser.js` | Selbsttest, der die echte Seite in einem iframe fernsteuert |
 | `fonts/` | Exo 2 (OFL, selbst gehostet), `OFL.txt` daneben |
@@ -336,7 +348,7 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (415 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (425 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   langpath | print | import | lock |
                                     #   lockconflict | random | randomspread |

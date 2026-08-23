@@ -132,7 +132,7 @@ Vorlagen, bewusst verschieden:
 | `campaigns/fear-no-evil.js` | abgeleiteter Zustand, gegenseitige Sperren, Auslosung, `migrate()` |
 | `campaigns/rise-of-red-skull.js` | feste Kartenpools mit Eindeutigkeitsregeln |
 | `campaigns/mad-titans-shadow.js` | das schlankeste: Spieler plus benannte Kästchen |
-| `campaigns/sinister-motives.js` | Kartensätze in Zellgittern, in denen die Position Teil der Eintragung ist; abgeleitete Freischaltungen aus einer Zahl |
+| `campaigns/sinister-motives.js` | eine Zahl, aus der zwei abgeleitete Zustände fallen: erreichte Stufen und freigeschaltete Felder; dazu eine Liste, in der die Position Teil der Eintragung ist |
 
 Harte Punkte:
 
