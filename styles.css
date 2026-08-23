@@ -11,8 +11,17 @@
    explicit [data-theme] overrides, and again inside @media print. */
 
 /* ---------- Self-hosted fonts (OFL, see fonts/OFL.txt) ---------- */
-/* Exo 2 ships as a variable font, so one file per subset covers every weight;
-   the italic file likewise. Same unicode-range split as Google Fonts serves. */
+/* Exo 2 ships as a variable font, so one file per subset covers every weight.
+   Same unicode-range split as Google Fonts serves.
+
+   The ITALIC files are not variable, whatever their font-weight range below
+   says: they are a single heavy instance — half the size of the upright ones,
+   and 100, 400, 700 and 900 all render identically, font-variation-settings
+   included. So italic here is always bold, and everything that sets it does so
+   at font-weight 800 on purpose (the headings, the player name, the table
+   header). Anything wanting LIGHT italic will not get it without a re-subset of
+   the italic variable font; until then, do not ask for it — you will get bold
+   and no error. */
 @font-face{font-family:"Exo 2";font-style:normal;font-weight:100 900;font-display:swap;src:url("fonts/Exo2-Upright.latin.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
 @font-face{font-family:"Exo 2";font-style:normal;font-weight:100 900;font-display:swap;src:url("fonts/Exo2-Upright.latinext.woff2") format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;}
 @font-face{font-family:"Exo 2";font-style:italic;font-weight:100 900;font-display:swap;src:url("fonts/Exo2-Italic.latin.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
@@ -1407,11 +1416,13 @@ body[class*="dnd-"] .entry-list { min-height: 2.2rem; outline: 1px dashed var(--
   to   { opacity: 1; transform: translate(-50%, 0); }
 }
 
-/* The picker's "start another run" rows. Set light and italic against the log
-   titles they sit among — a native select popup may ignore either, which is why
-   the angle brackets around the label carry the distinction and the styling is
-   only a hint. */
-.opt-new { font-style: italic; font-weight: 400; }
+/* The picker's "start another run" rows: the one kind of row in that list that
+   is not a sheet. Set light against the log titles they sit among, and NOT
+   italic — the italic face shipped here is a single heavy instance, so italic
+   would render them bolder than everything else rather than lighter (see the
+   note at the @font-face block). The angle brackets around the label carry the
+   distinction either way, which is what a select popup cannot ignore. */
+.opt-new { font-weight: 400; }
 
 /* ---------- Footer ---------- */
 .footer {
