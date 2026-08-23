@@ -263,7 +263,6 @@ Version N.*
      titleEn: "…", titleDe: "…",
      theme: "mg",               // -> <html data-campaign="mg">
      stateVersion: 1,
-     scenarioCount: 5,
      emptyState: function () {…},           // DOM-frei
      normalize: function (raw) {…},         // DOM-frei, wirft nie
      migrate: function (raw, from) {…},     // ab stateVersion 2 Pflicht, DOM-frei

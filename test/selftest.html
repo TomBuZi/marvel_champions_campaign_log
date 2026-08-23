@@ -1436,23 +1436,49 @@
           var registered = d.querySelectorAll('script[src^="campaigns/"]').length;
           log("one choice per campaign", radios.length === registered,
             radios.length + " of " + registered);
-          log("Fear No Evil stays preselected",
-            radios[0].checked && radios[0].value === "fear-no-evil", radios[0].value);
+          /* Product-number order, not registration order: MC10, MC21, MC60.
+             Read out of the labels and compared against their own sort, so the
+             assertion does not have to be rewritten for a fourth campaign. */
+          var codes = Array.prototype.map.call(
+            choices.querySelectorAll(".choice-text strong"),
+            function (n) { return parseInt(/\(MC(\d+)\)/.exec(n.textContent)[1], 10); });
+          log("the choices are sorted by product number",
+            codes.join() === codes.slice().sort(function (a, b) { return a - b; }).join(),
+            codes.join());
+          log("so the lowest number is preselected",
+            radios[0].checked && radios[0].value === "rise-of-red-skull", radios[0].value);
+          /* The preselected box and the proposed title have to mean the same
+             campaign, or the dialog names one thing and ticks another. */
+          log("the proposed title matches the preselected campaign",
+            d.getElementById("new-log-title").value === "The Rise of Red Skull",
+            d.getElementById("new-log-title").value);
           log("the dialog names MC10",
             /The Rise of Red Skull \(MC10\)/.test(choices.textContent));
-          log("the dialog names the scenario count", /5 Szenarien/.test(choices.textContent));
+          log("the dialog no longer counts scenarios",
+            !/Szenarien/.test(choices.textContent), choices.textContent);
 
           d.getElementById("btn-campaign-cancel").click();
           log("cancel closes the dialog", !dlg.open);
           log("cancel creates nothing", Object.keys(store()).length === 1);
 
           /* Second pass: pick MC10. The dialog rebuilds its choices every time,
-             so the nodes have to be looked up again. */
+             so the nodes have to be looked up again — and by value rather than
+             by position, because the order is a feature now and an index would
+             break the next time a campaign lands. */
           d.getElementById("btn-new").click();
-          var again = d.getElementById("campaign-choices").querySelectorAll("input[type=radio]");
-          again[1].checked = true;
-          fire(again[1], "change");
+          var box = {};
+          Array.prototype.forEach.call(
+            d.getElementById("campaign-choices").querySelectorAll("input[type=radio]"),
+            function (r) { box[r.value] = r; });
+
+          box["mad-titans-shadow"].checked = true;
+          fire(box["mad-titans-shadow"], "change");
           log("picking a campaign renames the log",
+            d.getElementById("new-log-title").value === "The Mad Titan's Shadow",
+            d.getElementById("new-log-title").value);
+          box["rise-of-red-skull"].checked = true;
+          fire(box["rise-of-red-skull"], "change");
+          log("and renames it again when the choice changes back",
             d.getElementById("new-log-title").value === "The Rise of Red Skull",
             d.getElementById("new-log-title").value);
           fire(d.getElementById("campaign-form"), "submit");
@@ -1468,8 +1494,11 @@
           log("the subtitle names MC10",
             /\(MC10\)/.test(d.getElementById("subtitle").textContent),
             d.getElementById("subtitle").textContent);
-          log("the picker groups by campaign",
-            d.getElementById("log-select").querySelectorAll("optgroup").length === 2);
+          var groups = d.getElementById("log-select").querySelectorAll("optgroup");
+          log("the picker groups by campaign", groups.length === 2, groups.length);
+          log("and its groups follow the product number too",
+            /\(MC10\)/.test(groups[0].label) && /\(MC60\)/.test(groups[1].label),
+            groups[0].label + " | " + groups[1].label);
           log("this sheet has no scenario table", !d.querySelector(".sheet-table"));
           log("a fresh sheet starts at standard level",
             active.state.expert === false, active.state.expert);

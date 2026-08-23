@@ -50,7 +50,6 @@ window.I18N = {
     create: "Anlegen",
     cancel: "Abbrechen",
     /* "%s" = Anzahl der Szenarien. */
-    scenarioCount: "%s Szenarien",
 
     linkCopied: "Link in die Zwischenablage kopiert.",
     linkCopiedLong: "Link kopiert — er ist allerdings sehr lang. Messenger, Mail-Programme und QR-Codes kürzen solche Links stillschweigend; im Zweifel besser die JSON-Datei weitergeben.",
@@ -149,7 +148,6 @@ window.I18N = {
     logTitleLabel: "Log name",
     create: "Create",
     cancel: "Cancel",
-    scenarioCount: "%s scenarios",
 
     linkCopied: "Link copied to the clipboard.",
     linkCopiedLong: "Link copied — but it is very long. Messengers, mail clients and QR codes truncate such links silently; when in doubt, pass on the JSON file instead.",

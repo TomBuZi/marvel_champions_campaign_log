@@ -797,9 +797,6 @@
     titleDe: "The Rise of Red Skull",
     theme: "trors",
     stateVersion: 1,
-    /* Crossbones, Absorbing Man, Taskmaster, Zola, Red Skull — played in that
-       fixed order, which is why none of them has a row on the sheet. */
-    scenarioCount: 5,
 
     emptyState: emptyState,
     normalize: normalize,
