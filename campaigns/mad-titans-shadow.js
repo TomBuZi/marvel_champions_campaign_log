@@ -51,16 +51,17 @@
      `key` is the state field and is persisted; every label is an i18n key and
      is not, so rewording one migrates nothing.
 
-     Card names carry an English and a German name, as in MC10. `de: null` means
-     there is no German name on record yet, and then the English one is shown —
-     visibly English rather than blank, and nothing migrates when one is filled
-     in, because only the key is ever stored. */
+     Card names carry an English and a German name, as in MC10, and the English
+     one is shown while `de` is null. Cosmo, Shawarma, Black Swan and Odin keep
+     their English names in the German edition, the way the MC10 allies do, so
+     their `de` stays null on purpose — a decision, not a translation still to be
+     done. Filling one in migrates nothing, because only the key is stored. */
   var SCENARIOS = [
     {
       id: "scenario-1", head: "secScenario1",
       pool: [
         { key: "cosmo",          en: "Cosmo",           de: null },
-        { key: "securityBreach", en: "Security Breach", de: null },
+        { key: "securityBreach", en: "Security Breach", de: "Sicherheitslücke" },
       ],
       extra: [],
     },
@@ -77,7 +78,7 @@
     {
       id: "scenario-3", head: "secScenario3",
       pool: [
-        { key: "systemShock", en: "System Shock", de: null },
+        { key: "systemShock", en: "System Shock", de: "Systemschock" },
       ],
       /* A side scheme that was completed, not a card that was added. */
       extra: [{ key: "infinityStones1B", label: "flagInfinityStones" }],
@@ -85,7 +86,7 @@
     {
       id: "scenario-4", head: "secScenario4",
       pool: [
-        { key: "nornStone", en: "Norn Stone", de: null },
+        { key: "nornStone", en: "Norn Stone", de: "Nornstein" },
         { key: "odin",      en: "Odin",       de: null },
       ],
       extra: [],
@@ -530,17 +531,12 @@
     helpDe: "Der MC21-Bogen ist der schlankeste der drei und folgt dem gedruckten Original: oben die Spieler, darunter neun Kästchen, verteilt auf vier Szenario-Abschnitte. Mehr hält die Kampagne nicht fest — es gibt hier bewusst keine Szenario-Tabelle, kein „Abgeschlossen“, keinen Fortschrittszähler und keinen Würfel. Oben im Spielerbereich steht der Haken „Expertenmodus“: die verbleibenden Lebenspunkte gehen nur auf Expertenstufe von einem Szenario ins nächste mit, und auf Standardstufe blendet der Bogen das Feld aus, statt danach zu fragen. Ausblenden heißt nicht löschen — wer versehentlich umschaltet, verliert nichts. Sieben der neun Kästchen sagen auf Papier denselben Satz („Check here if … was added to campaign pool“), deshalb stehen sie hier als eine Überschrift über benannten Kästchen: das Häkchen selbst ist das „check here“. Die zwei übrigen sagen etwas anderes und behalten ihren eigenen Wortlaut — dass der Avengers Tower das Merkmal „Damaged“ trägt, und dass „The Infinity Stones 1B“ abgeschlossen wurde. Das fünfte Szenario gegen Loki fehlt nicht, es steht auch auf dem gedruckten Bogen nicht: im Finale gibt es nichts festzuhalten. In der Bogen-Auswahl sind trotzdem fünf Szenarien genannt, weil diese Zahl die Kampagne beschreibt und nicht diese Seite.",
     helpEn: "The MC21 sheet is the leanest of the three and follows the printed original: players at the top, and below them nine checkboxes spread over four scenario sections. The campaign records nothing else — there is deliberately no scenario table, no “completed”, no progress counter and no die. At the top of the player area sits the “Expert level” box: the remaining hit points carry from one scenario to the next only at expert level, and at standard level the sheet hides that field rather than asking for it. Hiding is not clearing — switching by accident loses nothing. Seven of the nine boxes say the same sentence on paper (“Check here if … was added to campaign pool”), so here they are one caption over named boxes: the checkbox itself is the “check here”. The remaining two say something else and keep their own wording — that Avengers Tower carries the Damaged trait, and that “The Infinity Stones 1B” was completed. The fifth scenario against Loki is not missing; it is not on the printed sheet either, because the finale has nothing to record. The log picker still names five scenarios, because that number describes the campaign and not this page.",
 
-    /* Deutsche Feldnamen: MC21 ist auf Deutsch erschienen, aber die genaue
-       Beschriftung des gedruckten deutschen Bogens ließ sich nicht belegen. Die
-       mit „zu bestätigen“ markierten Zeilen bitte gegen den Bogen abgleichen
-       und je eine Zeile korrigieren. Es migriert nichts, wenn sie sich ändern —
-       persistiert werden nur Feldschlüssel, nie Beschriftungen. Die Kartennamen
-       stehen oben in SCENARIOS, je mit einem en- und einem de-Feld; solange
-       de null ist, wird der englische Name gezeigt. */
+    /* Deutsche Feldnamen: gegen die deutsche Ausgabe abgeglichen. Ändert sich
+       eine, migriert nichts — persistiert werden nur Feldschlüssel, nie
+       Beschriftungen. Die Kartennamen stehen oben in SCENARIOS. */
     i18n: {
       de: {
         secPlayers: "Spieler-Informationen",
-        /* Zu bestätigen: Szenarionamen der deutschen Ausgabe. */
         secScenario1: "Szenario 1: Ebony Maw",
         secScenario2: "Szenario 2: Tower Defense",
         secScenario3: "Szenario 3: Thanos",
@@ -560,12 +556,9 @@
         confirmRemovePlayer: "Diesen Spieler samt Eintragungen entfernen?",
         duplicateHero: "Dieser Held ist schon einem anderen Spieler zugeordnet.",
 
-        /* Zu bestätigen: Wortlaut der deutschen Ausgabe. */
-        lblAddedToPool: "In den Kampagnen-Pool gelegt",
-        /* Zu bestätigen: deutsches Merkmal des „Avengers Tower“. */
-        flagTowerDamaged: "Avengers Tower hat das Merkmal „Damaged“",
-        /* Zu bestätigen: deutscher Name des Nebenplans. */
-        flagInfinityStones: "„The Infinity Stones 1B“ abgeschlossen",
+        lblAddedToPool: "Dem Kampagnenvorrat hinzugefügt",
+        flagTowerDamaged: "Avengers Tower hat das Merkmal „Beschädigt“",
+        flagInfinityStones: "„Die Infinitysteine 1B“ vollendet",
       },
       en: {
         secPlayers: "Player Information",
@@ -588,8 +581,8 @@
         duplicateHero: "This hero is already assigned to another player.",
 
         lblAddedToPool: "Added to campaign pool",
-        flagTowerDamaged: "Avengers Tower has the Damaged trait",
-        flagInfinityStones: "The Infinity Stones 1B was completed",
+        flagTowerDamaged: "Avengers Tower has the „Damaged“ trait",
+        flagInfinityStones: "„The Infinity Stones 1B“ was completed",
       },
     },
   });

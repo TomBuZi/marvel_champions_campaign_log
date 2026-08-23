@@ -1896,13 +1896,26 @@
             /Hela/.test(sections[3].textContent));
           log("the pooled cards are named",
             /Cosmo/.test(sections[0].textContent) &&
-            /Security Breach/.test(sections[0].textContent));
+            /Sicherheitslücke/.test(sections[0].textContent),
+            sections[0].textContent);
+          /* One row, both languages: Cosmo keeps its English name in the German
+             edition, Security Breach is translated. A card shown in English may
+             be tagged lang="en" and a translated one may not — tagging a German
+             string as English misleads hyphenation and screen readers. Written
+             as an equivalence, so it stays true if a name is filled in later. */
+          log("the language tag follows the name actually shown",
+            Array.prototype.every.call(sections[0].querySelectorAll(".flag > span"),
+              function (span, n) {
+                return (span.textContent === ["Cosmo", "Security Breach"][n]) ===
+                  (span.getAttribute("lang") === "en");
+              }));
           /* The two boxes that do not say "added to campaign pool" keep their
              own wording. */
           log("the tower keeps its own wording",
             /Avengers Tower/.test(sections[1].textContent));
           log("and so does the side scheme",
-            /Infinity Stones 1B/.test(sections[2].textContent));
+            /Infinitysteine 1B/.test(sections[2].textContent),
+            sections[2].textContent);
 
           tick(sections[0].querySelectorAll(".sheet-check")[0]);   // Cosmo
           tick(sections[1].querySelectorAll(".sheet-check")[2]);   // Damaged
@@ -2004,10 +2017,10 @@
             /Lebenspunkte: 8/.test(text) && /Lebenspunkte: 11/.test(text));
           /* Which cards did NOT join the pool matters too, so all nine print. */
           log("print ticks the recorded boxes", /\[x\] Cosmo/.test(text));
-          log("print leaves the others unticked", /\[ \] Security Breach/.test(text));
+          log("print leaves the others unticked", /\[ \] Sicherheitslücke/.test(text));
           log("print ticks the tower trait", /\[x\] Avengers Tower/.test(text));
           log("print leaves the side scheme unticked",
-            /\[ \] .{0,3}The Infinity Stones 1B/.test(text));
+            /\[ \] .{0,3}Die Infinitysteine 1B/.test(text));
           finish();
         });
       }
