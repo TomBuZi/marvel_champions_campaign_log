@@ -20,6 +20,10 @@ window.I18N = {
     unofficial: "inoffiziell",
     logLabel: "Bogen",
     untitled: "Ohne Titel",
+    /* Die Zeile unter jeder Kampagnen-Überschrift der Bogen-Auswahl. Die
+       spitzen Klammern setzt core.js, damit sie keiner Übersetzung verloren
+       gehen können. */
+    newRun: "Neue Kampagne starten",
     menu: "Menü",
     close: "Schließen",
 
@@ -119,6 +123,7 @@ window.I18N = {
     unofficial: "unofficial",
     logLabel: "Log",
     untitled: "Untitled",
+    newRun: "Start a new campaign",
     menu: "Menu",
     close: "Close",
 

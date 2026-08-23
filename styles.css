@@ -11,8 +11,17 @@
    explicit [data-theme] overrides, and again inside @media print. */
 
 /* ---------- Self-hosted fonts (OFL, see fonts/OFL.txt) ---------- */
-/* Exo 2 ships as a variable font, so one file per subset covers every weight;
-   the italic file likewise. Same unicode-range split as Google Fonts serves. */
+/* Exo 2 ships as a variable font, so one file per subset covers every weight.
+   Same unicode-range split as Google Fonts serves.
+
+   The ITALIC files are not variable, whatever their font-weight range below
+   says: they are a single heavy instance — half the size of the upright ones,
+   and 100, 400, 700 and 900 all render identically, font-variation-settings
+   included. So italic here is always bold, and everything that sets it does so
+   at font-weight 800 on purpose (the headings, the player name, the table
+   header). Anything wanting LIGHT italic will not get it without a re-subset of
+   the italic variable font; until then, do not ask for it — you will get bold
+   and no error. */
 @font-face{font-family:"Exo 2";font-style:normal;font-weight:100 900;font-display:swap;src:url("fonts/Exo2-Upright.latin.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
 @font-face{font-family:"Exo 2";font-style:normal;font-weight:100 900;font-display:swap;src:url("fonts/Exo2-Upright.latinext.woff2") format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;}
 @font-face{font-family:"Exo 2";font-style:italic;font-weight:100 900;font-display:swap;src:url("fonts/Exo2-Italic.latin.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
@@ -390,6 +399,136 @@
   color-scheme: dark;
 }
 
+/* ---------- Campaign skin: MC27, Sinister Motives ----------
+   Sampled from mc27_sinister_motives_campaignlog.pdf the same way the three
+   palettes above were sampled from their sheets: the fill colours of the vector
+   areas in the page content stream, weighted by how much area each covers.
+   Violet #50225f carries 19.6% of the area and the dark plum frame #26171e
+   another 19.6%, the pale pink panels #f3dadb 7%, with crimson #c41e5d for
+   every outline and a hot pink #cf4398 on the sheet's own title. Violet and
+   crimson also keep MC27 apart from MC10's green and MC21's indigo at a glance.
+
+   One is lightened from what was sampled, for the mirror image of the reason
+   MC10's --brick and MC21's --page are darkened: --zap is a surface that carries
+   text — the notice bar and the badge set --on-zap on it — and the printed
+   #cf4398 holds only 4.0 against that ink. #ee8ac5 holds 7.4, and 5.2 against
+   the page for the badge's own outline.
+
+   Dark mode keeps all of the sheet's colours rather than only the violet: the
+   page field stays a deep violet, the panels go to the plum of the printed
+   frame so the crimson side of the sheet is still there, the accent stays hot
+   pink, and the text is a warm pink-white. An all-violet dark mode reads as a
+   different campaign than its own light mode. The accent lives in the tick
+   here, so --check-on carries it rather than --bar.
+
+   Four blocks, mirroring the four above, and for the reason spelled out there:
+   a single [data-campaign] block outranks the bare :root inside the dark media
+   query and would paint the light palette in dark mode. */
+:root[data-campaign="sm"] {
+  --page:      #50225f;   /* violet page field                            */
+  --bar:       #c41e5d;   /* crimson: bars, borders, ink outlines         */
+  --brick:     #6b3378;   /* mid violet, table body — derived and kept
+                             dark enough that the text on it holds 7.3    */
+  --panel-1:   #f7e5e6;   /* panel gradient, top                         */
+  --panel-2:   #f3dadb;   /* … bottom                                    */
+  --pill:      #e8b9be;   /* heading pill, table header row              */
+  --check:     #ebc9cc;   /* empty checkbox                              */
+  --zap:       #ee8ac5;   /* accent pink: focus, ticks, counters —
+                             lightened from the sampled #cf4398, which
+                             cannot carry the ink                        */
+  --ink:       #26171e;   /* near-black plum text                        */
+
+  --bg-input: #fffafb;
+  --text-dim: #5e3a52;
+  --accent-strong: #3a1746;
+  --accent-2: #8e2554;
+  /* Stays red: here the colour carries meaning, not identity. */
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(238, 138, 197, 0.55);
+  --halftone: rgba(196, 30, 93, 0.16);
+  --hatch: rgba(196, 30, 93, 0.10);
+  --on-brick: #f7e5e6;
+  --on-page: #f7e5e6;
+  --on-zap: #26171e;
+  --on-danger: #fff4ef;
+  /* Cream on crimson, the way the sheet sets its own title: the printed pink
+     would vanish on the crimson box. */
+  --tick: #f9f2f0;
+  --title-shadow: #f7e5e6;
+  --zap-strong: #fba2d6;
+  --input-settled: #dcc3c6;
+  --backdrop: rgba(20, 6, 16, 0.55);
+}
+/* --accent, --panel-border and --ink-shadow are left alone on purpose: they
+   are already defined as var(--bar) and follow it by themselves. */
+@media (prefers-color-scheme: dark) {
+  :root[data-campaign="sm"] {
+    --page: #1e0c2b; --bar: #e9a8c6; --brick: #3d1830;
+    --panel-1: #2c1226; --panel-2: #220e1e; --pill: #46203f;
+    --check: #2a1024; --zap: #f58cc4; --ink: #f5e4ea; --check-on: #f58cc4;
+    --bg-input: #1c0a18; --panel-border: #6b3a5e; --text-dim: #c79bb4;
+    --accent: #e9a8c6; --accent-strong: #f6cfe0; --accent-2: #f0a0c8;
+    --danger: #ff6b5c;
+    --glow: 0 0 0 3px rgba(245, 140, 196, 0.40);
+    --halftone: rgba(255, 255, 255, 0.06);
+    --hatch: rgba(255, 255, 255, 0.05);
+    --ink-shadow: 4px 4px 0 0 #0d0410;
+    --on-brick: #f5e4ea;
+    --on-page: #f5e4ea;
+    --on-zap: #26171e;
+    --on-danger: #2b0a07;
+    --tick: #1e0c2b;
+    --title-shadow: #0d0410;
+    --zap-strong: #fba5d2;
+    --input-settled: #140819;
+    --backdrop: rgba(10, 4, 14, 0.6);
+  }
+}
+:root[data-campaign="sm"][data-theme="light"] {
+  --page: #50225f; --bar: #c41e5d; --brick: #6b3378;
+  --panel-1: #f7e5e6; --panel-2: #f3dadb; --pill: #e8b9be;
+  --check: #ebc9cc; --zap: #ee8ac5; --ink: #26171e;
+  --bg-input: #fffafb; --panel-border: var(--bar); --text-dim: #5e3a52;
+  --accent: var(--bar); --accent-strong: #3a1746; --accent-2: #8e2554;
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(238, 138, 197, 0.55);
+  --halftone: rgba(196, 30, 93, 0.16);
+  --hatch: rgba(196, 30, 93, 0.10);
+  --ink-shadow: 4px 4px 0 0 var(--bar);
+  --on-brick: #f7e5e6;
+  --on-page: #f7e5e6;
+  --on-zap: #26171e;
+  --on-danger: #fff4ef;
+  --tick: #f9f2f0;
+  --title-shadow: #f7e5e6;
+  --zap-strong: #fba2d6;
+  --input-settled: #dcc3c6;
+  --backdrop: rgba(20, 6, 16, 0.55);
+  color-scheme: light;
+}
+:root[data-campaign="sm"][data-theme="dark"] {
+  --page: #1e0c2b; --bar: #e9a8c6; --brick: #3d1830;
+  --panel-1: #2c1226; --panel-2: #220e1e; --pill: #46203f;
+  --check: #2a1024; --zap: #f58cc4; --ink: #f5e4ea; --check-on: #f58cc4;
+  --bg-input: #1c0a18; --panel-border: #6b3a5e; --text-dim: #c79bb4;
+  --accent: #e9a8c6; --accent-strong: #f6cfe0; --accent-2: #f0a0c8;
+  --danger: #ff6b5c;
+  --glow: 0 0 0 3px rgba(245, 140, 196, 0.40);
+  --halftone: rgba(255, 255, 255, 0.06);
+  --hatch: rgba(255, 255, 255, 0.05);
+  --ink-shadow: 4px 4px 0 0 #0d0410;
+  --on-brick: #f5e4ea;
+  --on-page: #f5e4ea;
+  --on-zap: #26171e;
+  --on-danger: #2b0a07;
+  --tick: #1e0c2b;
+  --title-shadow: #0d0410;
+  --zap-strong: #fba5d2;
+  --input-settled: #140819;
+  --backdrop: rgba(10, 4, 14, 0.6);
+  color-scheme: dark;
+}
+
 /* ---------- Base ---------- */
 * { box-sizing: border-box; }
 
@@ -496,6 +635,10 @@ a { color: var(--accent-2); }
 }
 
 .log-picker { display: flex; }
+/* The picker takes its width from its widest row, and the rows are log titles
+   plus the "start another run" label — either can be long. Capped, so the
+   topbar cannot push past the viewport on a phone. */
+.log-picker select { max-width: min(22rem, 60vw); }
 
 /* ---------- Buttons and inputs ---------- */
 select, input, textarea, button {
@@ -673,6 +816,150 @@ button:focus-visible {
 .scenario-row { display: grid; gap: 1rem; }
 @media (min-width: 48rem) {
   .scenario-row { grid-template-columns: 1fr 1fr; }
+}
+
+/* MC27's unlabelled cell grid — the Osborn Tech row, one cell per rung of the
+   reputation track. Keyed on the number of cells, the way .player-grid is keyed
+   on the number of players, so the sheet's own 1x3 survives instead of being
+   whatever happens to fit; the breakpoint is where the card names stop being
+   readable in a narrower cell, not where they stop fitting. */
+.cell-row {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 62rem) {
+  .cell-row[data-cells="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+/* A cell is its control plus the line saying which rung opens it. */
+.cell-row > .cell { display: grid; gap: 0.2rem; align-content: start; }
+
+/* A field with a die beside it. MC60 does this inside a table cell, MC27 in a
+   player card and in an Osborn Tech cell, so the shape gets a name of its own.
+   min-width on the field, or a long card name pushes the die off the edge. */
+.with-die {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.with-die > .pool-select { flex: 1 1 auto; min-width: 0; }
+
+/* What a die dealt, offered so the player can keep one. Transient: the draw is
+   not part of the sheet, so it lives in the DOM only and goes as soon as the
+   choice is made. */
+.draw-list { margin-top: 0.35rem; }
+.draw-caption {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.chip-draw {
+  width: 100%;
+  font: inherit;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+}
+.chip-draw:hover,
+.chip-draw:focus-visible { background: var(--pill); }
+
+/* The per-player symbol MC27 sets in three of its rule lines. Drawn here, like
+   the checkbox and the halftone above, because the printed glyph comes from the
+   publisher's icon font and that is not ours to ship: a head and a pair of
+   shoulders in the current text colour, sized in em so it follows whatever line
+   it sits in. The element carries the meaning as its accessible name — see
+   ruleText() in campaigns/sinister-motives.js. */
+.icon-pp {
+  position: relative;
+  display: inline-block;
+  width: 0.6em;
+  height: 0.88em;
+  vertical-align: -0.14em;
+  margin: 0 0.1em;
+}
+.icon-pp::before,
+.icon-pp::after {
+  content: "";
+  position: absolute;
+  background: currentColor;
+}
+.icon-pp::before {
+  top: 0;
+  left: 50%;
+  width: 0.4em;
+  height: 0.4em;
+  transform: translateX(-50%);
+  border-radius: 50%;
+}
+.icon-pp::after {
+  left: 0;
+  right: 0;
+  bottom: 0.04em;
+  height: 0.42em;
+  border-radius: 46% 46% 14% 14% / 68% 68% 22% 22%;
+}
+
+/* Why a field is closed, said in the open rather than only in a tooltip — the
+   rung that opens it is information the player wants before they get there.
+   Empty while the field is open, so the row does not jump when it opens. */
+.lock-note {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-dim);
+}
+.lock-note:empty { display: none; }
+/* A field the reputation has not opened yet. Same idiom as a locked checkbox
+   further down — dashed border, slight fade, not-allowed cursor — and for the
+   same reason: whatever is already written in it stays legible, because
+   lowering the marker must not hide a record. */
+.pool-select:disabled,
+.text-input:disabled {
+  cursor: not-allowed;
+  border-style: dashed;
+  opacity: 0.8;
+}
+
+/* The "Conditions" legend from the track page. Two columns where there is room,
+   like the printed grid, one where there is not. */
+.rep-conditions {
+  margin: 0 0 0.8rem;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  column-width: 15rem;
+  column-gap: 1.5rem;
+}
+
+/* The reputation thresholds. Scoped to .rep-table so the MC60 scenario table
+   is untouched: its cells hold controls and centre well, these hold prose and
+   do not. */
+/* Left and top. Both cells hold prose of very different lengths, so centring
+   them left a short rung floating in the middle of a tall row, and the number
+   column goes with them so every row starts on the same line.
+
+   Written as .sheet-table.rep-table rather than .rep-table, so it does not
+   depend on where in this file the rule sits: the generic .sheet-table rule
+   further down centres its cells, and at equal specificity the later rule wins
+   — which is exactly how the first attempt at this ended up doing nothing. */
+.sheet-table.rep-table th,
+.sheet-table.rep-table td {
+  text-align: left;
+  vertical-align: top;
+}
+.rep-table .rep-at { white-space: nowrap; }
+.rep-table .rep-rule { margin: 0; }
+.rep-table .rep-rule + .rep-rule { margin-top: 0.4rem; }
+/* A threshold already reached is in force, and says so twice over: the number
+   goes bold and the row gets an accent edge. The ones still ahead are dimmed —
+   but only to 0.72, the same figure MC60 uses for a failed row, because that is
+   where the text on --brick still holds 4.5. They are reference, not history:
+   nothing is taken away, and a marker can move back down. */
+.rep-table tbody tr:not(.is-reached) { opacity: 0.72; }
+.rep-table tbody tr.is-reached .rep-at {
+  font-weight: 700;
+  box-shadow: inset 4px 0 0 0 var(--zap);
 }
 
 /* Two field groups stacked in one panel — MC21's scenario 2 and 3 put the
@@ -1128,6 +1415,14 @@ body[class*="dnd-"] .entry-list { min-height: 2.2rem; outline: 1px dashed var(--
   from { opacity: 0; transform: translate(-50%, 6px); }
   to   { opacity: 1; transform: translate(-50%, 0); }
 }
+
+/* The picker's "start another run" rows: the one kind of row in that list that
+   is not a sheet. Set light against the log titles they sit among, and NOT
+   italic — the italic face shipped here is a single heavy instance, so italic
+   would render them bolder than everything else rather than lighter (see the
+   note at the @font-face block). The angle brackets around the label carry the
+   distinction either way, which is what a select popup cannot ignore. */
+.opt-new { font-weight: 400; }
 
 /* ---------- Footer ---------- */
 .footer {

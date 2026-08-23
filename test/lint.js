@@ -385,6 +385,164 @@ for (const def of campaigns) {
     check(p + "and the boxes nobody touched stay unticked",
       ticked.flags.shawarma === false && ticked.flags.towerDamaged === false);
   }
+
+  if (def.id === "sinister-motives") {
+    /* The generic fixture feeds MC60's `scenarios`, `removed` and `flags`, none
+       of which is a field on this sheet. None of it may land. */
+    check(p + "no scenarios key on this sheet", once.scenarios === undefined);
+    check(p + "no removed key on this sheet", once.removed === undefined);
+    check(p + "no flags key on this sheet", once.flags === undefined);
+    check(p + "a notes field is not part of this sheet",
+      def.normalize({ notes: "anything" }).notes === undefined);
+
+    /* The level is a real boolean, and standard is the default: a sheet that
+       says nothing is not an expert campaign. */
+    check(p + "the level defaults to standard", empty.expert === false);
+    check(p + "a tolerant truthy level reads as expert",
+      def.normalize({ expert: "true" }).expert === true);
+    /* Hiding is not clearing: the hit points have to survive a sheet that is
+       currently standard, or toggling by accident would cost data. */
+    check(p + "a standard sheet keeps its hidden hit points",
+      def.normalize({ expert: false, players: [{ hero: "Ghost-Spider", hp: 6 }] })
+        .players[0].hp === 6);
+
+    check(p + "player list capped at 4", once.players.length === 4, once.players.length);
+    check(p + "an empty player list still yields one player",
+      def.normalize({ players: [] }).players.length === 1);
+    /* The three "Reputation Track Reward" sections live on the player, so the
+       key set says so — a parallel list would let a removed player shift the
+       entries out from under the names. */
+    check(p + "a player carries the identity, the hit points and three rewards",
+      eq(Object.keys(once.players[0]).sort(),
+        ["aspectAdvantage", "hero", "hp", "planningAhead", "shieldTech"]),
+      JSON.stringify(Object.keys(once.players[0])));
+    check(p + "hero trimmed, hp clamped",
+      once.players[0].hero === "Daredevil" && once.players[0].hp === 99,
+      once.players[0].hero + "/" + once.players[0].hp);
+    check(p + "a blank hit point field stays null",
+      def.normalize({ players: [{ hp: "" }] }).players[0].hp === null);
+
+    /* The reputation is the only state here that page 2 does not print, and
+       everything the panel says about what is unlocked is derived from it — so
+       an out-of-range number must be pulled back onto the track, not stored. */
+    check(p + "the reputation starts blank", empty.reputation === null);
+    check(p + "a blank reputation stays null",
+      def.normalize({ reputation: "" }).reputation === null);
+    check(p + "the reputation is clamped to the length of the track",
+      def.normalize({ reputation: "99" }).reputation === 35 &&
+      def.normalize({ reputation: -3 }).reputation === 0,
+      JSON.stringify([def.normalize({ reputation: "99" }).reputation,
+        def.normalize({ reputation: -3 }).reputation]));
+    check(p + "an unreadable reputation reads as blank, not as zero",
+      def.normalize({ reputation: "nope" }).reputation === null);
+    /* The final score is a place on the track and shares its range; Waking
+       Nightmare is a scenario tally and does not, so a value above the track's
+       length has to survive there and be pulled back here. */
+    check(p + "the final score is bounded by the track",
+      def.normalize({ finalScore: 999 }).finalScore === 35 &&
+      def.normalize({ finalScore: -1 }).finalScore === 0);
+    check(p + "but Waking Nightmare is not",
+      def.normalize({ wakingNightmare: 40 }).wakingNightmare === 40 &&
+      def.normalize({ wakingNightmare: 999 }).wakingNightmare === 99,
+      JSON.stringify([def.normalize({ wakingNightmare: 40 }).wakingNightmare,
+        def.normalize({ wakingNightmare: 999 }).wakingNightmare]));
+
+    /* Two of the three named card sections ask WHICH cards, so they are sets
+       and start out as nothing at all. Osborn Tech asks which card came in on
+       which rung, so it keeps one cell per rung — three of them, and that
+       number is derived in the module from the rungs that take a card, not
+       written down a second time. A missing cell would read as empty on screen
+       and then be written back on the next save, which is how a cell silently
+       disappears from a stored sheet. */
+    check(p + "the two sets start out as nothing at all",
+      eq(empty.communityService, []) && eq(empty.lastOnesStanding, []),
+      JSON.stringify([empty.communityService, empty.lastOnesStanding]));
+    check(p + "Osborn Tech has one cell per rung that takes a card",
+      empty.osbornTech.length === 3, empty.osbornTech.length);
+    check(p + "and its cells start empty",
+      empty.osbornTech.every((v) => v === ""));
+
+    /* A fixture of the sheet's own fields: unknown slugs, repeats within a
+       section, a repeat across two players, a too-long list and a too-short
+       one. The generic fixture above touches none of these. */
+    const dirtySm = {
+      players: [
+        { hero: "Ghost-Spider", hp: "500", shieldTech: "laser-goggles",
+          aspectAdvantage: "  Enhanced Reflexes  ",
+          planningAhead: "y".repeat(500) },
+        { hero: "Spider-Man", shieldTech: "laser-goggles",   // already taken
+          aspectAdvantage: 7, planningAhead: null },
+        { hero: "Venom", shieldTech: "not-a-card" },
+        "not even an object",
+      ],
+      expert: 1,
+      reputation: 13,
+      /* An unknown slug, a repeat, and a value that is not a string at all —
+         and deliberately in the wrong order, because a set comes back in the
+         pool's order rather than the order it arrived in. */
+      communityService: ["cat-in-a-tree", "made-up", "cat-in-a-tree",
+                         "off-the-rails", "rubble-rescue"],
+      wakingNightmare: "4",
+      lastOnesStanding: ["vulture", 7, "electro"],
+      finalScore: "28",
+      osbornTech: ["tracking-display", "arm-cannon", "tracking-display"],
+      scenarios: [{ slug: "does-not-exist" }],
+      flags: { invented: true },
+      somethingUnknown: { nested: [1, 2, 3] },
+    };
+    const m1 = def.normalize(dirtySm);
+    check(p + "MC27 fixture is idempotent", eq(m1, def.normalize(m1)), JSON.stringify(m1));
+
+    /* The two sets: unknown slugs out, duplicates out, and the survivors in
+       the pool's own order — that ordering is what makes normalize a fixpoint.
+       A blank in the input is simply not a slug, which is also why a sheet
+       stored in the older cell shape reads correctly here. */
+    check(p + "a set drops what it does not know and keeps pool order",
+      eq(m1.communityService, ["cat-in-a-tree", "off-the-rails", "rubble-rescue"]),
+      JSON.stringify(m1.communityService));
+    check(p + "a card ticked twice is one entry",
+      m1.communityService.filter((s) => s === "cat-in-a-tree").length === 1);
+    check(p + "the second set behaves the same way",
+      eq(m1.lastOnesStanding, ["electro", "vulture"]),
+      JSON.stringify(m1.lastOnesStanding));
+
+    /* Osborn Tech is the one that stays cells: the position says which rung the
+       card came in on, so the row is NOT reordered — an unknown slug and a
+       repeat empty their own cell and leave the rest where they were. */
+    check(p + "an unknown Osborn Tech slug empties its cell, not the row",
+      eq(def.normalize({ osbornTech: ["made-up", "arm-cannon"] }).osbornTech,
+        ["", "arm-cannon", ""]),
+      JSON.stringify(def.normalize({ osbornTech: ["made-up", "arm-cannon"] }).osbornTech));
+    check(p + "a row longer than the sheet is cut to the printed cells",
+      def.normalize({ osbornTech: ["arm-cannon", "ionic-boots", "kinetic-armor",
+        "spiked-gauntlet"] }).osbornTech.length === 3);
+    check(p + "a card recorded twice keeps only its first cell",
+      eq(m1.osbornTech, ["tracking-display", "arm-cannon", ""]),
+      JSON.stringify(m1.osbornTech));
+
+    check(p + "the reputation and both scores survive the fixture",
+      m1.reputation === 13 && m1.wakingNightmare === 4 && m1.finalScore === 28,
+      JSON.stringify([m1.reputation, m1.wakingNightmare, m1.finalScore]));
+
+    /* Each S.H.I.E.L.D. Tech upgrade exists once in the campaign. */
+    check(p + "the same upgrade cannot go to two players",
+      m1.players[0].shieldTech === "laser-goggles" && m1.players[1].shieldTech === "",
+      JSON.stringify([m1.players[0].shieldTech, m1.players[1].shieldTech]));
+    check(p + "an unknown upgrade slug is cleared",
+      m1.players[2].shieldTech === "", m1.players[2].shieldTech);
+    /* Free text, because the card comes from the player's own collection or
+       deck — trimmed and capped like every other name field here. */
+    check(p + "the free-text rewards are trimmed and capped",
+      m1.players[0].aspectAdvantage === "Enhanced Reflexes" &&
+      m1.players[0].planningAhead.length === 60,
+      m1.players[0].aspectAdvantage + "/" + m1.players[0].planningAhead.length);
+    /* Same tolerance every text field on every sheet has: a null is nothing,
+       a number is its digits. Asserted here so a change to coerceText() shows
+       up as a failing expectation rather than as quietly different data. */
+    check(p + "a free-text reward tolerates a null and a number alike",
+      m1.players[1].planningAhead === "" && m1.players[1].aspectAdvantage === "7",
+      JSON.stringify([m1.players[1].aspectAdvantage, m1.players[1].planningAhead]));
+  }
 }
 
 // ------------------------------------------------------------------- roster

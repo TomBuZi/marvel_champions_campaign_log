@@ -35,6 +35,10 @@
   /* Stand-in for a missing timestamp. Deliberately not "now" — see normalizeLog. */
   var EPOCH_ISO = "1970-01-01T00:00:00.000Z";
   var MENU_EDGE = 12;
+  /* The picker holds one row per campaign that is not a log but a way to start
+     another run of it. Prefixed so it can never be mistaken for a log id, which
+     is always a uuid. */
+  var NEW_RUN = "new:";
 
   var W = window.W;
 
@@ -559,9 +563,11 @@
   }
 
   // ---- Rendering -----------------------------------------------------------
-  /* Log picker, grouped by campaign. One <optgroup> per campaign keeps the
-     runs of different campaigns apart once there is more than one; with a
-     single campaign registered there is simply one group. */
+  /* Log picker, grouped by campaign. One <optgroup> per REGISTERED campaign,
+     whether or not there is a run of it yet: the heading plus the "start
+     another run" row under it is how a campaign is begun from here, so a
+     campaign nobody has played must still have its heading. A group for an
+     unknown campaign only appears because a stored log points at one. */
   function renderLogSelect() {
     var sel = document.getElementById("log-select");
     sel.innerHTML = "";
@@ -577,11 +583,26 @@
       if (order.indexOf(cid) === -1) order.push(cid);
     });
     order.forEach(function (cid) {
-      var ids = byCampaign[cid];
-      if (!ids) return;
+      var ids = byCampaign[cid] || [];
       var def = campaignById(cid);
+      /* An unknown campaign with nothing under it would be a heading over
+         nothing at all — and there is no starting a run of a campaign this
+         build does not have. */
+      if (!def && !ids.length) return;
       var group = el("optgroup", null,
         { label: def ? campaignTitle(def) + " (" + def.code + ")" : cid });
+      /* Directly under the heading, before the runs: starting another run of
+         the campaign you are looking at is a thing you do from here, and the
+         menu's "new sheet" is two clicks further away. Only under a campaign
+         this build knows — there is no starting a run of an unknown one. The
+         angle brackets are set here rather than in the dictionaries so a
+         translation cannot lose them; the italics are a hint, because a native
+         select popup is free to ignore them. */
+      if (def) {
+        var starter = el("option", "opt-new", { value: NEW_RUN + def.id });
+        starter.textContent = "< " + tr().newRun + " >";
+        group.appendChild(starter);
+      }
       ids.sort(function (a, b) {
         return (logs[b].updatedAt || "").localeCompare(logs[a].updatedAt || "");
       }).forEach(function (id) {
@@ -799,7 +820,11 @@
   /* The campaign of a log is fixed at creation, so it has to be asked for.
      With exactly one campaign registered there is nothing to ask, and the
      dialog is skipped — but it ships now, so campaign two costs no UI work. */
-  function newLog() {
+  /* `campaignId` preselects a campaign — the picker's starter rows know which
+     one they belong to. Preselected rather than created outright: the dialog
+     also asks for the title, and a row selected by accident must not leave a
+     sheet behind. */
+  function newLog(campaignId) {
     if (campaigns.length <= 1) {
       var only = campaigns[0];
       if (!only) return;
@@ -811,10 +836,11 @@
     var titleInput = document.getElementById("new-log-title");
     list.innerHTML = "";
     var ordered = campaignsByCode();
+    var wanted = campaignById(campaignId) ? campaignId : ordered[0].id;
     ordered.forEach(function (def, i) {
       var row = el("label", "choice");
       var radio = el("input", null, { type: "radio", name: "campaign", value: def.id });
-      if (i === 0) radio.checked = true;
+      if (def.id === wanted) radio.checked = true;
       var text = el("span", "choice-text");
       var strong = el("strong");
       strong.textContent = campaignTitle(def) + " (" + def.code + ")";
@@ -826,7 +852,7 @@
       });
       list.appendChild(row);
     });
-    titleInput.value = nextLogTitle(ordered[0].id);
+    titleInput.value = nextLogTitle(wanted);
 
     /* With nothing stored there is nothing to go back TO, so the way out is
        removed rather than left as a dead end that empties the page. Esc counts
@@ -866,7 +892,16 @@
   // ---- Wiring --------------------------------------------------------------
   function bind() {
     document.getElementById("log-select").addEventListener("change", function (e) {
-      activeId = e.target.value;
+      var picked = e.target.value;
+      /* A starter row is not a sheet. The picker is put back to the active one
+         BEFORE the dialog opens, so cancelling leaves the box showing what is
+         actually open rather than a row that is not a sheet at all. */
+      if (picked.indexOf(NEW_RUN) === 0) {
+        e.target.value = activeId || "";
+        newLog(picked.slice(NEW_RUN.length));
+        return;
+      }
+      activeId = picked;
       saveStorage();
       renderAll();
     });

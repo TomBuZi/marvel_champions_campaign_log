@@ -2,9 +2,10 @@
 <script>
 /* Legt einen ausgefüllten Beispielbogen an und springt in die App — für
    Screenshots und den Druckvergleich. "?c=mc10" nimmt den MC10-Bogen,
-   "?c=mc21" den MC21-Bogen, ohne Angabe kommt MC60. */
+   "?c=mc21" den MC21-Bogen, "?c=mc27" den MC27-Bogen, ohne Angabe kommt
+   MC60. */
 var q = new URLSearchParams(location.search);
-var which = { mc10: "mc10", mc21: "mc21" }[q.get("c")] || "mc60";
+var which = { mc10: "mc10", mc21: "mc21", mc27: "mc27" }[q.get("c")] || "mc60";
 /* "?theme=dark" (oder light) nagelt das Theme fest — sonst folgt es dem System.
    Gebraucht fuer den Druckvergleich: der Druck muss schwarz auf weiss sein,
    auch aus einer Dark-Mode-Sitzung und auch mit einem Kampagnen-Skin. */
@@ -79,6 +80,34 @@ var logs = {
         systemShock: false, infinityStones1B: true,
         nornStone: true, odin: false
       }
+    }
+  },
+  mc27: {
+    schemaVersion: 1, id: "seed-4", campaignId: "sinister-motives", stateVersion: 1,
+    title: "Sinister Motives, Durchgang 1",
+    createdAt: "2026-08-04T18:00:00.000Z", updatedAt: "2026-08-17T20:20:00.000Z",
+    state: {
+      expert: true,
+      /* Mitten auf der Leiste: Stufe 1, 5 und 9 gelten, 13 bis 25 stehen noch
+         aus — der Screenshot soll beides zeigen, erreichte und offene Stufen. */
+      reputation: 11,
+      players: [
+        { hero: "Ghost-Spider", hp: 8, shieldTech: "laser-goggles",
+          aspectAdvantage: "Enhanced Reflexes", planningAhead: "Swinging Web Kick" },
+        { hero: "Spider-Man", hp: 5, shieldTech: "shock-knuckles",
+          aspectAdvantage: "Clear the Area", planningAhead: "" },
+        { hero: "Miles Morales", hp: 11, shieldTech: "",
+          aspectAdvantage: "", planningAhead: "Web-Shooter" }
+      ],
+      /* Gemischt gefuellt: der Bogen soll im Screenshot beides zeigen, gesetzte
+         und leere Kaestchen. Und in der zweiten Osborn-Tech-Zelle steht mit
+         Absicht etwas, obwohl deren Stufe (13) noch nicht erreicht ist — so ist
+         im Screenshot auch der Fall "gesperrt, aber gefuellt" zu sehen. */
+      communityService: ["cat-in-a-tree", "rubble-rescue", "off-the-rails"],
+      wakingNightmare: 42,
+      lastOnesStanding: ["electro", "scorpion", "vulture"],
+      finalScore: null,
+      osbornTech: ["arm-cannon", "kinetic-armor", ""]
     }
   }
 };
