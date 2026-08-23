@@ -45,6 +45,25 @@
      campaign supplies data functions (which must not touch the DOM, so CI can
      exercise them headlessly) and render functions (which own their panel
      container completely). */
+  /* Display order: by product number, so MC10 comes before MC21 before MC60 —
+     the order the boxes were released in and the order a player looks for them
+     in. Registration order (index.html) still decides which campaign a fresh
+     visit opens, so this sorts copies and never `campaigns` itself.
+
+     The number is read out of `code`; a code without one sorts last, and ties
+     fall back to the code itself so the order stays stable. */
+  function codeNumber(code) {
+    var m = /(\d+)/.exec(String(code || ""));
+    return m ? parseInt(m[1], 10) : Infinity;
+  }
+  function byCode(a, b) {
+    var d = codeNumber(a.code) - codeNumber(b.code);
+    return d !== 0 ? d : String(a.code).localeCompare(String(b.code));
+  }
+  function campaignsByCode() {
+    return campaigns.slice().sort(byCode);
+  }
+
   window.registerCampaign = function (def) {
     campaigns.push(def);
   };
@@ -551,9 +570,9 @@
       var cid = logs[id].campaignId || "";
       (byCampaign[cid] = byCampaign[cid] || []).push(id);
     });
-    /* Registration order for known campaigns, then anything unknown, so a
+    /* Product-number order for known campaigns, then anything unknown, so a
        quarantined log from a future campaign still has a home in the list. */
-    var order = campaigns.map(function (c) { return c.id; });
+    var order = campaignsByCode().map(function (c) { return c.id; });
     Object.keys(byCampaign).forEach(function (cid) {
       if (order.indexOf(cid) === -1) order.push(cid);
     });
@@ -791,18 +810,15 @@
     var list = document.getElementById("campaign-choices");
     var titleInput = document.getElementById("new-log-title");
     list.innerHTML = "";
-    campaigns.forEach(function (def, i) {
+    var ordered = campaignsByCode();
+    ordered.forEach(function (def, i) {
       var row = el("label", "choice");
       var radio = el("input", null, { type: "radio", name: "campaign", value: def.id });
       if (i === 0) radio.checked = true;
       var text = el("span", "choice-text");
       var strong = el("strong");
       strong.textContent = campaignTitle(def) + " (" + def.code + ")";
-      var small = el("small");
-      small.textContent = def.scenarioCount
-        ? fmt(tr().scenarioCount, def.scenarioCount) : "";
       text.appendChild(strong);
-      text.appendChild(small);
       row.appendChild(radio);
       row.appendChild(text);
       radio.addEventListener("change", function () {
@@ -810,7 +826,16 @@
       });
       list.appendChild(row);
     });
-    titleInput.value = nextLogTitle(campaigns[0].id);
+    titleInput.value = nextLogTitle(ordered[0].id);
+
+    /* With nothing stored there is nothing to go back TO, so the way out is
+       removed rather than left as a dead end that empties the page. Esc counts
+       as a way out: <dialog> reports it as a "cancel" event. Assigned rather
+       than added, so reopening the dialog cannot stack listeners. */
+    var stranded = Object.keys(logs).length === 0;
+    document.getElementById("btn-campaign-cancel").hidden = stranded;
+    dlg.oncancel = stranded ? function (e) { e.preventDefault(); } : null;
+
     dlg.showModal();
   }
 
@@ -1015,18 +1040,17 @@
 
     if (!activeId || !logs[activeId]) {
       var ids = Object.keys(logs);
-      if (ids.length) {
-        activeId = ids[0];
-      } else if (campaigns.length) {
-        var first = emptyLog(campaigns[0].id);
-        logs[first.id] = first;
-        activeId = first.id;
-        saveStorage();
-      }
+      if (ids.length) activeId = ids[0];
     }
 
     bind();
     renderAll();
+    /* Nothing stored at all: ask which campaign instead of picking one on the
+       visitor's behalf. Nothing is written until the dialog is answered, and
+       the page behind it stays empty meanwhile — renderCampaign() and
+       applyCampaignChrome() both have a branch for having no active log. After
+       bind(), because the dialog's own buttons are wired there. */
+    if (!activeId) newLog();
     maybeRemindExport();
   }
 

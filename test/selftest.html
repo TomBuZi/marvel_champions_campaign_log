@@ -69,9 +69,23 @@
         pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
+          /* A first visit asks which campaign rather than picking one, so
+             this case has to answer before it has a sheet to test. */
+          var dlg0 = d.getElementById("campaign-dialog");
+          log("a fresh visit asks which campaign", dlg0.open);
+          log("and writes nothing until it is answered",
+            Object.keys(JSON.parse(localStorage.getItem("mcclog:logs") || "{}")).length === 0,
+            localStorage.getItem("mcclog:logs"));
+          /* Nothing to go back to, so no way out — cancelling would leave an
+             empty page. */
+          log("the way out is removed on a first visit",
+            d.getElementById("btn-campaign-cancel").hidden);
+          pick(d, "fear-no-evil");
+          fire(d.getElementById("campaign-form"), "submit");
+
           var store = JSON.parse(localStorage.getItem("mcclog:logs") || "{}");
           var ids = Object.keys(store);
-          log("a fresh visit creates one log", ids.length === 1, ids.length);
+          log("answering it creates one log", ids.length === 1, ids.length);
           var log0 = store[ids[0]];
           log("log carries campaignId", log0 && log0.campaignId === "fear-no-evil", log0 && log0.campaignId);
           log("log title auto-named", log0 && log0.title === "Fear No Evil", log0 && log0.title);
@@ -320,6 +334,7 @@
         pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
+          answerCampaignDialog(d, "fear-no-evil");
           log("stored preference wins", d.documentElement.lang === "de", d.documentElement.lang);
           log("German section heading",
             /Spieler-Informationen/.test(d.getElementById("campaign").textContent));
@@ -407,6 +422,14 @@
         var waited = 0;
         function poll() {
           var d = f.contentDocument;
+          /* Ready means either a rendered sheet or the question being asked: a
+             first visit shows the campaign dialog and leaves the sheet empty,
+             so waiting only for content would wait forever. */
+          var dlg = d && d.getElementById("campaign-dialog");
+          if (dlg && dlg.open) {
+            then(f, f.contentWindow, d);
+            return;
+          }
           var panel = d && d.getElementById("campaign");
           if (panel && panel.textContent.trim().length > 0) {
             then(f, f.contentWindow, d);
@@ -429,6 +452,7 @@
         pinLang("de");
         bootVia("../en/index.html", function (frame, w, d) {
           f0 = w;
+          answerCampaignDialog(d, "fear-no-evil");
           log("/en/ lands on the app",
             /\/index\.html$/.test(w.location.pathname), w.location.pathname);
           log("/en/ arrives with ?lang=en", w.location.search === "?lang=en", w.location.search);
@@ -454,6 +478,7 @@
         pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
+          answerCampaignDialog(d, "fear-no-evil");
           var hero = d.querySelectorAll(".player-card .text-input")[0];
           hero.value = "Daredevil";
           fire(hero, "input");
@@ -482,9 +507,11 @@
           log("print says which level was played",
             /\[ \] Expertenmodus/.test(text), text.slice(0, 130));
           /* Standard level, so the hit points are not on the sheet and must
-             not be on the printout either. */
+             not be on the printout either. Matched on the bare word rather than
+             the full label: a negative assertion on an exact caption stops
+             testing anything the moment the caption is reworded. */
           log("print omits the hit points at standard level",
-            !/Verbleibende Trefferpunkte/.test(text));
+            !/Lebenspunkte/.test(text));
           log("print carries the hero", /Daredevil/.test(text));
           log("print marks the villain", /Typhoid Mary/.test(text));
           log("print shows the failed scenario", /Gescheitert/.test(text));
@@ -565,6 +592,7 @@
           clearInterval(iv);
           f.contentWindow.confirm = function () { return answer; };
           var d = f.contentDocument;
+          answerCampaignDialog(d, "fear-no-evil");
           var startingIds = Object.keys(JSON.parse(localStorage.getItem("mcclog:logs")));
 
           // 1) A brand-new log is added alongside the one that already exists.
@@ -655,6 +683,7 @@
         pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
+          answerCampaignDialog(d, "fear-no-evil");
           function rows() { return d.querySelectorAll("tbody tr"); }
           function done(i) { return rows()[i].querySelector(".sheet-check"); }
           function boxes(i) { return rows()[i].querySelectorAll(".progress-box"); }
@@ -792,6 +821,7 @@
         pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
+          answerCampaignDialog(d, "fear-no-evil");
           function rows() { return d.querySelectorAll("tbody tr"); }
           function die(i) { return rows()[i].querySelector(".villain-die"); }
           function sel(i) { return rows()[i].querySelector(".pool-select"); }
@@ -874,6 +904,7 @@
         pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
+          answerCampaignDialog(d, "fear-no-evil");
           var seen = {}, rolls = 40;
           for (var i = 0; i < rolls; i++) {
             var row = d.querySelectorAll("tbody tr")[0];
@@ -916,6 +947,7 @@
         localStorage.setItem("mcclog:theme", "dark");
         boot("", function (frame, w, d) {
           f0 = w;
+          answerCampaignDialog(d, "fear-no-evil");
           function rows() { return d.querySelectorAll("tbody tr"); }
           function sel(i) { return rows()[i].querySelector(".pool-select"); }
           function bg(node) { return w.getComputedStyle(node).backgroundColor; }
@@ -1016,6 +1048,7 @@
         pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
+          answerCampaignDialog(d, "fear-no-evil");
           function cards() { return d.querySelectorAll(".player-card"); }
           function addBtn() { return d.querySelector('[data-section="players"] .btn-add'); }
           function removeBtn(i) { return cards()[i].querySelector(".player-remove"); }
@@ -1240,6 +1273,7 @@
         pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
+          answerCampaignDialog(d, "fear-no-evil");
           function rows() { return d.querySelectorAll("tbody tr"); }
           function btn() { return d.querySelector('[data-section="scenarios"] .btn-add'); }
           function progress() {
@@ -1358,6 +1392,7 @@
         pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
+          answerCampaignDialog(d, "fear-no-evil");
           var pairs = {}, rounds = 20;
 
           /* Every click re-renders the panel, so a node grabbed before the
@@ -1416,37 +1451,72 @@
         pinLang("de");
         boot("", function (frame, w, d) {
           f0 = w;
-          var store = function () { return JSON.parse(localStorage.getItem("mcclog:logs")); };
-          var ids = Object.keys(store());
-          log("a fresh visit still opens Fear No Evil",
-            ids.length === 1 && store()[ids[0]].campaignId === "fear-no-evil",
-            JSON.stringify(ids.map(function (k) { return store()[k].campaignId; })));
-
+          var store = function () {
+            return JSON.parse(localStorage.getItem("mcclog:logs") || "{}");
+          };
           var dlg = d.getElementById("campaign-dialog");
-          log("dialog starts closed", !dlg.open);
-          d.getElementById("btn-new").click();
-          log("a second campaign makes the dialog appear", dlg.open);
+          log("a fresh visit opens the dialog itself", dlg.open);
+          log("and nothing is stored yet", Object.keys(store()).length === 0,
+            JSON.stringify(Object.keys(store())));
+          log("with no way out, having nothing to go back to",
+            d.getElementById("btn-campaign-cancel").hidden);
 
           var choices = d.getElementById("campaign-choices");
           var radios = choices.querySelectorAll("input[type=radio]");
-          log("one choice per campaign", radios.length === 2, radios.length);
-          log("Fear No Evil stays preselected",
-            radios[0].checked && radios[0].value === "fear-no-evil", radios[0].value);
+          /* Counted from the script tags rather than pinned to a number: those
+             are the registration, so a fourth campaign moves both together. */
+          var registered = d.querySelectorAll('script[src^="campaigns/"]').length;
+          log("one choice per campaign", radios.length === registered,
+            radios.length + " of " + registered);
+          /* Product-number order, not registration order: MC10, MC21, MC60.
+             Read out of the labels and compared against their own sort, so the
+             assertion does not have to be rewritten for a fourth campaign. */
+          var codes = Array.prototype.map.call(
+            choices.querySelectorAll(".choice-text strong"),
+            function (n) { return parseInt(/\(MC(\d+)\)/.exec(n.textContent)[1], 10); });
+          log("the choices are sorted by product number",
+            codes.join() === codes.slice().sort(function (a, b) { return a - b; }).join(),
+            codes.join());
+          log("so the lowest number is preselected",
+            radios[0].checked && radios[0].value === "rise-of-red-skull", radios[0].value);
+          /* The preselected box and the proposed title have to mean the same
+             campaign, or the dialog names one thing and ticks another. */
+          log("the proposed title matches the preselected campaign",
+            d.getElementById("new-log-title").value === "The Rise of Red Skull",
+            d.getElementById("new-log-title").value);
           log("the dialog names MC10",
             /The Rise of Red Skull \(MC10\)/.test(choices.textContent));
-          log("the dialog names the scenario count", /5 Szenarien/.test(choices.textContent));
+          log("the dialog no longer counts scenarios",
+            !/Szenarien/.test(choices.textContent), choices.textContent);
 
+          /* Answer it with MC60, so the rest of the case has the same two
+             campaigns on the sheet list as before. */
+          pick(d, "fear-no-evil");
+          fire(d.getElementById("campaign-form"), "submit");
+          log("answering it creates the chosen campaign",
+            Object.keys(store()).length === 1 &&
+            store()[localStorage.getItem("mcclog:activeId")].campaignId === "fear-no-evil");
+
+          /* Now there IS something to go back to, so the way out is offered
+             again — and it still creates nothing. */
+          d.getElementById("btn-new").click();
+          log("reopening offers the way out again",
+            dlg.open && !d.getElementById("btn-campaign-cancel").hidden);
           d.getElementById("btn-campaign-cancel").click();
           log("cancel closes the dialog", !dlg.open);
           log("cancel creates nothing", Object.keys(store()).length === 1);
 
           /* Second pass: pick MC10. The dialog rebuilds its choices every time,
-             so the nodes have to be looked up again. */
+             so the nodes have to be looked up again — and by value rather than
+             by position, because the order is a feature now and an index would
+             break the next time a campaign lands. */
           d.getElementById("btn-new").click();
-          var again = d.getElementById("campaign-choices").querySelectorAll("input[type=radio]");
-          again[1].checked = true;
-          fire(again[1], "change");
+          pick(d, "mad-titans-shadow");
           log("picking a campaign renames the log",
+            d.getElementById("new-log-title").value === "The Mad Titan's Shadow",
+            d.getElementById("new-log-title").value);
+          pick(d, "rise-of-red-skull");
+          log("and renames it again when the choice changes back",
             d.getElementById("new-log-title").value === "The Rise of Red Skull",
             d.getElementById("new-log-title").value);
           fire(d.getElementById("campaign-form"), "submit");
@@ -1462,8 +1532,11 @@
           log("the subtitle names MC10",
             /\(MC10\)/.test(d.getElementById("subtitle").textContent),
             d.getElementById("subtitle").textContent);
-          log("the picker groups by campaign",
-            d.getElementById("log-select").querySelectorAll("optgroup").length === 2);
+          var groups = d.getElementById("log-select").querySelectorAll("optgroup");
+          log("the picker groups by campaign", groups.length === 2, groups.length);
+          log("and its groups follow the product number too",
+            /\(MC10\)/.test(groups[0].label) && /\(MC60\)/.test(groups[1].label),
+            groups[0].label + " | " + groups[1].label);
           log("this sheet has no scenario table", !d.querySelector(".sheet-table"));
           log("a fresh sheet starts at standard level",
             active.state.expert === false, active.state.expert);
@@ -1808,6 +1881,34 @@
                  basicUpgrade: "", rescuedAllies: [], engagedWithMinion: false };
       }
 
+      /* Choose a campaign in the new-log dialog by id. By value rather than by
+         position, because the order of the choices is a feature of its own now
+         and an index would break the next time a campaign lands. */
+      function pick(d, campaignId) {
+        var boxes = d.getElementById("campaign-choices")
+          .querySelectorAll("input[type=radio]");
+        for (var i = 0; i < boxes.length; i++) {
+          if (boxes[i].value === campaignId) {
+            boxes[i].checked = true;
+            fire(boxes[i], "change");
+            return boxes[i];
+          }
+        }
+        return null;
+      }
+
+      /* A first visit asks which campaign instead of creating a sheet, so a case
+         that wants one has to answer. Idempotent: does nothing when the dialog
+         is not open, e.g. because the case seeded a log or followed a share
+         link. Cases about the dialog itself answer it by hand. */
+      function answerCampaignDialog(d, campaignId) {
+        var dlg = d.getElementById("campaign-dialog");
+        if (!dlg || !dlg.open) return false;
+        pick(d, campaignId);
+        fire(d.getElementById("campaign-form"), "submit");
+        return true;
+      }
+
       /* Tick a checkbox the way a click would: the widget listens for change. */
       function tick(box) {
         box.checked = true;
@@ -1826,7 +1927,200 @@
         fire(input, "blur");
       }
 
-      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert };
+      // ----------------------------------------------------------- MC21
+      /* The MC21 sheet is players plus nine checkboxes, so these cases are
+         mostly about the boxes being the ones the paper sheet has, in the
+         sections it puts them in. */
+      function mtsLog() {
+        return {
+          schemaVersion: 1, id: "mts1", campaignId: "mad-titans-shadow", stateVersion: 1,
+          title: "The Mad Titan's Shadow",
+          createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-02T00:00:00.000Z",
+          state: {
+            /* Expert, because the hit points only exist there. caseMtsExpert is
+               the one that starts at standard. */
+            expert: true,
+            players: [{ hero: "", hp: null }],
+            /* Deliberately empty: normalize() has to read all nine boxes out of
+               a state that mentions none of them. */
+            flags: {},
+          },
+        };
+      }
+
+      function caseMts() {
+        seed({ mts1: mtsLog() }, "mts1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var card = d.querySelectorAll(".player-card")[0];
+
+          log("identity is the only free-text field on the card",
+            card.querySelectorAll(".text-input").length === 1,
+            card.querySelectorAll(".text-input").length);
+          var hero = card.querySelector(".text-input");
+          hero.value = "Gamora";
+          fire(hero, "input");
+          log("the hit point hint follows the hero",
+            /\d/.test(card.querySelector(".num-hint").textContent),
+            card.querySelector(".num-hint").textContent);
+
+          var hp = card.querySelector(".num-input");
+          hp.value = "8";
+          fire(hp, "input");
+          fire(hp, "blur");
+
+          /* Four sections, because the printed sheet has four — the finale
+             against Loki records nothing and so has no section here. */
+          var sections = d.querySelectorAll('[data-section^="scenario-"]');
+          log("four scenario sections", sections.length === 4, sections.length);
+          log("and no fifth one for the finale",
+            !d.querySelector("[data-section=scenario-5]"));
+
+          var boxes = d.querySelectorAll('[data-section^="scenario-"] .sheet-check');
+          log("nine boxes across them", boxes.length === 9, boxes.length);
+          /* Per section: 2, 3, 2, 2 — the shape of the paper sheet. */
+          var split = Array.prototype.map.call(sections, function (sc) {
+            return sc.querySelectorAll(".sheet-check").length;
+          }).join();
+          log("split 2 / 3 / 2 / 2 as printed", split === "2,3,2,2", split);
+
+          log("the sections name their scenarios",
+            /Ebony Maw/.test(sections[0].textContent) &&
+            /Tower Defense/.test(sections[1].textContent) &&
+            /Thanos/.test(sections[2].textContent) &&
+            /Hela/.test(sections[3].textContent));
+          log("the pooled cards are named",
+            /Cosmo/.test(sections[0].textContent) &&
+            /Sicherheitslücke/.test(sections[0].textContent),
+            sections[0].textContent);
+          /* One row, both languages: Cosmo keeps its English name in the German
+             edition, Security Breach is translated. A card shown in English may
+             be tagged lang="en" and a translated one may not — tagging a German
+             string as English misleads hyphenation and screen readers. Written
+             as an equivalence, so it stays true if a name is filled in later. */
+          log("the language tag follows the name actually shown",
+            Array.prototype.every.call(sections[0].querySelectorAll(".flag > span"),
+              function (span, n) {
+                return (span.textContent === ["Cosmo", "Security Breach"][n]) ===
+                  (span.getAttribute("lang") === "en");
+              }));
+          /* The two boxes that do not say "added to campaign pool" keep their
+             own wording. */
+          log("the tower keeps its own wording",
+            /Avengers Tower/.test(sections[1].textContent));
+          log("and so does the side scheme",
+            /Infinitysteine 1B/.test(sections[2].textContent),
+            sections[2].textContent);
+
+          tick(sections[0].querySelectorAll(".sheet-check")[0]);   // Cosmo
+          tick(sections[1].querySelectorAll(".sheet-check")[2]);   // Damaged
+          tick(sections[3].querySelectorAll(".sheet-check")[1]);   // Odin
+
+          d.querySelector(".btn-add").click();
+          log("a second player can be added",
+            d.querySelectorAll(".player-card").length === 2,
+            d.querySelectorAll(".player-card").length);
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).mts1.state;
+            log("the hero and hit points were stored",
+              st.players[0].hero === "Gamora" && st.players[0].hp === 8,
+              st.players[0].hero + "/" + st.players[0].hp);
+            log("the three ticked boxes were stored",
+              st.flags.cosmo === true && st.flags.towerDamaged === true &&
+              st.flags.odin === true);
+            log("and the six untouched ones are false, not missing",
+              st.flags.securityBreach === false && st.flags.shawarma === false &&
+              st.flags.blackSwan === false && st.flags.systemShock === false &&
+              st.flags.infinityStones1B === false && st.flags.nornStone === false,
+              JSON.stringify(st.flags));
+            finish();
+          }, 500);
+        });
+      }
+
+      function caseMtsExpert() {
+        var seeded = mtsLog();
+        seeded.state.expert = false;
+        /* Filled in, but not visible at standard level — exactly the state that
+           would lose data if hiding were clearing. */
+        seeded.state.players = [{ hero: "Gamora", hp: 6 }];
+        seed({ mts1: seeded }, "mts1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var card = function () { return d.querySelector(".player-card"); };
+          var toggle = function () {
+            return d.querySelector("[data-section=players] .panel-head .flag .sheet-check");
+          };
+
+          log("the switch is in the player panel head", !!toggle());
+          log("it starts unticked", toggle().checked === false);
+          log("standard hides the hit points", !card().querySelector(".num-input"));
+          log("the identity field is not hidden with them",
+            !!card().querySelector(".text-input"));
+          /* The level governs the hit points and nothing else here, so the
+             boxes stay put either way. */
+          log("standard leaves all nine boxes",
+            d.querySelectorAll('[data-section^="scenario-"] .sheet-check').length === 9);
+
+          toggle().checked = true;
+          fire(toggle(), "change");
+
+          log("expert reveals the hit points", !!card().querySelector(".num-input"));
+          log("and the value was still there",
+            card().querySelector(".num-input").value === "6",
+            card().querySelector(".num-input").value);
+
+          toggle().checked = false;
+          fire(toggle(), "change");
+          log("switching back hides them again", !card().querySelector(".num-input"));
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).mts1.state;
+            log("the sheet is back at standard", st.expert === false);
+            log("but the hidden hit points survived", st.players[0].hp === 6,
+              st.players[0].hp);
+            finish();
+          }, 500);
+        });
+      }
+
+      function caseMtsPrint() {
+        var seeded = mtsLog();
+        seeded.state.players = [
+          { hero: "Gamora", hp: 8 },
+          { hero: "Drax", hp: 11 },
+        ];
+        seeded.state.flags = { cosmo: true, towerDamaged: true, odin: true };
+        seed({ mts1: seeded }, "mts1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          w.dispatchEvent(new w.Event("beforeprint"));
+          var pv = d.getElementById("print-view");
+          var text = pv.textContent;
+          log("print view built", pv.children.length > 0, pv.children.length);
+          log("print names the campaign", /The Mad Titan.s Shadow \(MC21\)/.test(text));
+          log("print carries both heroes",
+            /Gamora/.test(text) && /Drax/.test(text));
+          log("print says which level was played",
+            /\[x\] Expertenmodus/.test(text), text.slice(0, 120));
+          /* Named, not just the bare number: textContent runs the lines
+             together, so a digit on its own proves nothing about where it sat. */
+          log("print carries the hit points",
+            /Lebenspunkte: 8/.test(text) && /Lebenspunkte: 11/.test(text));
+          /* Which cards did NOT join the pool matters too, so all nine print. */
+          log("print ticks the recorded boxes", /\[x\] Cosmo/.test(text));
+          log("print leaves the others unticked", /\[ \] Sicherheitslücke/.test(text));
+          log("print ticks the tower trait", /\[x\] Avengers Tower/.test(text));
+          log("print leaves the side scheme unticked",
+            /\[ \] .{0,3}Die Infinitysteine 1B/.test(text));
+          finish();
+        });
+      }
+
+      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint };
       (cases[CASE] || caseBasic)();
     </script>
   </body>

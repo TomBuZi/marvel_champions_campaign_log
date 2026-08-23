@@ -52,7 +52,12 @@
   --on-page: #fdece4;     /* text directly on the page (footer)      */
   --on-zap: #241012;      /* text on the accent yellow               */
   --on-danger: #fff4ef;   /* text on the danger red                  */
-  --tick: #e7d810;        /* the checkbox tick, drawn on --bar       */
+  --check-on: var(--bar); /* a ticked checkbox — its own token, because a
+                             campaign whose accent lives in the tick has no
+                             accent left once the tick goes dark in the other
+                             theme; defaults to --bar, so a campaign that does
+                             not set it looks exactly as before */
+  --tick: #e7d810;        /* the checkbox tick, drawn on --check-on  */
   --title-shadow: #fdece4;/* hard offset behind the display title    */
   --zap-strong: #ffe500;  /* the yellow where it has to carry a state */
   --input-settled: #ddc4ba;/* a field whose row is done, one way or the other */
@@ -258,6 +263,130 @@
   --zap-strong: #f0e46a;
   --input-settled: #0a140d;
   --backdrop: rgba(4, 10, 6, 0.6);
+  color-scheme: dark;
+}
+
+/* ---------- Campaign skin: MC21, The Mad Titan's Shadow ----------
+   Sampled from mc21_the_mad_titans_shadow_rulebook-compressed-campaign_log.pdf
+   the same way the two palettes above were sampled from their sheets: the fill
+   colours of the vector areas in the page content stream, weighted by how much
+   area each covers. Indigo #2f3694 and orange #e19526 carry 12% of the area
+   each, lavender #e0dff0 another 17%, with a gold accent on the badges — which
+   also keeps MC21 apart from MC60 and from MC10's green at a glance.
+
+   Two are darkened from what was sampled, for the same reason MC10's --brick
+   is: the orange page field and the mid indigo carry text, and the printed
+   tones are too light to hold 4.5 against it. Every pair here matches or beats
+   the MC10 palette's contrast.
+
+   Dark mode keeps all four of the sheet's colours rather than only the indigo:
+   the page field goes to a dark rust instead of another blue, the heading pills
+   carry the gold of the printed badges, the panel gradient ends on a warm tone
+   the way the light one ends on cream, and the text is a warm off-white. An
+   all-indigo dark mode reads as a different campaign than its own light mode.
+
+   Four blocks, mirroring the four above, and for the reason spelled out there:
+   a single [data-campaign] block outranks the bare :root inside the dark media
+   query and would paint the light palette in dark mode. */
+:root[data-campaign="tmts"] {
+  --page:      #b4541c;   /* rust page field — darkened from the sampled
+                             #e19526, which cannot carry text              */
+  --bar:       #2f3694;   /* indigo: bars, borders, ink outlines           */
+  --brick:     #4a4fa0;   /* mid indigo, table body — derived and darkened
+                             so the text on it holds 4.5 (6.6 as it is)    */
+  --panel-1:   #fffaf4;   /* panel gradient, top                          */
+  --panel-2:   #ffe6cb;   /* … bottom                                     */
+  --pill:      #e0dff0;   /* heading pill, table header row               */
+  --check:     #d3c8e3;   /* empty checkbox                               */
+  --zap:       #e9ab21;   /* accent gold: focus, ticks, counters          */
+  --ink:       #231f20;   /* near-black text                              */
+
+  --bg-input: #fdfbff;
+  --text-dim: #454072;
+  --accent-strong: #1d2270;
+  --accent-2: #5a62c4;
+  /* Stays red: here the colour carries meaning, not identity. */
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(233, 171, 33, 0.55);
+  --halftone: rgba(47, 54, 148, 0.16);
+  --hatch: rgba(47, 54, 148, 0.10);
+  --on-brick: #f5f4fb;
+  --on-page: #fffaf4;
+  --on-zap: #231f20;
+  --on-danger: #fff4ef;
+  --tick: #e9ab21;
+  --title-shadow: #fffaf4;
+  --zap-strong: #f7bd3a;
+  --input-settled: #ded9ee;
+  --backdrop: rgba(9, 10, 26, 0.55);
+}
+/* --accent, --panel-border and --ink-shadow are left alone on purpose: they
+   are already defined as var(--bar) and follow it by themselves. */
+@media (prefers-color-scheme: dark) {
+  :root[data-campaign="tmts"] {
+    --page: #1e1208; --bar: #a9adf0; --brick: #2f2a4e;
+    --panel-1: #1c1e36; --panel-2: #251f2e; --pill: #3d3118;
+    --check: #232647; --zap: #f0c04a; --ink: #f1ece4; --check-on: #f0c04a;
+    --bg-input: #15172c; --panel-border: #3b3f6b; --text-dim: #bdb6a8;
+    --accent: #a9adf0; --accent-strong: #cfd2fb; --accent-2: #8f96e8;
+    --danger: #ff6b5c;
+    --glow: 0 0 0 3px rgba(240, 192, 74, 0.40);
+    --halftone: rgba(255, 255, 255, 0.06);
+    --hatch: rgba(255, 255, 255, 0.05);
+    --ink-shadow: 4px 4px 0 0 #0c0703;
+    --on-brick: #f1ece4;
+    --on-page: #f6e9d8;
+    --on-zap: #231f20;
+    --on-danger: #2b0a07;
+    --tick: #231f20;
+    --title-shadow: #0c0703;
+    --zap-strong: #f7cf62;
+    --input-settled: #0e1020;
+    --backdrop: rgba(12, 7, 3, 0.6);
+  }
+}
+:root[data-campaign="tmts"][data-theme="light"] {
+  --page: #b4541c; --bar: #2f3694; --brick: #4a4fa0;
+  --panel-1: #fffaf4; --panel-2: #ffe6cb; --pill: #e0dff0;
+  --check: #d3c8e3; --zap: #e9ab21; --ink: #231f20;
+  --bg-input: #fdfbff; --panel-border: var(--bar); --text-dim: #454072;
+  --accent: var(--bar); --accent-strong: #1d2270; --accent-2: #5a62c4;
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(233, 171, 33, 0.55);
+  --halftone: rgba(47, 54, 148, 0.16);
+  --hatch: rgba(47, 54, 148, 0.10);
+  --ink-shadow: 4px 4px 0 0 var(--bar);
+  --on-brick: #f5f4fb;
+  --on-page: #fffaf4;
+  --on-zap: #231f20;
+  --on-danger: #fff4ef;
+  --tick: #e9ab21;
+  --title-shadow: #fffaf4;
+  --zap-strong: #f7bd3a;
+  --input-settled: #ded9ee;
+  --backdrop: rgba(9, 10, 26, 0.55);
+  color-scheme: light;
+}
+:root[data-campaign="tmts"][data-theme="dark"] {
+  --page: #1e1208; --bar: #a9adf0; --brick: #2f2a4e;
+  --panel-1: #1c1e36; --panel-2: #251f2e; --pill: #3d3118;
+  --check: #232647; --zap: #f0c04a; --ink: #f1ece4; --check-on: #f0c04a;
+  --bg-input: #15172c; --panel-border: #3b3f6b; --text-dim: #bdb6a8;
+  --accent: #a9adf0; --accent-strong: #cfd2fb; --accent-2: #8f96e8;
+  --danger: #ff6b5c;
+  --glow: 0 0 0 3px rgba(240, 192, 74, 0.40);
+  --halftone: rgba(255, 255, 255, 0.06);
+  --hatch: rgba(255, 255, 255, 0.05);
+  --ink-shadow: 4px 4px 0 0 #0c0703;
+  --on-brick: #f1ece4;
+  --on-page: #f6e9d8;
+  --on-zap: #231f20;
+  --on-danger: #2b0a07;
+  --tick: #231f20;
+  --title-shadow: #0c0703;
+  --zap-strong: #f7cf62;
+  --input-settled: #0e1020;
+  --backdrop: rgba(12, 7, 3, 0.6);
   color-scheme: dark;
 }
 
@@ -546,6 +675,13 @@ button:focus-visible {
   .scenario-row { grid-template-columns: 1fr 1fr; }
 }
 
+/* Two field groups stacked in one panel — MC21's scenario 2 and 3 put the
+   pooled cards over a box with its own wording — would otherwise touch: .panel
+   is padding, not a grid, and only .player-card carries a gap. Scoped to direct
+   children so the fields inside a player card keep following that gap instead
+   of adding to it. */
+.panel > .player-field + .player-field { margin-top: 0.75rem; }
+
 /* ---------- Player cards ---------- */
 /* The column count follows the number of players, not the available width.
    auto-fit decides how many tracks fit and then wraps, which put four players
@@ -706,7 +842,7 @@ button:focus-visible {
   print-color-adjust: exact;
   -webkit-print-color-adjust: exact;
 }
-.sheet-check:checked { background: var(--bar); }
+.sheet-check:checked { background: var(--check-on); }
 /* A clip-path tick beats content:"✓" — it does not depend on a font subset
    carrying the glyph, and it prints. */
 .sheet-check:checked::after {
@@ -938,7 +1074,6 @@ body[class*="dnd-"] .entry-list { min-height: 2.2rem; outline: 1px dashed var(--
   cursor: pointer;
 }
 .choice-text { display: grid; }
-.choice-text small { color: var(--text-dim); }
 
 .dialog-actions {
   display: flex;

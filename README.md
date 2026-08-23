@@ -5,8 +5,9 @@ Eintippen statt ausdrucken: automatisch gespeichert, zweisprachig, teilbar, druc
 
 **Live:** https://tombuzi.github.io/marvel_champions_campaign_log/
 
-Umgesetzt sind die Kampagnen **Fear No Evil (MC60)** und
-**The Rise of Red Skull (MC10)**. Die Kampagne wird beim Anlegen eines Bogens gewählt
+Umgesetzt sind die Kampagnen **Fear No Evil (MC60)**,
+**The Rise of Red Skull (MC10)** und **The Mad Titan's Shadow (MC21)**.
+Die Kampagne wird beim Anlegen eines Bogens gewählt
 und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
 [Eine Kampagne hinzufügen](#eine-kampagne-hinzufügen).
 
@@ -17,24 +18,32 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
 ## Was die App kann
 
 * **Der ganze Bogen, je Kampagne der ihre.** Jedes Modul folgt seiner Vorlage Feld
-  für Feld, und die beiden Vorlagen sind sehr verschieden:
+  für Feld, und die drei Vorlagen sind sehr verschieden:
   * *Fear No Evil (MC60)* — Spielerplätze mit Identität und verbleibenden
-    Trefferpunkten, die fünf Szenarien mit Schurken-Zuordnung und Fortschritt, die
+    Lebenspunkten, die fünf Szenarien mit Schurken-Zuordnung und Fortschritt, die
     aus der Kampagne entfernten Verbündeten und Persona-Unterstützungen, und die
     beiden Kampagnen-Marken.
-  * *The Rise of Red Skull (MC10)* — je Spieler Identität, Trefferpunkte,
-    Verpflichtungen, Tech- und Basis-Verbesserung und gerettete Verbündete; dazu die
+  * *The Rise of Red Skull (MC10)* — je Spieler Identität, Lebenspunkte,
+    Verpflichtungen, Tech- und Basis-Upgrade und gerettete Verbündete; dazu die
     drei Felder, nach denen spätere Szenarien fragen, und die entfernten
     Verbündeten. **Keine** Szenario-Tabelle, kein Fortschritt, kein Würfel — der
     gedruckte MC10-Bogen hat das alles nicht, weil die fünf Szenarien in fester
     Reihenfolge gespielt werden.
+  * *The Mad Titan's Shadow (MC21)* — der schlankeste der drei: je Spieler
+    Identität und Lebenspunkte, dazu neun benannte Kästchen in vier
+    Szenario-Abschnitten. Sieben von ihnen sagen auf Papier denselben Satz
+    („… was added to campaign pool“), deshalb stehen sie hier als eine
+    Überschrift über benannten Kästchen. Das fünfte Szenario gegen Loki fehlt
+    auch auf dem gedruckten Bogen — im Finale gibt es nichts festzuhalten.
 * **Standard- oder Expertenstufe** — der Haken „Expertenmodus“ oben im
-  Spielerbereich, in beiden Kampagnen an derselben Stelle. Auf Standardstufe
+  Spielerbereich, in allen drei Kampagnen an derselben Stelle. Auf Standardstufe
   blendet der Bogen aus, was es dort nicht gibt, statt danach zu fragen:
-  * *Fear No Evil (MC60)* — die verbleibenden Trefferpunkte.
-  * *The Rise of Red Skull (MC10)* — die verbleibenden Trefferpunkte **und** die
+  * *Fear No Evil (MC60)* — die verbleibenden Lebenspunkte.
+  * *The Rise of Red Skull (MC10)* — die verbleibenden Lebenspunkte **und** die
     Verpflichtungen; das MC10-Regelheft nennt beides ausdrücklich als Sache der
     Expertenstufe.
+  * *The Mad Titan's Shadow (MC21)* — die verbleibenden Lebenspunkte. Die neun
+    Kästchen bleiben auf beiden Stufen stehen.
 
   **Ausblenden ist nicht Löschen**: wer versehentlich umschaltet, findet nach dem
   Zurückschalten alles wieder vor. Gedruckt wird der Haken mit, weil er
@@ -222,9 +231,10 @@ auch über `file://` und direkt aus dem Repo-Root über GitHub Pages.
 | `core.js` | Speichern, mehrere Bögen, Quarantäne, Export/Import, Share-Link, Druck, Sprache, Theme, Kampagnen-Registry |
 | `widgets.js` | wiederverwendbare Bausteine: Checkbox, Zahlenfeld, Textfeld, Auswahl mit Ausschluss, Fortschrittszähler, Icon-Button, String-Liste mit Drag&Drop — jeweils mit optionalem gesperrten Zustand |
 | `i18n.js` | `window.I18N = { de, en }` — nur Strings des Rahmens |
-| `heroes.js` | 68 Helden (Name, Trefferpunkte) als Vorschlagsliste für die Identitätsfelder |
+| `heroes.js` | 68 Helden (Name, Lebenspunkte) als Vorschlagsliste für die Identitätsfelder |
 | `campaigns/fear-no-evil.js` | die Kampagne MC60: eigenes Datenmodell, eigenes Rendering, eigene Strings |
 | `campaigns/rise-of-red-skull.js` | die Kampagne MC10: feste Kartenpools mit ihren Eindeutigkeitsregeln und drei Szenariofelder; bewusst ohne Szenario-Tabelle |
+| `campaigns/mad-titans-shadow.js` | die Kampagne MC21: Spieler und neun benannte Kästchen in vier Szenario-Abschnitten; das schlankeste der drei Module |
 | `test/lint.js` | Prüfungen ohne Browser: Wörterbücher, Kampagnendefinition, Datenmodell, Paketierung |
 | `test/selftest.html`, `test/run-browser.js` | Selbsttest, der die echte Seite in einem iframe fernsteuert |
 | `fonts/` | Exo 2 (OFL, selbst gehostet), `OFL.txt` daneben |
@@ -244,6 +254,11 @@ Version N.*
 
 ### Eine Kampagne hinzufügen
 
+Hier steht der **Vertrag** eines Moduls. Der **Arbeitsweg** — Vorschau-Branch,
+Farben aus dem Bogen-PDF messen, Testfälle, Merge nach `main` — steht in
+[`CLAUDE.md`](CLAUDE.md), zusammen mit den Fallstricken, die dabei schon Zeit
+gekostet haben.
+
 1. `campaigns/<id>.js` anlegen und `window.registerCampaign({...})` aufrufen:
 
    ```js
@@ -253,7 +268,6 @@ Version N.*
      titleEn: "…", titleDe: "…",
      theme: "mg",               // -> <html data-campaign="mg">
      stateVersion: 1,
-     scenarioCount: 5,
      emptyState: function () {…},           // DOM-frei
      normalize: function (raw) {…},         // DOM-frei, wirft nie
      migrate: function (raw, from) {…},     // ab stateVersion 2 Pflicht, DOM-frei
@@ -301,13 +315,14 @@ node test/run-browser.js print      # nur ein Fall: basic | quarantine | share |
                                     #   appearance | players | migrate | expert |
                                     #   round | roundlast | roundspread |
                                     #   rrs | rrsdialog | rrsprint | rrspools |
-                                    #   rrsexpert
+                                    #   rrsexpert | mts | mtsexpert | mtsprint
 BROWSER_LANG=de-DE node test/run-browser.js   # unter einer anderen Browser-Sprache
 ```
 
 `test/seed.html` legt einen ausgefüllten Beispielbogen an und springt in die App —
 praktisch für Screenshots und für den Druckvergleich. `?c=mc10` nimmt den MC10-Bogen
-statt MC60, `?expert=0` stellt den Bogen auf Standardstufe, und `?theme=dark` nagelt das
+und `?c=mc21` den MC21-Bogen statt MC60, `?expert=0` stellt den Bogen auf
+Standardstufe, und `?theme=dark` nagelt das
 Theme fest; letzteres braucht man, um zu prüfen, dass der Druck auch aus einer
 Dark-Mode-Sitzung schwarz auf weiß bleibt.
 
@@ -373,7 +388,8 @@ Theme sonst hell und dunkel gegeneinander verdreht.
 
 **Jede Kampagne bringt ihre eigene Palette mit**, gesetzt über
 `[data-campaign]` am `<html>`: MC60 ist comic-orange auf Dunkelrot, MC10 salbeigrün
-auf Tiefgrün mit Senfgelb — beides aus dem jeweiligen Bogen-PDF gemessen. Ein
+auf Tiefgrün mit Senfgelb, MC21 Indigo und Lavendel auf Rostorange mit Gold —
+alle drei aus dem jeweiligen Bogen-PDF gemessen. Ein
 solcher Skin muss dieselben **vier** Blöcke spiegeln. Ein einzelner
 `[data-campaign]`-Block wäre spezifischer als das bloße `:root` in der
 Dark-Media-Query und würde im Dunkelmodus die helle Palette malen; umgekehrt muss
@@ -445,10 +461,10 @@ im Footer der Seite. Der Ko-fi-Link öffnet in einem neuen Tab und trägt
 * **Helden mit zwei Trägern stehen einzeln in der Liste**, mit `*` getrennt:
   „Spider-Man * Peter Parker“ und „Spider-Man * Miles Morales“, „Black Panther *
   T'Challa“ und „Black Panther * Shuri“. Die Kartendaten führen sie unter einem Namen,
-  die Trefferpunkte unterscheiden sich aber.
+  die Lebenspunkte unterscheiden sich aber.
 * **Das Identitätsfeld ist Freitext**, `heroes.js` liefert nur Vorschläge. Ein Umbenennen
   in der Liste ändert also nie einen bestehenden Bogen — dort bleibt der eingetippte
-  Name stehen, höchstens der Trefferpunkte-Hinweis daneben findet keine Entsprechung
+  Name stehen, höchstens der Lebenspunkte-Hinweis daneben findet keine Entsprechung
   mehr. Es gibt deshalb nichts zu migrieren, wenn die Liste wächst oder sich ändert.
 * `health` darf `null` sein, wenn ein Wert nicht belegt ist; der Hinweis neben dem Feld
   bleibt dann leer. Ein erfundener Wert wäre schlechter als keiner.
