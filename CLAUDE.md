@@ -319,8 +319,14 @@ nichts übrig ist.
   haben — und weil es nur diese Spalte betrifft, sieht es nach einem
   Farb- oder Breitenproblem aus, nicht nach dem Box-Modell. MC60s
   Schurken-Spalte hatte das monatelang. Braucht ein Zellinhalt Flex, kommt ein
-  Wrapper **in** die Zelle (`.with-die`), nie auf das `<td>`. Kein Test fängt
-  das; es fällt nur auf, wenn jemand hinsieht.
+  Wrapper **in** die Zelle (`.with-die`), nie auf das `<td>`. Aufgefallen ist es
+  nur, weil jemand hingesehen hat — **jetzt fängt es ein Test**:
+  `cellsAreCells()` in `test/selftest.html` liest für jede Zelle jeder
+  `.sheet-table` das berechnete `display` und verlangt `table-cell`. Aufgerufen
+  wird es in `basic`, `smrep`, `mg`, `ne` und `aoa` — also einmal je Kampagne,
+  die überhaupt eine Tabelle druckt (MC10 und MC21 haben keine). Nur in der
+  Breitansicht sinnvoll: die Schmalvariante macht jede Zelle absichtlich zum
+  Block und legt den Rahmen auf die Zeile.
 * **Terminologie über alle Kampagnen hinweg.** Dasselbe Feld heißt überall
   gleich („Verbleibende Lebenspunkte"). Eine Umbenennung in einer Kampagne ist
   keine halbe Arbeit: README, Hilfetexte und Tests gehören dazu.

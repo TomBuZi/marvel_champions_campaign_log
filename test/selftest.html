@@ -91,6 +91,13 @@
           log("log title auto-named", log0 && log0.title === "Fear No Evil", log0 && log0.title);
           log("state has 5 scenarios", log0 && log0.state.scenarios.length === 5);
 
+          /* The table's cells have to still be table cells -- see
+             cellsAreCells() for what goes wrong when one is not. This sheet is
+             the one it went wrong on. */
+          var cellTroubleFne = cellsAreCells(w, d);
+          log("every cell of the table is still a table cell",
+            cellTroubleFne === null, cellTroubleFne);
+
           /* Standard level is the default, and it has no hit-point field. The
              rest of this case is about that field, so switch to expert first —
              the hint lives inside it. */
@@ -1974,6 +1981,32 @@
         fire(box, "change");
       }
 
+      /* Every cell of every .sheet-table has to still BE a table cell. A <td> or
+         <th> made into a flex or grid container stops being a table-cell box —
+         the table wraps it in an anonymous cell — and border-collapse can then
+         no longer merge its border with its neighbours': that one column draws a
+         doubled line while every other column draws a single one. MC60's villain
+         column shipped like that, and nothing in this file noticed, because the
+         symptom looks like a colour or a width bug rather than a lost box.
+
+         Returns null when everything is fine and a detail string otherwise, so a
+         failure names the offending cell instead of just saying "false". Only
+         meaningful in the WIDE view, which is what boot() gives: the narrow
+         layout turns every cell into a block on purpose, and there each row
+         carries the border itself. */
+      function cellsAreCells(w, d) {
+        var cells = d.querySelectorAll(".sheet-table th, .sheet-table td");
+        if (!cells.length) return "no table cells found at all";
+        var bad = [];
+        Array.prototype.forEach.call(cells, function (c) {
+          var disp = w.getComputedStyle(c).display;
+          if (disp !== "table-cell") {
+            bad.push((c.className || c.tagName.toLowerCase()) + " -> " + disp);
+          }
+        });
+        return bad.length ? bad.length + " of " + cells.length + ": " + bad.join(" | ") : null;
+      }
+
       /* Add one entry to the list with this id: press its own add button, then
          fill the row that appeared. */
       function addEntry(d, listId, value) {
@@ -2432,6 +2465,12 @@
             at() === "1,5,9,13,17,21,25", at());
           log("at 11 the first three are in force", reached() === "1,5,9", reached());
 
+          /* The table's cells have to still be table cells -- see
+             cellsAreCells() for what goes wrong when one is not. */
+          var cellTroubleSm = cellsAreCells(w, d);
+          log("every cell of the table is still a table cell",
+            cellTroubleSm === null, cellTroubleSm);
+
           /* The legend from the foot of the track page: six ways to score. */
           log("the conditions legend is complete",
             panel.querySelectorAll(".rep-conditions li").length === 6,
@@ -2731,6 +2770,12 @@
             at('[data-section="future-past-deck"] th[scope="col"]').length === 5,
             at('[data-section="future-past-deck"] th[scope="row"]').length + "/" +
             at('[data-section="future-past-deck"] th[scope="col"]').length);
+
+          /* The table's cells have to still be table cells -- see
+             cellsAreCells() for what goes wrong when one is not. */
+          var cellTroubleMg = cellsAreCells(w, d);
+          log("every cell of the table is still a table cell",
+            cellTroubleMg === null, cellTroubleMg);
 
           /* Named, and named out of two DIFFERENT sets. The card names are still
              to be translated, so what is checked is the relationship between the
@@ -3355,6 +3400,12 @@
           log("and the choice is the campaign's five scenarios",
             chosen.options.length === 1 + 5, chosen.options.length);
 
+          /* The table's cells have to still be table cells -- see
+             cellsAreCells() for what goes wrong when one is not. */
+          var cellTroubleNe = cellsAreCells(w, d);
+          log("every cell of the table is still a table cell",
+            cellTroubleNe === null, cellTroubleNe);
+
           /* A bare checkbox in a grid is unnameable, so every box carries its
              row AND its column. Checked against the words on screen rather than
              against a string in here, so it survives the German print. */
@@ -3801,6 +3852,12 @@
                 var p = td.querySelector(".rule-text");
                 return !!p && p.textContent.trim().length > 0;
               }));
+
+          /* The table's cells have to still be table cells -- see
+             cellsAreCells() for what goes wrong when one is not. */
+          var cellTroubleAoa = cellsAreCells(w, d);
+          log("every cell of the table is still a table cell",
+            cellTroubleAoa === null, cellTroubleAoa);
 
           /* A bare checkbox in a grid is unnameable, so every box carries its
              row AND its column. Checked against the words on screen rather than
