@@ -67,14 +67,15 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     mehr festzuhalten.
   * *NeXt Evolution (MC40)* — der tabellenlastigste: je Spieler Identität und
     Lebenspunkte, darunter drei kleine Kästen nebeneinander, wie der Bogen sie
-    druckt — *Marauders Defeated* als drei numerierte Auswahlfelder über den
-    sieben Marauder-Schurken, *Morlocks Saved* als eine Zahl und *Hope
-    Summers's Damage* als zwei, für Szenario 3 und 4. Darunter das Gitter der
-    sechs **Kampagnen-Nebenpläne**: drei seiner fünf Spalten sind gedruckter
-    Text — der Nebenplan, die Begegnungskarte, die für den Rest der Kampagne
-    ins Begegnungsdeck kommt, und das Umfeld, das die Zeile auszahlt —,
-    eingetragen werden nur *Scenario Chosen* und *Earned?*. Sechs Zeilen stehen
-    fünf Szenarien gegenüber, eine Zeile bleibt am Ende also zwangsläufig leer.
+    druckt — *Besiegte Marauders* als drei numerierte Auswahlfelder über den
+    sieben Marauder-Schurken, *Gerettete Morlocks* als eine Zahl und *Schaden
+    auf Hope Summers* als zwei, für Szenario 3 und 4. Darunter das Gitter der
+    sechs **Spieler-Nebenpläne der Kampagne**: drei seiner fünf Spalten sind
+    gedruckter Text — der Nebenplan, die Begegnungskarte, die für den Rest der
+    Kampagne ins Begegnungsdeck kommt, und die Umgebung, die die Zeile auszahlt
+    —, eingetragen werden nur *Szenarionummer* und *Verdient?*. Sechs Zeilen
+    stehen fünf Szenarien gegenüber, eine Zeile bleibt am Ende also
+    zwangsläufig leer.
 * **Standard- oder Expertenstufe** — der Haken „Expertenmodus“ oben im
   Spielerbereich, in jeder Kampagne an derselben Stelle. Auf Standardstufe
   blendet der Bogen aus, was es dort nicht gibt, statt danach zu fragen:
@@ -91,9 +92,10 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     gedruckte Bogen setzt „(expert)“ unter dieses eine Feld. Rolle und
     Rollenverbesserungen bleiben auf beiden Stufen stehen.
   * *NeXt Evolution (MC40)* — die verbleibenden Lebenspunkte. Hier kennzeichnet
-    der gedruckte Bogen sie **nicht**, das Regelheft aber schon: „While playing
-    the NeXt Evolution campaign at the expert level, each player must record
-    their remaining hit points in the campaign log.“ Alles andere bleibt auf
+    der gedruckte Bogen sie **nicht**, das Regelheft aber schon, unter
+    „Bleibender Schaden“: „Während einer Experten-Kampagne von NeXt Evolution
+    muss jeder Spieler seine verbleibenden Lebenspunkte im Kampagnenlogbuch
+    notieren, nachdem ihr ein Szenario gewonnen habt.“ Alles andere bleibt auf
     beiden Stufen stehen.
 
   **Ausblenden ist nicht Löschen**: wer versehentlich umschaltet, findet nach dem
@@ -145,7 +147,7 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   bleiben Freitext: sie kommen aus den eigenen Decks der Spieler.
 
   Bei MC40 ist es der Satz der sieben Marauder-Schurken, und die Form folgt
-  wieder der Frage: *Marauders Defeated* druckt drei **numerierte** Zeilen, also
+  wieder der Frage: *Besiegte Marauders* druckt drei **numerierte** Zeilen, also
   drei Auswahlfelder statt Kästchen über dem ganzen Satz — die Position ist Teil
   der Eintragung, wie bei MC27s Osborn Tech. Derselbe Schurke zweimal ist kein
   Eintrag, sondern ein Tippfehler, deshalb ist eine belegte Zeile bei den
@@ -188,8 +190,8 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     eine richtige Eintragung für einen Fehler erklären.
   * *Kampagnen-Nebenpläne* (MC40) — jedes Szenario wählt einen Nebenplan, „der
     noch nicht gewählt wurde“, also ist ein in einer Zeile eingetragenes
-    Szenario bei den übrigen abgeblendet. Und *Earned?* ist zu, solange die
-    Zeile kein Szenario trägt: verdient wird ein Umfeld, indem der **gewählte**
+    Szenario bei den übrigen abgeblendet. Und *Verdient?* ist zu, solange die
+    Zeile kein Szenario trägt: verdient wird eine Umgebung, indem der **gewählte**
     Nebenplan besiegt wird, und ein nie gewählter war nie im Spiel. Auch das
     einseitig — verliert eine Zeile ihr Szenario, weil zwei dasselbe trugen,
     bleibt ihr Häkchen bedienbar, und der Widerspruch wird unter der Tabelle
@@ -498,7 +500,7 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (604 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (606 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   langpath | print | import | lock |
                                     #   lockconflict | random | randomspread |
@@ -655,14 +657,20 @@ im Footer der Seite. Der Ko-fi-Link öffnet in einem neuen Tab und trägt
   Konvention der deutschen Ausgabe: dort behalten Figuren ihre Namen (Rhino, Klaw,
   Ultron), übersetzt werden nur Szenario- und Hauptplan-Namen.
 * **Ein englisch angezeigter Kartenname heißt zwei verschiedene Dinge**, und die
-  Kartentabelle des Moduls sagt jeweils, welches. Bei MC10, MC21 und MC32 ist er
-  eine **Entscheidung**: der Name bleibt im deutschen Druck englisch, siehe den
-  ersten Punkt. Bei MC27 und MC40 ist er **offene Arbeit**: der deutsche Wortlaut
-  ist noch nicht eingetragen, und der englische steht als Platzhalter. MC40 trägt
-  beides in einer Datei — die sieben Marauder und die vier Schergen sind Figuren
-  und bleiben englisch, die Nebenplan- und Umfeldnamen sind nachzutragen. Ohne
-  diesen Kommentar räumt ein späterer Leser das Falsche auf. Es migriert in
+  Kartentabelle des Moduls sagt jeweils, welches. Bei MC10, MC21, MC32 und MC40
+  ist er eine **Entscheidung**: der Name bleibt im deutschen Druck englisch,
+  siehe den ersten Punkt. Bei MC27 ist er **offene Arbeit**: der deutsche
+  Wortlaut ist noch nicht eingetragen, und der englische steht als Platzhalter.
+  Ohne diesen Kommentar räumt ein späterer Leser das Falsche auf. Es migriert in
   keinem Fall etwas, weil gespeichert nur der Slug wird.
+* **MC40 hat beide Fälle in einer Tabelle**, und deshalb ist es das Modul, an dem
+  sich die Regel prüfen lässt: dieselbe Gitterzeile trägt einen übersetzten
+  Nebenplan- und Umgebungsnamen und daneben eine Begegnungskarte, die englisch
+  bleibt, weil sie eine Figur ist — Malice, Vanisher, Scrambler, Lady
+  Mastermind. Überladen und Unter Druck sind dagegen eine Verräterei und ein
+  Nebenplan und daher übersetzt. Der Selbsttest prüft die Sprachauszeichnung
+  hier als Äquivalenz über diese gemischte Tabelle, was eine handgepflegte
+  Liste nicht überlebt hätte.
 * **Die deutschen Szenarionamen sind vorläufig.** Von MC60 gibt es noch keine
   offizielle deutsche Ausgabe; sie stehen als eine Zeile je Szenario in
   `campaigns/fear-no-evil.js` und sind dort zu korrigieren, sobald es eine gibt.

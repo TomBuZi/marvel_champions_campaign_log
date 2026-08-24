@@ -83,9 +83,11 @@
    sheet does NOT print "(expert)" next to them the way MC32's does. The
    rulebook is unambiguous where the print is silent: "While playing the NeXt
    Evolution campaign at the expert level, each player must record their
-   remaining hit points in the campaign log." So the switch is right and the
-   print simply omits the marker — worth writing down, or a later reader
-   "fixes" the gate away. Hides, not clears: the value stays in the sheet, in
+   remaining hit points in the campaign log." The German printing says the same
+   under BLEIBENDER SCHADEN and leaves the field unmarked as well, so this is
+   the edition rather than one edition's slip. The switch is right and the print
+   simply omits the marker — worth writing down, or a later reader "fixes" the
+   gate away. Hides, not clears: the value stays in the sheet, in
    the JSON export and in a share link. See `expert` below.
 
    emptyState() and normalize() must not touch the DOM — not at load time and
@@ -123,12 +125,16 @@
      `marauders` set (40070-40076) and the `next_evol_campaign` set (40190a/b to
      40195a/b for the six scheme/environment pairs, 40198-40203 for the six
      encounter cards). Its German translation files carry NO entry for any of
-     those codes, so nothing here could be copied from there.
+     those codes, so not one German name below could come from there. They come
+     from the German printing instead — "Spielanleitung_NeXt Evolution_web.pdf",
+     whose campaign log is page 24 — read off that page at its coordinates so
+     each row's three cards stay paired with the row they are printed in.
 
-     TWO MEANINGS OF `de: null` LIVE IN THIS ONE FILE, and confusing them is how
-     a later reader tidies up the wrong thing. Each table says which one it is.
-     Where a name is still open work, the English wording is the placeholder —
-     lint.js rejects an empty string, which is what makes that safe. */
+     NOTHING HERE IS OPEN WORK, and every remaining `de: null` is a DECISION:
+     the name stays English in the German printing. That is the MC10/MC21/MC32
+     meaning, not MC27's "not entered yet", and it is checkable rather than
+     assumed — see each table. Filling one in anyway migrates nothing, because
+     only the slug is ever persisted. */
 
   /* The seven Marauder villains of the Morlock Siege villain deck, in the
      rulebook's order. Three of them go into the log after scenario #1, and
@@ -137,9 +143,11 @@
 
      `de: null` here is a DECISION, the MC10/MC21/MC32 one: these are all
      characters, and the German edition leaves character names in English while
-     translating scenarios and schemes. See "Hinweise zu den Namen" in the
-     README. Filling one in anyway migrates nothing, because only the slug is
-     ever persisted. */
+     translating scenarios and schemes. Not inferred from the convention either
+     — the German rulebook prints this villain deck as "Schurkendeck: Arclight
+     (A), Blockbuster (A), Chimera (A), Greycrow (A), Harpoon (A), Riptide (A),
+     Vertigo (A)", so all seven are confirmed by the printing itself. See
+     "Hinweise zu den Namen" in the README. */
   var MARAUDERS = [
     { slug: "arclight",    en: "Arclight",    de: null },
     { slug: "blockbuster", en: "Blockbuster", de: null },
@@ -159,34 +167,33 @@
      than in the state: nothing about them is ever entered, and a row is
      identified by its scheme slug.
 
-     `de: null` is MIXED here, which is exactly why it is spelled out:
-
-       * the six scheme names, the six environment names, `Overburdened` (a
-         treachery) and `Under Pressure` (a side scheme) are translatable, so
-         their `null` is OPEN WORK — to be transcribed verbatim from the German
-         printing, not invented here;
-       * `Malice`, `Vanisher`, `Scrambler` and `Lady Mastermind` are minions,
-         so their `null` is the same DECISION as the Marauders above: the name
-         stays English in the German edition. */
+     This is the table where the German printing draws the line for itself, and
+     it draws it exactly where the convention says it would: the six scheme
+     names, the six environments, `Overburdened` and `Under Pressure` are
+     translated, while `Malice`, `Vanisher`, `Scrambler` and `Lady Mastermind`
+     keep their English names — the first four are a treachery, a side scheme
+     and two things a card DOES, the last four are minions, i.e. characters. So
+     the `de: null` left in this table is the same DECISION as the Marauders
+     above, and the sheet itself is the evidence for it. */
   var SCHEMES = [
-    { slug: "assemble-the-team", en: "Assemble the Team", de: null,
+    { slug: "assemble-the-team", en: "Assemble the Team", de: "Team versammeln",
       encounter: { en: "Malice", de: null },
-      environment: { en: "Team Assembled", de: null } },
-    { slug: "establish-safehouse", en: "Establish Safehouse", de: null,
+      environment: { en: "Team Assembled", de: "Team versammelt" } },
+    { slug: "establish-safehouse", en: "Establish Safehouse", de: "Safehouse einrichten",
       encounter: { en: "Vanisher", de: null },
-      environment: { en: "Safehouse Established", de: null } },
-    { slug: "gear-up", en: "Gear Up", de: null,
-      encounter: { en: "Overburdened", de: null },
-      environment: { en: "Geared Up", de: null } },
-    { slug: "mission-prep", en: "Mission Prep", de: null,
+      environment: { en: "Safehouse Established", de: "Safehouse eingerichtet" } },
+    { slug: "gear-up", en: "Gear Up", de: "Ausrüsten",
+      encounter: { en: "Overburdened", de: "Überladen" },
+      environment: { en: "Geared Up", de: "Ausgerüstet" } },
+    { slug: "mission-prep", en: "Mission Prep", de: "Mission vorbereiten",
       encounter: { en: "Scrambler", de: null },
-      environment: { en: "Mission Prepped", de: null } },
-    { slug: "practice-maneuvers", en: "Practice Maneuvers", de: null,
+      environment: { en: "Mission Prepped", de: "Mission vorbereitet" } },
+    { slug: "practice-maneuvers", en: "Practice Maneuvers", de: "Manöver einüben",
       encounter: { en: "Lady Mastermind", de: null },
-      environment: { en: "Practiced Maneuvers", de: null } },
-    { slug: "prepare-defenses", en: "Prepare Defenses", de: null,
-      encounter: { en: "Under Pressure", de: null },
-      environment: { en: "Prepared Defenses", de: null } },
+      environment: { en: "Practiced Maneuvers", de: "Manöver eingeübt" } },
+    { slug: "prepare-defenses", en: "Prepare Defenses", de: "Verteidigung vorbereiten",
+      encounter: { en: "Under Pressure", de: "Unter Druck" },
+      environment: { en: "Prepared Defenses", de: "Verteidigung vorbereitet" } },
   ];
 
   // ---- Lookups -------------------------------------------------------------
@@ -869,7 +876,7 @@
     render: render,
     renderPrint: renderPrint,
 
-    helpDe: "Der MC40-Bogen ist der tabellenlastigste von allen: über dem Spielerbereich stehen drei kleine Kästen nebeneinander, darunter ein Gitter aus sechs Zeilen und fünf Spalten. „Marauders Defeated“ druckt genau drei numerierte Zeilen, und drei ist nicht geraten — der Sieg-Schritt von Szenario 1 verlangt den Titel jedes Schurken unter „Routed“, und dieses Szenario ist gewonnen, wenn drei der sieben Marauder besiegt sind. Deshalb stehen dort drei Auswahlfelder über dem gedruckten Satz der sieben Schurken, und weil die Zeilen numeriert sind, ist die Position Teil der Eintragung. Ein Schurke, der schon in einer Zeile steht, ist in den anderen abgeblendet: zweimal derselbe wäre kein Eintrag, sondern ein Tippfehler. „Morlocks Saved“ ist eine Zahl — der Bogen druckt dort eine leere Fläche ohne Zeilen und ohne Zahlen, und der Sieg-Schritt sagt „die Anzahl der noch im Spiel befindlichen Morlock-Verbündeten“. Eine Obergrenze steht hier bewusst nicht: der Kartensatz enthält vier Morlocks und „Mutant Massacre“ gibt jedem Spieler einen (im Solospiel zwei), aber gedruckt ist keine Grenze, und eine Grenze, die niemand gedruckt hat, kann nur falsch sein. „Hope Summers's Damage“ hat zwei Felder, weil der Bogen zwei Zeilen druckt: Szenario 3 und Szenario 4. Die anderen drei Szenarien halten über sie nichts fest, deshalb steht dort kein Feld — und kein abgeblendetes. Das Gitter darunter hat fünf Spalten, von denen drei gedruckt sind: der Nebenplan selbst, die Begegnungskarte, die für den Rest der Kampagne ins Begegnungsdeck kommt, und das Umfeld, das die Zeile auszahlt. Diese drei sind unveränderlicher Text; eingetragen werden nur „Scenario Chosen“ und „Earned?“. Sechs gedruckte Zeilen stehen fünf Szenarien gegenüber, denn jedes Szenario wählt einen Nebenplan, „der noch nicht gewählt wurde“ — eine Zeile bleibt am Ende zwangsläufig leer, und das ist der Bogen und keine Lücke darin. Ein Szenario, das in einer Zeile steht, ist deshalb in den übrigen abgeblendet. Das Häkchen „Earned?“ ist zu, solange die Zeile kein Szenario trägt: verdient wird ein Umfeld, indem der GEWÄHLTE Nebenplan besiegt wird, und ein nie gewählter war nie im Spiel. Diese Sperre ist einseitig, wie bei MC60 und MC32 — ein bereits gesetztes Häkchen bleibt bedienbar. Das ist wichtiger, als es klingt: verliert eine Zeile ihr Szenario, weil zwei Zeilen dasselbe trugen, kürt der Bogen keinen Sieger, und der Ausweg muss auf dem Bildschirm liegen. Der Widerspruch wird stattdessen unter der Tabelle benannt. Nicht markiert wird dagegen eine Zeile mit Szenario ohne Häkchen. Nach dem Regelheft ist dieser Nebenplan aus der Kampagne heraus — aber erst, nachdem das Szenario gewonnen ist, und dieser Bogen hält überhaupt keinen Fortschritt fest. Er kann „noch nicht“ und „endgültig“ nicht auseinanderhalten, also behauptet er es auch nicht. Oben im Spielerbereich steht der Haken „Expertenmodus“, und hier weicht MC40 von MC32 ab: der gedruckte Bogen kennzeichnet die verbleibenden Lebenspunkte NICHT mit „(expert)“, das Regelheft aber schon — nur auf Expertenstufe werden sie festgehalten, und nur dort trägt sie das Setup des nächsten Szenarios wieder ein. Auf Standardstufe blendet der Bogen das Feld aus, statt danach zu fragen. Ausblenden heißt nicht löschen — der Wert bleibt im Bogen, im Export und im Share-Link. Es gibt hier bewusst keine Szenario-Tabelle, kein „Abgeschlossen“, keinen Fortschrittszähler und kein Notizfeld: der gedruckte Bogen hat sie nicht.",
+    helpDe: "Der MC40-Bogen ist der tabellenlastigste von allen: über dem Spielerbereich stehen drei kleine Kästen nebeneinander, darunter ein Gitter aus sechs Zeilen und fünf Spalten. „Besiegte Marauders“ druckt genau drei numerierte Zeilen, und drei ist nicht geraten — der Sieg-Schritt von Szenario 1 verlangt den Namen jedes Schurken unter der Karte „Besiegt“, und dieses Szenario ist gewonnen, wenn drei der sieben Marauder besiegt sind. Deshalb stehen dort drei Auswahlfelder über dem gedruckten Satz der sieben Schurken, und weil die Zeilen numeriert sind, ist die Position Teil der Eintragung. Ein Schurke, der schon in einer Zeile steht, ist in den anderen abgeblendet: zweimal derselbe wäre kein Eintrag, sondern ein Tippfehler. „Gerettete Morlocks“ ist eine Zahl — der Bogen druckt dort eine leere Fläche ohne Zeilen und ohne Zahlen, und der Sieg-Schritt sagt „die Anzahl der Morlock-Verbündeten, die noch im Spiel sind“. Eine Obergrenze steht hier bewusst nicht: der Kartensatz enthält vier Morlocks und „Mutanten-Massaker“ gibt jedem Spieler einen (im Solospiel zwei), aber gedruckt ist keine Grenze, und eine Grenze, die niemand gedruckt hat, kann nur falsch sein. „Schaden auf Hope Summers“ hat zwei Felder, weil der Bogen zwei Zeilen druckt: Szenario 3 und Szenario 4. Die anderen drei Szenarien halten über sie nichts fest, deshalb steht dort kein Feld — und kein abgeblendetes. Das Gitter darunter hat fünf Spalten, von denen drei gedruckt sind: der Nebenplan selbst, die Begegnungskarte, die für den Rest der Kampagne ins Begegnungsdeck kommt, und die Umgebung, die die Zeile auszahlt. Diese drei sind unveränderlicher Text; eingetragen werden nur „Szenarionummer“ und „Verdient?“ — und die Spalte heißt im deutschen Druck wirklich so, sie fragt nach der Nummer, während der englische Bogen nach der Wahl fragt. Sechs gedruckte Zeilen stehen fünf Szenarien gegenüber, denn jedes Szenario wählt einen Nebenplan, „der noch nicht gewählt wurde“ — eine Zeile bleibt am Ende zwangsläufig leer, und das ist der Bogen und keine Lücke darin. Ein Szenario, das in einer Zeile steht, ist deshalb in den übrigen abgeblendet. Das Häkchen „Verdient?“ ist zu, solange die Zeile kein Szenario trägt: verdient wird eine Umgebung, indem der GEWÄHLTE Nebenplan besiegt wird, und ein nie gewählter war nie im Spiel. Diese Sperre ist einseitig, wie bei MC60 und MC32 — ein bereits gesetztes Häkchen bleibt bedienbar. Das ist wichtiger, als es klingt: verliert eine Zeile ihr Szenario, weil zwei Zeilen dasselbe trugen, kürt der Bogen keinen Sieger, und der Ausweg muss auf dem Bildschirm liegen. Der Widerspruch wird stattdessen unter der Tabelle benannt. Nicht markiert wird dagegen eine Zeile mit Szenario ohne Häkchen. Nach dem Regelheft ist dieser Nebenplan aus der Kampagne heraus — aber erst, nachdem das Szenario gewonnen ist, und dieser Bogen hält überhaupt keinen Fortschritt fest. Er kann „noch nicht“ und „endgültig“ nicht auseinanderhalten, also behauptet er es auch nicht. Oben im Spielerbereich steht der Haken „Expertenmodus“, und hier weicht MC40 von MC32 ab: der gedruckte Bogen kennzeichnet die verbleibenden Lebenspunkte NICHT als Expertenfeld, das Regelheft aber schon. Unter „Bleibender Schaden“ steht dort: „Während einer Experten-Kampagne von NeXt Evolution muss jeder Spieler seine verbleibenden Lebenspunkte im Kampagnenlogbuch notieren, nachdem ihr ein Szenario gewonnen habt.“ Nur dort stellt das Setup des nächsten Szenarios sie auch wieder ein. Auf Standardstufe blendet der Bogen das Feld aus, statt danach zu fragen. Ausblenden heißt nicht löschen — der Wert bleibt im Bogen, im Export und im Share-Link. Es gibt hier bewusst keine Szenario-Tabelle, kein „Abgeschlossen“, keinen Fortschrittszähler und kein Notizfeld: der gedruckte Bogen hat sie nicht. Die Abschnittsnamen, die Spaltentitel und die Kartennamen stehen hier so, wie die deutsche Spielanleitung sie auf Seite 24 druckt. Englisch bleiben nur die Figuren — die sieben Marauder und die vier Schergen Malice, Vanisher, Scrambler und Lady Mastermind —, wie es die deutsche Ausgabe durchweg hält.",
     helpEn: "The MC40 sheet is the most table-shaped of them all: three small boxes sit side by side above the player area, and a grid of six rows by five columns below it. “Marauders Defeated” prints exactly three numbered lines, and three is not a guess — scenario 1's victory step asks for the title of each villain under “Routed”, and that scenario is won by defeating three of the seven Marauders. So there are three dropdowns over the printed set of seven villains, and because the lines are numbered, the position is part of the entry. A villain already standing in one line is greyed out in the others: the same one twice is not a record but a typo. “Morlocks Saved” is one number — the sheet prints an empty area there with no lines and no numerals, and the victory step says “the number of Morlock allies still in play”. There is deliberately no ceiling on it: the card set holds four Morlocks and “Mutant Massacre” hands each player one (two in a solo game), but no bound is printed, and a bound nobody printed can only be wrong. “Hope Summers's Damage” has two fields because the sheet prints two lines: scenario 3 and scenario 4. The other three scenarios record nothing about her, so there is no field for them — not a disabled one either. The grid below has five columns, three of which are printed: the side scheme itself, the encounter card that joins the encounter deck for the rest of the campaign, and the environment the row pays out. Those three are fixed text; only “Scenario Chosen” and “Earned?” are entered. Six printed rows stand against five scenarios, because each scenario picks a side scheme “that has not been chosen previously” — one row must stay empty at the end, and that is the sheet rather than a gap in it. A scenario standing in one row is therefore greyed out in the rest. The “Earned?” box is closed while its row carries no scenario: an environment is earned by defeating the CHOSEN side scheme, and one that was never chosen was never in play. That lock is one-sided, as in MC60 and MC32 — a box that is already ticked stays operable. That matters more than it sounds: when a row loses its scenario because two rows carried the same one, the sheet picks no winner, and the way out has to be on screen. The contradiction is named under the table instead. What is not marked is a row with a scenario and no tick. By the rulebook that side scheme is out of the campaign — but only once the scenario has been won, and this sheet records no progress whatsoever. It cannot tell “not yet” from “for good”, so it does not claim to. At the top of the player area sits the “Expert level” box, and here MC40 departs from MC32: the printed sheet does NOT mark the remaining hit points “(expert)”, while the rulebook does — they are recorded at expert level only, and only there does the next scenario's setup read them back in. At standard level the sheet hides the field rather than asking for it. Hiding is not clearing — the value stays in the sheet, in the export and in a share link. There is deliberately no scenario table, no “completed”, no progress counter and no notes field: the printed sheet has none.",
 
     /* Zwei Gruppen, und die Unterscheidung sagt, wer eine Änderung entscheidet:
@@ -880,10 +887,12 @@
           aus den Nachbarmodulen übernommen und gehören dorthin abgeglichen,
           nicht hier neu formuliert. Sie stehen sofort auf Deutsch.
        2. Wörter, die vom gedruckten Bogen kommen — die Abschnittsnamen und die
-          Spaltentitel des Gitters — stehen unten NOCH ENGLISCH in beiden
-          Wörterbüchern. Das ist offene Arbeit: sie sind aus dem deutschen Druck
-          wörtlich nachzutragen, sobald er vorliegt. Der englische Wortlaut ist
-          der Platzhalter, weil lint.js leere Werte fängt.
+          Spaltentitel des Gitters — stehen wörtlich so da, wie der deutsche
+          Druck sie setzt: Seite 24 von "Spielanleitung_NeXt Evolution_web.pdf".
+          Wer eine davon ändert, ändert eine Aussage über das Papier und braucht
+          das Papier dazu. Insbesondere heißt die Spalte dort
+          „Szenarionummer“ und nicht „gewähltes Szenario“ — der deutsche Bogen
+          fragt nach der Nummer, der englische nach der Wahl.
 
        Und wer eine ändert, liest helpDe/helpEn mit: die beiden zitieren die
        Abschnittsnamen, also werden sie zur Lüge, sobald ein Name wandert.
@@ -914,19 +923,19 @@
         confirmRemovePlayer: "Diesen Spieler samt Eintragungen entfernen?",
         duplicateHero: "Dieser Held ist schon einem anderen Spieler zugeordnet.",
 
-        earnedNeedsScenario: "In dieser Zeile ist kein Szenario gewählt. Verdient wird ein Umfeld nur, indem der gewählte Nebenplan besiegt wird.",
-        earnedConflict: "Widerspruch: eine Zeile trägt ein verdientes Umfeld, ohne dass ein Szenario gewählt ist.",
+        earnedNeedsScenario: "In dieser Zeile ist kein Szenario gewählt. Verdient wird eine Umgebung nur, indem der gewählte Nebenplan besiegt wird.",
+        earnedConflict: "Widerspruch: eine Zeile trägt eine verdiente Umgebung, ohne dass ein Szenario gewählt ist.",
 
-        /* ---- Noch englisch: kommt wörtlich vom gedruckten Bogen ---------- */
-        secMarauders: "Marauders Defeated",
-        secMorlocks: "Morlocks Saved",
-        secHopeDamage: "Hope Summers's Damage",
-        secSideSchemes: "Campaign Player Side Schemes",
-        colSideScheme: "Player Side Scheme",
-        colChosen: "Scenario Chosen",
-        colEncounter: "Encounter Card",
-        colEnvironment: "Environment",
-        colEarned: "Earned?",
+        /* ---- Wörtlich vom gedruckten Bogen, Seite 24 ---------------------- */
+        secMarauders: "Besiegte Marauders",
+        secMorlocks: "Gerettete Morlocks",
+        secHopeDamage: "Schaden auf Hope Summers",
+        secSideSchemes: "Spieler-Nebenpläne der Kampagne",
+        colSideScheme: "Spieler-Nebenplan",
+        colChosen: "Szenarionummer",
+        colEncounter: "Begegnungskarte",
+        colEnvironment: "Umgebung",
+        colEarned: "Verdient?",
       },
       en: {
         secPlayers: "Player Information",

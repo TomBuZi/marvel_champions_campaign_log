@@ -3389,18 +3389,40 @@
              English exactly when it is the SAME string in both languages. Read
              in German, then in English, then switched back — so this keeps
              checking the rule however many names get translated later, instead
-             of decaying into a list somebody has to maintain. */
-          var tagged = Array.prototype.map.call(
-            at('[data-section="side-schemes"] th[scope="row"]'),
-            function (n) { return n.getAttribute("lang") === "en"; });
+             of decaying into a list somebody has to maintain.
+
+             Checked over the row headers AND the two printed card columns,
+             because this sheet is the first where one table holds both cases:
+             the schemes and the environments are translated, the four minions
+             keep their English names. A mixture is what a per-entry rule has to
+             survive, and a list maintained by hand would not. */
+          var tagFor = function (sel) {
+            return Array.prototype.map.call(at('[data-section="side-schemes"] ' + sel),
+              function (n) { return n.getAttribute("lang") === "en"; });
+          };
+          var taggedRows = tagFor('th[scope="row"]');
+          var taggedCards = tagFor("td.card-name");
           d.getElementById("btn-lang").click();
           var english = col('th[scope="row"]');
+          var englishCards = col("td.card-name");
           d.getElementById("btn-lang").click();
           var german = col('th[scope="row"]');
+          var germanCards = col("td.card-name");
           log("the language tag follows the name actually shown",
             german.length === english.length && german.length > 0 &&
-            german.every(function (n, i) { return tagged[i] === (n === english[i]); }),
-            german.join() + " / " + english.join() + " / " + tagged.join());
+            german.every(function (n, i) { return taggedRows[i] === (n === english[i]); }),
+            german.join() + " / " + english.join() + " / " + taggedRows.join());
+          log("and does so per card, in a table that holds both cases",
+            germanCards.length === englishCards.length && germanCards.length > 0 &&
+            germanCards.every(function (n, i) {
+              return taggedCards[i] === (n === englishCards[i]);
+            }),
+            germanCards.join() + " / " + englishCards.join() + " / " + taggedCards.join());
+          /* And it really is a mixture rather than all-or-nothing, or the
+             assertion above would hold with the rule wired backwards. */
+          log("and the table holds tagged and untagged cards side by side",
+            taggedCards.indexOf(true) !== -1 && taggedCards.indexOf(false) !== -1,
+            taggedCards.join());
 
           /* Switching twice rebuilt the sheet twice, so everything below has to
              be looked up again. */
