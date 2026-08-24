@@ -2781,21 +2781,51 @@
           /* Switching twice rebuilt the sheet twice, so everything below has to
              be looked up again. */
           var fp = at('[data-section="future-past-victory"] .sheet-check');
-          /* Ticked out of pool order on purpose: a set comes back in the pool's
-             order, and that is what makes normalize() a fixpoint. */
-          tick(fp[4]);
-          tick(fp[1]);
 
           /* The same card in two scenarios' columns — allowed, and the normal
              case: a card recorded after scenario 1 is shuffled back into the
              encounter deck at scenario 2's setup. Row 2 is the second card of
-             the set, columns 1 and 2 its first two cells. */
+             the set, columns 1 and 2 its first two cells. Ticked BEFORE the
+             victory display below, because that is the order the campaign
+             makes the entries in. */
           var rows = at('[data-section="future-past-deck"] tbody tr');
           var cells = rows[1].querySelectorAll(".sheet-check");
           tick(cells[0]);
           tick(cells[1]);
           log("the same card can stand in two columns at once",
             cells[0].checked && cells[1].checked);
+
+          /* Ticked out of pool order on purpose: a set comes back in the pool's
+             order, and that is what makes normalize() a fixpoint. fp[1] is the
+             card whose row already holds two cells, fp[4] one that holds none —
+             so this covers both halves of the one-sided lock below. */
+          tick(fp[4]);
+          tick(fp[1]);
+
+          /* A card in the victory display is removed from the campaign, so its
+             encounter-deck row closes and says so. One-sided: the two cells
+             that were already recorded stay operable, because a card can
+             legitimately have sat in an early scenario's deck and only later
+             land in the victory display. */
+          var open = function (row) {
+            return Array.prototype.map.call(row.querySelectorAll(".sheet-check"),
+              function (b) { return b.disabled ? "-" : "o"; }).join("");
+          };
+          log("a removed card is struck out in the grid",
+            rows[1].classList.contains("is-removed") &&
+            rows[4].classList.contains("is-removed"));
+          log("its recorded cells stay operable and its empty ones close",
+            open(rows[1]) === "oo--", open(rows[1]));
+          log("a removed card with nothing recorded closes entirely",
+            open(rows[4]) === "----", open(rows[4]));
+          log("and the closed cells say why",
+            cells[2].title.length > 0 && cells[2].title !== cells[0].title,
+            cells[2].title);
+          /* A card nobody removed is untouched — the lock is per row, not per
+             table. */
+          log("a card still in the campaign is untouched",
+            !rows[0].classList.contains("is-removed") && open(rows[0]) === "oooo",
+            open(rows[0]));
 
           var ss = at('[data-section="side-schemes"] .sheet-check');
           tick(ss[0]);
@@ -2968,8 +2998,32 @@
           tick(jb("s3Removed"));
           log("removed earlier and in play later is marked",
             cellNote("s4InPlay").length > 0, cellNote("s4InPlay"));
-          log("and neither of those boxes is closed by it",
+          log("and a box that is set is never closed by it",
             !jb("s4InPlay").disabled && !jb("s3Removed").disabled);
+
+          /* Gone means gone: once she is removed, every box of every later
+             scenario closes — as soon as it is empty, since its own value is
+             what keeps it open. */
+          jb("s4Removed").checked = false;
+          fire(jb("s4Removed"), "change");
+          log("clearing a later box closes it once she is gone",
+            jb("s4Removed").disabled === true);
+          log("and it says why, in its own words",
+            jb("s4Removed").title.length > 0 &&
+            jb("s4Removed").title !== jb("s3Removed").title,
+            jb("s4Removed").title);
+          jb("s4InPlay").checked = false;
+          fire(jb("s4InPlay"), "change");
+          log("so does the other box of that scenario",
+            jb("s4InPlay").disabled === true);
+          log("and the contradiction marker goes with it",
+            cellNote("s4InPlay") === "", cellNote("s4InPlay"));
+          /* Nothing here is one-way: correcting the earlier scenario opens them
+             again, which is the whole point of the lock being one-sided. */
+          jb("s3Removed").checked = false;
+          fire(jb("s3Removed"), "change");
+          log("correcting the earlier scenario opens them again",
+            !jb("s4InPlay").disabled && !jb("s4Removed").disabled);
 
           w.dispatchEvent(new w.Event("pagehide"));
           setTimeout(function () {
@@ -3175,7 +3229,105 @@
         });
       }
 
-      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint, mg: caseMg, mgrole: caseMgRole, mgexpert: caseMgExpert, mgprint: caseMgPrint };
+      /* The share button is the one action that sits in the bar rather than in
+         the menu, and it takes two different routes: a phone gets the system
+         share sheet, a desktop gets the clipboard. Both routes are stubbed here
+         — the real ones need a permission prompt and a device — so what is
+         actually asserted is which route is taken, that the link carries the
+         payload, and that a cancelled share sheet does not quietly fall back to
+         copying. */
+      function caseShareButton() {
+        seed({ "sb-1": {
+          schemaVersion: 1, id: "sb-1", campaignId: "fear-no-evil", stateVersion: 3,
+          title: "Zum Teilen",
+          createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-02T00:00:00.000Z",
+          state: { expert: false, players: [{ hero: "Daredevil", hp: 8 }] },
+        } }, "sb-1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var btn = d.getElementById("btn-share");
+          log("the share button is in the bar", !!btn &&
+            !!btn.closest(".topbar .controls"));
+          /* One control per action: it must not also still be in the menu. */
+          log("and not a second time in the menu",
+            !d.getElementById("main-menu").querySelector("#btn-share"));
+          /* Icon-only, so the name has to come from somewhere else. */
+          log("it carries a name and a tooltip",
+            (btn.getAttribute("aria-label") || "").length > 0 &&
+            (btn.getAttribute("title") || "").length > 0,
+            btn.getAttribute("aria-label"));
+
+          var copied = [];
+          var shared = [];
+          var shareResult = null;
+          Object.defineProperty(w.navigator, "clipboard", {
+            configurable: true,
+            value: { writeText: function (text) { copied.push(text); return Promise.resolve(); } },
+          });
+
+          /* Desktop first: no share sheet is offered, so the link goes to the
+             clipboard and the toast says so. */
+          btn.click();
+          setTimeout(function () {
+            log("on a desktop the link goes to the clipboard", copied.length === 1,
+              copied.length);
+            log("and it is a share link into this app",
+              copied.length === 1 && copied[0].indexOf("#log=") !== -1 &&
+              copied[0].indexOf(w.location.pathname) !== -1,
+              (copied[0] || "").slice(0, 60));
+            var toast = d.getElementById("toast");
+            log("and the toast says what happened",
+              !toast.hidden && toast.textContent.trim().length > 0,
+              toast.textContent.slice(0, 50));
+
+            /* Now a phone: a coarse pointer with no hover, and a share sheet
+               available. matchMedia is what core.js asks, so that is what gets
+               stubbed — no user-agent string is involved anywhere. */
+            w.navigator.share = function (data) {
+              shared.push(data);
+              return shareResult ? Promise.reject(shareResult) : Promise.resolve();
+            };
+            w.matchMedia = function (q) {
+              return { matches: q.indexOf("pointer: coarse") !== -1, media: q };
+            };
+            btn.click();
+            setTimeout(function () {
+              log("on a phone the system share sheet is used instead",
+                shared.length === 1, shared.length);
+              log("and it is handed the link and a title",
+                shared.length === 1 && String(shared[0].url).indexOf("#log=") !== -1 &&
+                String(shared[0].title).length > 0,
+                shared.length ? shared[0].title : "");
+              log("and nothing was copied that time", copied.length === 1,
+                copied.length);
+
+              /* Cancelling the sheet is a decision, not a failure: it must not
+                 turn into a surprise clipboard write. */
+              shareResult = new w.Error("cancelled");
+              shareResult.name = "AbortError";
+              btn.click();
+              setTimeout(function () {
+                log("cancelling the sheet is not an error", shared.length === 2,
+                  shared.length);
+                log("and still copies nothing", copied.length === 1, copied.length);
+
+                /* Anything else is a failure of the route, not of the action,
+                   so the clipboard takes over. */
+                shareResult = new w.Error("no permission");
+                shareResult.name = "NotAllowedError";
+                btn.click();
+                setTimeout(function () {
+                  log("but a failing share sheet falls back to the clipboard",
+                    copied.length === 2, copied.length);
+                  finish();
+                }, 250);
+              }, 250);
+            }, 250);
+          }, 250);
+        });
+      }
+
+      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint, mg: caseMg, mgrole: caseMgRole, mgexpert: caseMgExpert, mgprint: caseMgPrint, sharebtn: caseShareButton };
       (cases[CASE] || caseBasic)();
     </script>
   </body>

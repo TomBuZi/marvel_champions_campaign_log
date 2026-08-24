@@ -136,17 +136,33 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   Detail — beim Tausch zweier Rollen geht zwangsläufig einer der beiden kurz
   ohne Rolle durch, und ein Fehlklick im Auswahlfeld darf keine fünf Häkchen
   kosten. Gedruckt werden sie mit, in einer eigenen Zeile.
-* **Sagen statt sperren** (MC32) — der Bogen druckt Abschnitte nebeneinander,
-  die das Regelheft koppelt, und die App erzwingt nur, was **eine** gedruckte
-  Zeile über sich selbst sagt. Jubilees „in play“ und „removed from campaign“
-  sind zwei Zustände eines Ergebnisses und stehen unter einer Szenario-Pille,
-  also sperren sie sich gegenseitig — einseitig, wie MC60s „Abgeschlossen“ und
-  „Gescheitert“, damit ein Bogen, der beides mitbringt, bedienbar bleibt. Wie
-  viele Rollenverbesserungen die Kampagne vergeben hat, hängt dagegen an den
+* **Was aus der Kampagne heraus ist, wird gesperrt** (MC32) — und zwar
+  **einseitig**: ein bereits gesetztes Kästchen bleibt immer bedienbar, denn
+  `normalize()` entscheidet einen Widerspruch nicht, also muss der Ausweg auf
+  dem Bildschirm liegen. Ein importierter oder von Hand bearbeiteter Bogen darf
+  nie festgefroren ankommen.
+  * *Jubilee* — „in play“ und „removed from campaign“ eines Szenarios sind zwei
+    Zustände eines Ergebnisses („im Spiel eintragen, **sonst** aus dem Logbuch
+    entfernen“) und sperren sich gegenseitig, wie MC60s „Abgeschlossen“ und
+    „Gescheitert“. Und sobald sie entfernt ist, sind die Kästchen **aller
+    späteren Szenarien** zu: sie kommt nicht zurück. Ein trotzdem vorhandener
+    Widerspruch wird zusätzlich benannt — das noch offene Kästchen ist das, das
+    korrigiert werden muss.
+  * *Future Past* — eine Karte im Victory Display ist aus der Kampagne
+    entfernt, also ist ihre ganze Zeile im Begegnungsdeck-Gitter durchgestrichen
+    und zu. Hier zählt die Einseitigkeit am meisten: eine Karte kann in einem
+    frühen Szenario im Begegnungsdeck gestanden haben und zwei Szenarien später
+    im Victory Display landen, und dieser Abschnitt druckt keine Spalten, kann
+    also nicht sagen, *wann* sie entfernt wurde. Die leeren Zellen zu schließen
+    verhindert den nächsten falschen Eintrag; die gesetzten zu schließen würde
+    eine richtige Eintragung für einen Fehler erklären.
+* **Sagen statt sperren, wo es um eine Anzahl geht** (MC32) — wie viele
+  Rollenverbesserungen die Kampagne vergeben hat, hängt an den
   Nebenplan-Kästchen, begrenzt aber nur eine **Anzahl** und keine bestimmte
-  Karte: das wird gesagt, sobald mehr eingetragen ist als vergeben, und nie
-  gesperrt. Ebenso der Widerspruch, wenn Jubilee in einem früheren Szenario
-  entfernt und in einem späteren im Spiel ist.
+  Karte. Das wird gesagt, sobald mehr eingetragen ist als vergeben, und nie
+  gesperrt: sonst wären genau die Kästchen zu, die beim Erreichen der Grenze
+  zufällig leer waren, und ein frischer Bogen — Grenze 1 — käme sofort zu vier
+  Fünfteln zu.
 * **Ein bis vier Spieler** — Karten werden hinzugefügt, wenn jemand mitspielt, statt
   vier feste Plätze zu zeigen. Der gedruckte Bogen muss alle vier vorhalten; ein
   Bildschirm nicht.
@@ -175,7 +191,16 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
 * **Automatisch gespeichert** im Speicher des Browsers — kein Server, kein Konto,
   keine Übertragung irgendwohin.
 * **Export / Import** als JSON, und **Link teilen**: der komplette Bogen steckt
-  komprimiert in der Adresse.
+  komprimiert in der Adresse. Der Teilen-Knopf steht oben rechts in der Leiste und
+  nicht im Menü — er ist die eine Handlung, die man mitten im Spiel braucht, und
+  es gibt ihn deshalb genau einmal. Was er tut, hängt am Gerät: auf einem Zeigegerät
+  landet der Link in der Zwischenablage, auf einem Touchgerät öffnet er das
+  System-Teilen. Entschieden wird das am **Zeiger**
+  (`(hover: none) and (pointer: coarse)`), nicht an der Kennung des Browsers:
+  `navigator.share` gibt es auch auf dem Desktop, wo ein Teilen-Dialog die falsche
+  Antwort ist. Wird der Dialog abgebrochen, passiert nichts — abbrechen ist eine
+  Entscheidung und kein Fehler; scheitert er dagegen, übernimmt die Zwischenablage,
+  und ohne Zwischenablage steht der Link zum Herauskopieren im Dialog.
 * **Druckansicht** als reine Textfassung in Schwarzweiß, damit nichts abgeschnitten wird.
 * **Deutsch und Englisch**, hell und dunkel, beides umschaltbar und gespeichert —
   die Sprache lässt sich auch über die Adresse vorgeben (`…/de/`, `…/en/`).
@@ -418,7 +443,7 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (519 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (541 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   langpath | print | import | lock |
                                     #   lockconflict | random | randomspread |
@@ -427,7 +452,8 @@ node test/run-browser.js print      # nur ein Fall: basic | quarantine | share |
                                     #   rrs | rrsdialog | rrsprint | rrspools |
                                     #   rrsexpert | mts | mtsexpert | mtsprint |
                                     #   sm | smrep | smexpert | smprint |
-                                    #   mg | mgrole | mgexpert | mgprint
+                                    #   mg | mgrole | mgexpert | mgprint |
+                                    #   sharebtn
 BROWSER_LANG=de-DE node test/run-browser.js   # unter einer anderen Browser-Sprache
 ```
 

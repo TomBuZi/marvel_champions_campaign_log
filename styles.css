@@ -1118,6 +1118,14 @@ button:focus-visible {
    further down centres its cells, and at equal specificity the later rule
    wins. */
 .sheet-table.fp-table th[scope="row"] { text-align: left; }
+/* A card in the victory display is removed from the campaign, so no encounter
+   deck can hold it any more. The row says so the way MC60 says a scenario is
+   out of play — struck name, dimmed to 0.72, the figure where the text on
+   --brick still holds 4.5 — while its cells close one-sided: an already ticked
+   one stays operable, because it may have been recorded before the card was
+   removed and a record that was right must stay correctable. */
+.sheet-table.fp-table tr.is-removed { opacity: 0.72; }
+.sheet-table.fp-table tr.is-removed th[scope="row"] { text-decoration: line-through; }
 /* The four scenario columns keep one width whatever the card names do, so the
    boxes line up in columns the way they do on the sheet. */
 .sheet-table.fp-table thead th:not(:first-child),
