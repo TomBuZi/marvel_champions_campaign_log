@@ -54,8 +54,8 @@
       names the boxes carry follows the player's chosen role.
    2. What is recorded under a role the player no longer holds is kept, not
       shown as boxes, and the card says so. See `upgrades` in normalize().
-   3. Where the rulebook says a card or a character is GONE, the boxes that
-      would contradict it close. Where it caps a number rather than naming a
+   3. Where the rulebook says a card or a character is GONE — or not there
+      yet — the boxes that would contradict it close. Where it caps a number rather than naming a
       card, the sheet only says so. The line falls between an identity and a
       count, and every lock here is ONE-SIDED — a box that is itself ticked
       stays operable, because normalize() picks no winner for a contradiction
@@ -66,10 +66,15 @@
         outcome ("if in play, record that; OTHERWISE remove her"), printed side
         by side under one SCENARIO label — so they close each other, exactly as
         MC60's Completed and Failed do.
-      * Once Jubilee is removed from the campaign she does not come back, so
-        every box of every LATER scenario closes as well. The contradiction
-        still gets its marker: with the earlier column corrected afterwards,
-        the box that is still open is the one to fix.
+      * The Jubilee columns hang together in both directions. A column is
+        closed until the one before it records her in play, because that is the
+        only reason the later scenario asks at all — scenario 2's victory step
+        writes her into the log and scenario 3's setup puts her into play.
+        Scenario 2 has nothing before it and is always open. And once she is
+        removed from the campaign she does not come back, so every box of every
+        LATER scenario closes as well. The contradiction still gets its marker:
+        with the earlier column corrected afterwards, the box that is still
+        open is the one to fix.
       * A card in the victory display is removed from the campaign, so its
         whole row in the encounter-deck grid closes. One-sided matters most
         here: a card can legitimately sit in an early scenario's column and
@@ -81,9 +86,9 @@
         handed out, but they govern a COUNT, not an identity: "at most 1 plus
         the checked ones out of these five, but not which". Closing that would
         mean closing whichever boxes happen to be unticked when the cap is hit,
-        and a fresh sheet — cap 1 — would arrive four fifths shut. So it is a
-        quiet note instead, in the `markDuplicates` spirit: the paper does not
-        stop you, so neither do we.
+        and a fresh sheet — cap 1 — would arrive four fifths shut. So nothing
+        happens at all: the paper does not check it, the players know the rule,
+        and a running count on screen would start to read as a limit.
 
    And one thing that cannot be built here at all: nothing may depend on "which
    scenario is being played now", because this sheet records no progress
@@ -209,10 +214,6 @@
     UPGRADES_OF[role.slug] = role.upgrades;
     role.upgrades.forEach(function (u) { ALL_UPGRADES.push(u); });
   });
-  /* Derived from the table rather than written down a second time — the header
-     explains why five is trustworthy at all. */
-  var UPGRADES_PER_ROLE = ROLES[0].upgrades.length;
-
   /* Jubilee, as the sheet prints her: scenario 2 gets ONE box, scenarios 3 and
      4 get two each. The asymmetry is not an oversight to fix — she enters play
      during scenario 2, so at that point there is nothing to remove yet. */
@@ -258,24 +259,6 @@
   /* The five boxes a player's card shows, or none while no role is chosen. */
   function upgradesOf(player) {
     return UPGRADES_OF[player.role] || [];
-  }
-  /* What the player has recorded under a role they no longer hold. Kept, never
-     shown as boxes — there is no printed box for it — but counted, so the card
-     can admit that it is there. */
-  function orphanUpgrades(player) {
-    var own = upgradesOf(player);
-    return player.upgrades.filter(function (slug) { return !inPool(own, slug); });
-  }
-  /* What the player has recorded under the role they hold now. */
-  function ownUpgrades(player) {
-    var own = upgradesOf(player);
-    return player.upgrades.filter(function (slug) { return !!inPool(own, slug); });
-  }
-  /* How many role upgrades the campaign has handed out so far: one at scenario
-     1's setup, plus one for each side scheme recorded as defeated. Derived from
-     the boxes every time, never stored. */
-  function grantedCount(state) {
-    return 1 + state.sideSchemes.length;
   }
 
   // ---- Data ----------------------------------------------------------------
@@ -808,29 +791,24 @@
     return section;
   }
 
-  /* Everything a player's upgrade column has to say that is not a box: that no
-     role is chosen yet, that marks under another role are being kept, and how
-     many the campaign has actually granted. Derived from the state every time
-     and never stored — and it closes nothing, which is the point. One pass over
-     the whole sheet, because the granted count comes out of another panel. */
+  /* The one thing a player's upgrade column has to say that is not a box: that
+     there is no role yet, so an empty space does not have to be guessed at.
+
+     Two things it deliberately does NOT say. It does not mention marks kept
+     under a role the player no longer holds — the behaviour stays, because a
+     mis-clicked dropdown must not cost a record, but it is bookkeeping and not
+     something to interrupt anyone with; the marks are in the JSON export and
+     in a share link, which is where a record belongs. And it does not count
+     how many upgrades the campaign has granted against how many are ticked:
+     that is a rule the players know, the paper does not check it either, and a
+     number standing there permanently starts to look like a limit. Nothing is
+     closed in either case. */
   function paintUpgrades(t, state) {
     Array.prototype.forEach.call(document.querySelectorAll("[data-upgrades]"), function (row) {
       var player = state.players[parseInt(row.getAttribute("data-upgrades"), 10)];
       var note = row.querySelector(".lock-note");
       if (!player || !note) return;
-
-      var notes = [];
-      if (!player.role) notes.push(t("upgradeNoRole"));
-      var orphans = orphanUpgrades(player).length;
-      if (orphans) notes.push(t("upgradeOtherRole", String(orphans)));
-      /* Only when the sheet says more than the campaign can have handed out.
-         A number standing there permanently would start to look like a rule of
-         its own, and this is a reminder, not a limit. */
-      var granted = grantedCount(state);
-      if (ownUpgrades(player).length > granted) {
-        notes.push(t("upgradeGranted", String(granted), String(UPGRADES_PER_ROLE)));
-      }
-      note.textContent = notes.join(" ");
+      note.textContent = player.role ? "" : t("upgradeNoRole");
     });
   }
 
@@ -1007,23 +985,32 @@
     return section;
   }
 
-  /* Which Jubilee boxes are closed, and where the sheet contradicts itself.
-     Derived every time, nothing stored. Two rules, both from the rulebook:
+  /* Which Jubilee boxes are open, and where the sheet contradicts itself.
+     Derived every time, nothing stored. Three rules, all three straight out of
+     the scenario instructions:
 
        * within a column, "in play" and "removed from campaign" are two states
          of one outcome — "if in play, record that, OTHERWISE remove her" — so
          each closes the other;
-       * once she is removed from the campaign she does not come back, so every
-         box of every LATER scenario closes too.
+       * a column means nothing until the one before it recorded her in play:
+         scenario 3 only asks about her because scenario 2's victory step wrote
+         her into the log, and scenario 3's setup then puts her into play. No
+         entry there, nothing to ask here. Scenario 2 has nothing before it and
+         is therefore always open;
+       * and once she is removed from the campaign she does not come back, so
+         every box of every LATER scenario closes as well. That is the stronger
+         statement of the two, so it is the one the tooltip gives.
 
-     Both one-sided, like MC60's Completed and Failed: a box that is itself set
-     stays operable. Otherwise a sheet arriving from an import or a hand-edited
-     file with a contradiction in it would be frozen solid with no way out —
-     and normalize() picks no winner either, so the way out has to be on
-     screen. That is also why the contradiction still gets a marker: the one
+     All three one-sided, like MC60's Completed and Failed: a box that is itself
+     set stays operable. Otherwise a sheet arriving from an import or a
+     hand-edited file with a contradiction in it would be frozen solid with no
+     way out — and normalize() picks no winner either, so the way out has to be
+     on screen. That is also why the contradiction still gets a marker: the one
      box that is still open is the one to correct. */
   function paintJubilee(t, state) {
     var removedBefore = false;
+    /* null while there is no previous column at all — scenario 2. */
+    var previousInPlay = null;
     JUBILEE.forEach(function (col) {
       var cellEl = null;
       var keys = [col.inPlay];
@@ -1033,12 +1020,12 @@
         if (!box) return;
         var other = key === col.inPlay ? col.removed : col.inPlay;
         var set = !!state.jubilee[key];
-        /* The stronger statement wins the tooltip: "she is gone" explains more
-           than "the other box in this column is ticked". */
         var gone = removedBefore && !set;
+        var notYet = previousInPlay === false && !set;
         var paired = !!other && state.jubilee[other] && !set;
-        box.disabled = gone || paired;
+        box.disabled = gone || notYet || paired;
         box.title = gone ? t("jubileeGone")
+          : notYet ? t("jubileeNotYet")
           : paired ? t("jubileeLocked")
           : (box.getAttribute("aria-label") || "");
         cellEl = box.closest(".cell");
@@ -1051,6 +1038,7 @@
             ? t("jubileeConflict") : "";
         }
       }
+      previousInPlay = !!state.jubilee[col.inPlay];
       if (col.removed && state.jubilee[col.removed]) removedBefore = true;
     });
   }
@@ -1120,19 +1108,10 @@
           entryName(entry, lang));
       });
 
-      /* Recorded under a role the player no longer holds. Printed only when
-         there is something, and as prose rather than as boxes: a box would
-         claim a printed place, and there is none. But a printout that silently
-         swallows what is stored would be worse than one extra line — the same
-         class of line as "[x] Expert level", which is also a statement ABOUT
-         the sheet rather than a field on it. */
-      var orphans = orphanUpgrades(p);
-      if (orphans.length) {
-        printLine(players, "  " + t("upgradeOtherRole", String(orphans.length)) + " " +
-          orphans.map(function (slug) {
-            return poolName(ALL_UPGRADES, slug, lang);
-          }).join(", "));
-      }
+      /* Nothing about marks kept under a role the player no longer holds. The
+         printout is the sheet as it reads now, and on screen those marks are
+         not on it either. They are not lost — they are in the JSON export and
+         in a share link, which is the record that has to be complete. */
     });
 
     /* Every card of the set on its own line with a box: which side schemes were
@@ -1230,8 +1209,8 @@
     render: render,
     renderPrint: renderPrint,
 
-    helpDe: "Der MC32-Bogen ist der kästchenreichste von allen, und keine seiner Schreibflächen hat gedruckte Zeilen. Trotzdem musste hier keine Zellenzahl erfunden werden: jede dieser Flächen meint einen endlichen gedruckten Kartensatz, deshalb steht überall der Satz selbst als benannte Kästchen. Die vier Kampagnen-Nebenpläne behalten je eine Szenariospalte, weil der Bogen über jedes Kästchen eine SCENARIO-Pille druckt. „Future Past Cards in the Victory Display“ druckt keine Spalten und „… in the Encounter Deck“ vier — genau das ist der Unterschied: Entfernen ist endgültig und gilt für die ganze Kampagne, deshalb eine Menge; das Encounter-Deck wird im nächsten Setup wieder eingemischt, deshalb vier Spalten, und dieselbe Karte darf in mehreren stehen. Das Deck-Gitter steht hier als Tabelle, Karten links und Szenarien oben — gegenüber dem Druck gedreht, weil aus zwanzig wiederholten Kartennamen so fünf plus vier Spaltenköpfe werden und eine Zelle ohne Karte und Szenario keinen Namen hätte. „Role Upgrades in Play“ druckt der Bogen als eigenen Bereich mit einer Spalte Player #1 bis #4; diese Spalte ist nur die Spielerliste noch einmal, deshalb stehen die Kästchen hier in der Spielerkarte — und dort auch direkt unter der Rolle, denn die Rolle entscheidet, welche fünf Verbesserungen überhaupt angezeigt werden. Ohne gewählte Rolle steht dort keine Kästchenreihe, sondern der Hinweis, erst eine Rolle zu wählen. Jeder Spieler muss eine andere Rolle nehmen, deshalb ist eine bereits vergebene Rolle bei den anderen abgeblendet. Wer die Rolle wechselt, verliert nichts: Eintragungen der alten Rolle bleiben gespeichert, werden nur nicht mehr als Kästchen gezeigt, und die Karte sagt, wie viele es sind — ausblenden heißt nicht löschen, und beim Rollentausch zweier Spieler geht zwangsläufig einer kurz ohne Rolle durch. Die Kampagne vergibt eine Verbesserung im Setup von Szenario 1 und je eine weitere, wenn der Nebenplan des Vorszenarios angehakt ist; steht mehr auf dem Bogen als vergeben wurde, sagt die Karte das — gesperrt wird nichts, denn die Regel begrenzt eine Anzahl, nicht eine bestimmte Karte, und ein frischer Bogen wäre sonst sofort fast ganz zu. Gesperrt wird dagegen, wo eine Karte oder eine Figur aus der Kampagne heraus ist. Bei Jubilee sperren sich „in play“ und „removed from campaign“ innerhalb eines Szenarios gegenseitig, weil der Sieg-Schritt genau das sagt: im Spiel eintragen, sonst aus dem Logbuch entfernen. Und sobald sie entfernt ist, sind die Kästchen aller späteren Szenarien zu — sie kommt nicht zurück. Ebenso im Future-Past-Gitter: eine Karte im Victory Display ist aus der Kampagne entfernt, ihre ganze Zeile im Begegnungsdeck ist deshalb durchgestrichen und zu. Jede dieser Sperren ist einseitig, wie bei MC60: ein bereits gesetztes Kästchen bleibt bedienbar. Das ist wichtiger, als es klingt — eine Karte kann in einem frühen Szenario im Begegnungsdeck gestanden haben und zwei Szenarien später im Victory Display landen, und der Bogen druckt dort keine Spalten, kann also nicht sagen, wann sie entfernt wurde. Die leeren Zellen zu schließen verhindert den nächsten falschen Eintrag; die gesetzten zu schließen würde eine richtige Eintragung für einen Fehler erklären. Aus demselben Grund bleibt ein Bogen, der einen Widerspruch mitbringt, immer korrigierbar, und der Widerspruch wird zusätzlich benannt. Die Verbündeten aus „Abduction Protocols“ sind die vier CAPTIVE-Verbündeten als Kästchen; die Verbündeten unter „Rescue Captives“ oder „Find the Prisoners“ bleiben Freitext, weil sie aus den eigenen Decks der Spieler kommen und keine gedruckte Liste sind. Oben im Spielerbereich steht der Haken „Expertenmodus“: die verbleibenden Lebenspunkte sind das einzige Feld, das der gedruckte Bogen mit „(expert)“ kennzeichnet, und auf Standardstufe blendet der Bogen es aus, statt danach zu fragen. Ausblenden heißt nicht löschen — der Wert bleibt im Bogen, im Export und im Share-Link. Es gibt hier bewusst keine Szenario-Tabelle, kein „Abgeschlossen“, keinen Fortschrittszähler und kein Notizfeld: der gedruckte Bogen hat sie nicht. Und das fünfte Szenario gegen Magneto fehlt nicht — es steht auch auf dem gedruckten Bogen nicht, weil im Finale nichts mehr festzuhalten ist.",
-    helpEn: "The MC32 sheet is the most checkbox-heavy of them all, and not one of its write-in areas prints a row line. No cell count had to be invented all the same: every one of those areas means a finite printed card set, so the set itself is here as named boxes. The four campaign side schemes each keep a scenario column, because the sheet prints a SCENARIO pill over every box. “Future Past Cards in the Victory Display” prints no columns and “… in the Encounter Deck” prints four — and that difference is the point: removal is permanent and holds for the whole campaign, so it is one set; the encounter deck is shuffled back in at the next setup, so it keeps four columns and the same card may stand in several of them. The deck grid is a table here, cards down the side and scenarios across the top — transposed against the print, because that turns twenty repeated card names into five plus four column labels, and a cell would have no name without both its card and its scenario. “Role Upgrades in Play” is printed as its own area with a Player #1 to #4 column; that column is just the player list again, so the boxes sit in the player cards — and directly under the role, because the role decides which five upgrades are shown at all. With no role chosen there is no row of boxes but a line saying to pick a role first. Each player must take a different role, so a role already taken is greyed out for the others. Changing role costs nothing: what was entered under the old one stays stored and is only no longer shown as boxes, and the card says how many there are — hiding is not clearing, and swapping two players' roles necessarily takes one of them through a moment with no role at all. The campaign grants one upgrade at scenario 1's setup and one more for each previous scenario's side scheme that is checked; if the sheet holds more than has been granted, the card says so — nothing is closed, because the rule caps a NUMBER rather than naming a card, and a fresh sheet would otherwise arrive almost entirely shut. What does close is anything the rulebook has put out of the campaign. For Jubilee, “in play” and “removed from campaign” close each other within one scenario, because the victory step says exactly that: record her if she is in play, otherwise remove her from the log. And once she is removed, the boxes of every later scenario close too — she does not come back. The same in the Future Past grid: a card in the victory display is removed from the campaign, so its whole encounter-deck row is struck through and closed. Every one of these locks is one-sided, as in MC60: a box that is already ticked stays operable. That matters more than it sounds — a card can have sat in an early scenario's encounter deck and land in the victory display two scenarios later, and the sheet prints no columns there, so the log cannot say when it was removed. Closing the empty cells prevents the next wrong entry; closing the ticked ones would call a correct record an error. For the same reason a sheet that arrives with a contradiction stays correctable, and the contradiction is named on top of that. The allies from “Abduction Protocols” are the four CAPTIVE allies as boxes; the allies under “Rescue Captives” or “Find the Prisoners” stay free text, because they come out of the players' own decks and are not a printed list. At the top of the player area sits the “Expert level” box: the remaining hit points are the only field the printed sheet marks “(expert)”, and at standard level the sheet hides it rather than asking for it. Hiding is not clearing — the value stays in the sheet, in the export and in a share link. There is deliberately no scenario table, no “completed”, no progress counter and no notes field: the printed sheet has none. And the fifth scenario against Magneto is not missing; it is not on the printed sheet either, because the finale has nothing left to record.",
+    helpDe: "Der MC32-Bogen ist der kästchenreichste von allen, und keine seiner Schreibflächen hat gedruckte Zeilen. Trotzdem musste hier keine Zellenzahl erfunden werden: jede dieser Flächen meint einen endlichen gedruckten Kartensatz, deshalb steht überall der Satz selbst als benannte Kästchen. Die vier Kampagnen-Nebenpläne behalten je eine Szenariospalte, weil der Bogen über jedes Kästchen eine SCENARIO-Pille druckt. „Future Past Cards in the Victory Display“ druckt keine Spalten und „… in the Encounter Deck“ vier — genau das ist der Unterschied: Entfernen ist endgültig und gilt für die ganze Kampagne, deshalb eine Menge; das Encounter-Deck wird im nächsten Setup wieder eingemischt, deshalb vier Spalten, und dieselbe Karte darf in mehreren stehen. Das Deck-Gitter steht hier als Tabelle, Karten links und Szenarien oben — gegenüber dem Druck gedreht, weil aus zwanzig wiederholten Kartennamen so fünf plus vier Spaltenköpfe werden und eine Zelle ohne Karte und Szenario keinen Namen hätte. „Role Upgrades in Play“ druckt der Bogen als eigenen Bereich mit einer Spalte Player #1 bis #4; diese Spalte ist nur die Spielerliste noch einmal, deshalb stehen die Kästchen hier in der Spielerkarte — und dort auch direkt unter der Rolle, denn die Rolle entscheidet, welche fünf Verbesserungen überhaupt angezeigt werden. Ohne gewählte Rolle steht dort keine Kästchenreihe, sondern der Hinweis, erst eine Rolle zu wählen. Jeder Spieler muss eine andere Rolle nehmen, deshalb ist eine bereits vergebene Rolle bei den anderen abgeblendet. Wer die Rolle wechselt, verliert nichts: Eintragungen der alten Rolle bleiben gespeichert und werden nur nicht mehr als Kästchen gezeigt — ausblenden heißt nicht löschen, und beim Rollentausch zweier Spieler geht zwangsläufig einer kurz ohne Rolle durch. Der Bogen sagt darüber nichts; es ist Buchführung, kein Hinweis, den jemand braucht, und im JSON-Export und im Share-Link stehen die Eintragungen ohnehin. Wie viele Verbesserungen die Kampagne vergeben hat — eine im Setup von Szenario 1 und je eine weitere, wenn der Nebenplan des Vorszenarios angehakt ist —, zählt der Bogen ebenfalls nicht mit: die Regel begrenzt eine Anzahl und keine bestimmte Karte, das Papier prüft es auch nicht, und ein frischer Bogen wäre sonst sofort fast ganz zu. Gesperrt wird dagegen, wo eine Karte oder eine Figur aus der Kampagne heraus ist. Bei Jubilee sperren sich „in play“ und „removed from campaign“ innerhalb eines Szenarios gegenseitig, weil der Sieg-Schritt genau das sagt: im Spiel eintragen, sonst aus dem Logbuch entfernen. Die Szenarien hängen außerdem aneinander: Szenario 3 fragt nur nach ihr, weil der Sieg-Schritt von Szenario 2 sie ins Logbuch geschrieben hat, deshalb sind die Kästchen eines Szenarios erst offen, wenn das vorige „in play“ trägt — Szenario 2 hat nichts davor und ist immer offen. Und sobald sie entfernt ist, sind die Kästchen aller späteren Szenarien zu: sie kommt nicht zurück. Ebenso im Future-Past-Gitter: eine Karte im Victory Display ist aus der Kampagne entfernt, ihre ganze Zeile im Begegnungsdeck ist deshalb durchgestrichen und zu. Jede dieser Sperren ist einseitig, wie bei MC60: ein bereits gesetztes Kästchen bleibt bedienbar. Das ist wichtiger, als es klingt — eine Karte kann in einem frühen Szenario im Begegnungsdeck gestanden haben und zwei Szenarien später im Victory Display landen, und der Bogen druckt dort keine Spalten, kann also nicht sagen, wann sie entfernt wurde. Die leeren Zellen zu schließen verhindert den nächsten falschen Eintrag; die gesetzten zu schließen würde eine richtige Eintragung für einen Fehler erklären. Aus demselben Grund bleibt ein Bogen, der einen Widerspruch mitbringt, immer korrigierbar, und der Widerspruch wird zusätzlich benannt. Die Verbündeten aus „Abduction Protocols“ sind die vier CAPTIVE-Verbündeten als Kästchen; die Verbündeten unter „Rescue Captives“ oder „Find the Prisoners“ bleiben Freitext, weil sie aus den eigenen Decks der Spieler kommen und keine gedruckte Liste sind. Oben im Spielerbereich steht der Haken „Expertenmodus“: die verbleibenden Lebenspunkte sind das einzige Feld, das der gedruckte Bogen mit „(expert)“ kennzeichnet, und auf Standardstufe blendet der Bogen es aus, statt danach zu fragen. Ausblenden heißt nicht löschen — der Wert bleibt im Bogen, im Export und im Share-Link. Es gibt hier bewusst keine Szenario-Tabelle, kein „Abgeschlossen“, keinen Fortschrittszähler und kein Notizfeld: der gedruckte Bogen hat sie nicht. Und das fünfte Szenario gegen Magneto fehlt nicht — es steht auch auf dem gedruckten Bogen nicht, weil im Finale nichts mehr festzuhalten ist.",
+    helpEn: "The MC32 sheet is the most checkbox-heavy of them all, and not one of its write-in areas prints a row line. No cell count had to be invented all the same: every one of those areas means a finite printed card set, so the set itself is here as named boxes. The four campaign side schemes each keep a scenario column, because the sheet prints a SCENARIO pill over every box. “Future Past Cards in the Victory Display” prints no columns and “… in the Encounter Deck” prints four — and that difference is the point: removal is permanent and holds for the whole campaign, so it is one set; the encounter deck is shuffled back in at the next setup, so it keeps four columns and the same card may stand in several of them. The deck grid is a table here, cards down the side and scenarios across the top — transposed against the print, because that turns twenty repeated card names into five plus four column labels, and a cell would have no name without both its card and its scenario. “Role Upgrades in Play” is printed as its own area with a Player #1 to #4 column; that column is just the player list again, so the boxes sit in the player cards — and directly under the role, because the role decides which five upgrades are shown at all. With no role chosen there is no row of boxes but a line saying to pick a role first. Each player must take a different role, so a role already taken is greyed out for the others. Changing role costs nothing: what was entered under the old one stays stored and is only no longer shown as boxes — hiding is not clearing, and swapping two players' roles necessarily takes one of them through a moment with no role at all. The sheet says nothing about it; that is bookkeeping rather than something anyone needs telling, and those marks are in the JSON export and in a share link anyway. Nor does the sheet count how many upgrades the campaign has granted — one at scenario 1's setup and one more for each previous scenario's side scheme that is checked: the rule caps a NUMBER rather than naming a card, the paper does not check it either, and a fresh sheet would otherwise arrive almost entirely shut. What does close is anything the rulebook has put out of the campaign. For Jubilee, “in play” and “removed from campaign” close each other within one scenario, because the victory step says exactly that: record her if she is in play, otherwise remove her from the log. The scenarios also hang together: scenario 3 only asks about her because scenario 2's victory step wrote her into the log, so a scenario's boxes are closed until the one before it carries “in play” — scenario 2 has nothing before it and is always open. And once she is removed, the boxes of every later scenario close too: she does not come back. The same in the Future Past grid: a card in the victory display is removed from the campaign, so its whole encounter-deck row is struck through and closed. Every one of these locks is one-sided, as in MC60: a box that is already ticked stays operable. That matters more than it sounds — a card can have sat in an early scenario's encounter deck and land in the victory display two scenarios later, and the sheet prints no columns there, so the log cannot say when it was removed. Closing the empty cells prevents the next wrong entry; closing the ticked ones would call a correct record an error. For the same reason a sheet that arrives with a contradiction stays correctable, and the contradiction is named on top of that. The allies from “Abduction Protocols” are the four CAPTIVE allies as boxes; the allies under “Rescue Captives” or “Find the Prisoners” stay free text, because they come out of the players' own decks and are not a printed list. At the top of the player area sits the “Expert level” box: the remaining hit points are the only field the printed sheet marks “(expert)”, and at standard level the sheet hides it rather than asking for it. Hiding is not clearing — the value stays in the sheet, in the export and in a share link. There is deliberately no scenario table, no “completed”, no progress counter and no notes field: the printed sheet has none. And the fifth scenario against Magneto is not missing; it is not on the printed sheet either, because the finale has nothing left to record.",
 
     /* Zweisprachig angelegt, aber noch nicht zweisprachig befüllt. Zwei
        Gruppen, und die Unterscheidung ist der ganze Punkt:
@@ -1277,12 +1256,9 @@
         duplicateHero: "Dieser Held ist schon einem anderen Spieler zugeordnet.",
 
         upgradeNoRole: "Erst eine Rolle wählen.",
-        /* "%s" = Anzahl der Eintragungen unter einer anderen Rolle. */
-        upgradeOtherRole: "Eintragungen einer anderen Rolle bleiben erhalten (%s).",
-        /* "%s" = bisher vergeben, "%s" = Verbesserungen je Rolle. */
-        upgradeGranted: "Die Kampagne hat bisher %s von %s vergeben.",
         jubileeLocked: "Das Gegenstück dieses Szenarios ist angehakt. Zuerst dort abhaken.",
         jubileeGone: "Ein früheres Szenario hat Jubilee aus der Kampagne entfernt. Danach kann sie nicht mehr ins Spiel kommen.",
+        jubileeNotYet: "Im vorigen Szenario ist Jubilee nicht als im Spiel eingetragen. Erst dort anhaken.",
         jubileeConflict: "Widerspruch: ein früheres Szenario hat Jubilee aus der Kampagne entfernt.",
         fpRemoved: "Diese Karte steht im Victory Display und ist damit aus der Kampagne entfernt. Sie kann in keinem Begegnungsdeck mehr stehen.",
 
@@ -1326,10 +1302,9 @@
         duplicateHero: "This hero is already assigned to another player.",
 
         upgradeNoRole: "Choose a role first.",
-        upgradeOtherRole: "Marks under another role are kept (%s).",
-        upgradeGranted: "The campaign has granted %s of %s so far.",
         jubileeLocked: "This scenario's counterpart is checked. Clear it there first.",
         jubileeGone: "An earlier scenario removed Jubilee from the campaign. She cannot come back into play after that.",
+        jubileeNotYet: "The previous scenario does not record Jubilee as in play. Check it there first.",
         jubileeConflict: "Contradiction: an earlier scenario removed Jubilee from the campaign.",
         fpRemoved: "This card is in the victory display and therefore removed from the campaign. It cannot be in any encounter deck any more.",
 
