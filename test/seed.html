@@ -2,11 +2,11 @@
 <script>
 /* Legt einen ausgefüllten Beispielbogen an und springt in die App — für
    Screenshots und den Druckvergleich. "?c=mc10" nimmt den MC10-Bogen,
-   "?c=mc21" den MC21-Bogen, "?c=mc27" den MC27-Bogen, "?c=mc32" den
-   MC32-Bogen, "?c=mc40" den MC40-Bogen, "?c=mc45" den MC45-Bogen, ohne
-   Angabe kommt MC60. */
+   "?c=mc16" den MC16-Bogen, "?c=mc21" den MC21-Bogen, "?c=mc27" den
+   MC27-Bogen, "?c=mc32" den MC32-Bogen, "?c=mc40" den MC40-Bogen,
+   "?c=mc45" den MC45-Bogen, ohne Angabe kommt MC60. */
 var q = new URLSearchParams(location.search);
-var which = { mc10: "mc10", mc21: "mc21", mc27: "mc27", mc32: "mc32", mc40: "mc40", mc45: "mc45" }[q.get("c")] || "mc60";
+var which = { mc10: "mc10", mc16: "mc16", mc21: "mc21", mc27: "mc27", mc32: "mc32", mc40: "mc40", mc45: "mc45" }[q.get("c")] || "mc60";
 /* "?theme=dark" (oder light) nagelt das Theme fest — sonst folgt es dem System.
    Gebraucht fuer den Druckvergleich: der Druck muss schwarz auf weiss sein,
    auch aus einer Dark-Mode-Sitzung und auch mit einem Kampagnen-Skin. */
@@ -220,6 +220,52 @@ var logs = {
         "abyss": true,
         "sugar-man": false,
         "mikhail-rasputin": false
+      }
+    }
+  },
+  mc16: {
+    schemaVersion: 1, id: "seed-8", campaignId: "galaxys-most-wanted", stateVersion: 2,
+    title: "Galaxy's Most Wanted, Durchgang 1",
+    createdAt: "2026-08-20T18:00:00.000Z", updatedAt: "2026-08-24T21:40:00.000Z",
+    state: {
+      expert: true,
+      /* Drei Spieler, damit die Spalten von Markt und Sammlung nebeneinander
+         zu sehen sind. Die Marktkarten sind bewusst gemischt: uebersetzte
+         (Panzerung, Knapp daneben) neben noch englischen, damit der
+         Sprach-Tag im Bild zu pruefen ist. Und keine Karte doppelt, denn die
+         Gruppenregel laesst genau das nicht zu. */
+      players: [
+        /* Verdient 12, ausgegeben 7 (Panzerung 4 + Knapp daneben 3) — bleiben
+           5. Die "Uebrigen Units" stehen nirgends im Zustand: sie werden
+           gerechnet. */
+        { hero: "Rocket Raccoon", hp: 7, unitsEarned: 12,
+          market: ["armor-plating", "close-call"],
+          collection: ["Enhanced Reflexes", "~Boot Camp"] },
+        /* Absichtlich ueberzogen: 1 verdient, Grapple kostet 2, macht -1 in
+           Rot. Wie MC45s Widerspruchszeile gehoert der Fehlerzustand in den
+           Beispielbogen, sonst prueft ihn kein Blick. */
+        { hero: "Groot", hp: 11, unitsEarned: 1,
+          market: ["grapple"],
+          collection: ["Nova"] },
+        { hero: "Gamora", hp: 6, unitsEarned: 0,
+          market: [],
+          collection: [] }
+      ],
+      /* Zwei der vier Artefakte notiert, damit beide Zustaende im Bild sind. */
+      artifacts: ["magical-teapot", "crystal-ball"],
+      /* Gamora haelt den Machtstein: das Auswahlfeld muss ihren Namen zeigen,
+         obwohl gespeichert nur der Spielerplatz ist. */
+      powerStone: 2,
+      /* Zwei Ausweichmarker, also 1 zusaetzliche Bedrohung in Szenario #5 —
+         die abgeleitete Zeile ist damit nicht leer. */
+      evasion: 2,
+      /* Drei Kreuze, damit die Staffel drei Karten nennt, jede mit dem
+         Szenario, ab dem sie ueberhaupt geprueft wird. */
+      headhunter: {
+        brotherhood: true,
+        infiltrate: true,
+        escape: false,
+        nebula: true
       }
     }
   }

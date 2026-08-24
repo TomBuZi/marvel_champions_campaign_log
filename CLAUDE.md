@@ -168,7 +168,8 @@ Vorlagen, bewusst verschieden:
 | `campaigns/sinister-motives.js` | eine Zahl, aus der zwei abgeleitete Zustände fallen: erreichte Stufen und freigeschaltete Felder; dazu eine Liste, in der die Position Teil der Eintragung ist |
 | `campaigns/mutant-genesis.js` | Beschriftungen, die aus einer Wahl abgeleitet werden, ohne dass die Wahl entscheidet, was gespeichert bleibt; ein Gitter aus Kartensatz × Szenario; und die Grenze zwischen einer Sperre und einem Hinweis |
 | `campaigns/next-evolution.js` | eine Tabelle, deren Zeile eine gedruckte Karte ist und deren gedruckte Spalten nur gelesen werden; eine Auswahl mit Eindeutigkeit über die Zeilen hinweg; und ein Feld, das erst mit dieser Auswahl aufgeht |
-| `campaigns/age-of-apocalypse.js` | das schlankeste Datenmodell: zwei Wahrheitswerte je gedruckter Zeile, die sich gegenseitig ausschließen und gemeinsam den Zeilennamen durchstreichen — dazu ein Bogen, dessen deutscher Druck vorlag, also nichts als Platzhalter stehen ließ |
+| `campaigns/galaxys-most-wanted.js` | eine **wachsende** Auswahlliste aus einem festen Pool, deren Eindeutigkeit über alle Spieler hinweg gilt; ein gedrucktes Feld, das nicht abgefragt, sondern gerechnet wird — samt `migrate()`, die den alten Kontostand *exakt* umrechnet statt einen Standardwert zu raten; ein Feld, das per Index auf einen Spieler zeigt statt auf seinen Namen; und zwei Zahlen, aus denen der nächste Spielaufbau abgeleitet wird |
+| `campaigns/age-of-apocalypse.js` | sehr schlank: zwei Wahrheitswerte je gedruckter Zeile, die sich gegenseitig ausschließen und gemeinsam den Zeilennamen durchstreichen — dazu ein Bogen, dessen deutscher Druck vorlag, also nichts als Platzhalter stehen ließ |
 
 Harte Punkte:
 
@@ -177,7 +178,12 @@ Harte Punkte:
 * `stateVersion: 1` heißt kein `migrate()`. Ab 2 ist es Pflicht — und eine
   Migration, die ein Feld hinzufügt, muss überlegen, was der Standardwert für
   **bestehende** Bögen bedeutet. (MC60 hat gelernt: `expert: false` versteckte
-  eingetragene Lebenspunkte.)
+  eingetragene Lebenspunkte.) Wo es geht, wird gar kein Standardwert geraten:
+  MC16 hat ein Feld von „übrig“ auf „verdient“ umgestellt und rechnet in der
+  Migration `übrig + ausgegeben` — und was ausgegeben wurde, steht als
+  Kartenliste direkt daneben. Ein Bogen ohne eingetragenen Kontostand bekommt
+  auch danach keinen: aus den Karten eine Einnahme abzuleiten, die nie notiert
+  wurde, wäre eine Erfindung.
 * Kartennamen als Tabelle mit `en` und `de`. `de: null` zeigt den englischen
   Namen; `de: ""` ist verboten und wird von `lint.js` gefangen.
 * Ein englisch angezeigter Name trägt `lang="en"`, ein übersetzter nicht.
@@ -221,7 +227,13 @@ Dieselbe Zweiteilung gilt für `de: null` in den Kartentabellen, und dort ist si
 am leichtesten zu verwechseln: bei MC10 und MC21 heißt `null` „bleibt im
 deutschen Druck englisch" — eine **Entscheidung**. Bei MC27 heißt es „noch nicht
 eingetragen" — **offene Arbeit**. Der Kommentar muss sagen, welches von beiden
-gemeint ist, sonst räumt ein späterer Leser das Falsche auf.
+gemeint ist, sonst räumt ein späterer Leser das Falsche auf. MC16 hat gar kein
+`de: null`: alle 28 Marktkarten sind übersetzt, und weil das der einzige solche
+Fall ist, sagt es der Dateikopf ausdrücklich — sonst sucht jemand den fehlenden
+Fall, statt ihn als erledigt zu erkennen. Und wo zwei deutsche Drucke einander
+widersprechen — beim MC16-Artefakt „Ei des Monarchen von Hujahdarian" setzt das
+Regelheft eine Silbe weniger als die Karte —, gewinnt die Karte, und der
+Kommentar hält fest, warum die Tabelle nicht zum Regelheft passt.
 
 Dann in `index.html` einhängen (`<script src="campaigns/....js">`). Die
 Reihenfolge dort ist nur noch die Registrierung — **angezeigt** wird nach
@@ -324,7 +336,8 @@ nichts übrig ist.
   `cellsAreCells()` in `test/selftest.html` liest für jede Zelle jeder
   `.sheet-table` das berechnete `display` und verlangt `table-cell`. Aufgerufen
   wird es in `basic`, `smrep`, `mg`, `ne` und `aoa` — also einmal je Kampagne,
-  die überhaupt eine Tabelle druckt (MC10 und MC21 haben keine). Nur in der
+  die überhaupt eine Tabelle druckt (MC10, MC16 und MC21 haben keine, ihre
+  Spielerspalten sind `.player-grid`). Nur in der
   Breitansicht sinnvoll: die Schmalvariante macht jede Zelle absichtlich zum
   Block und legt den Rahmen auf die Zeile.
 * **Terminologie über alle Kampagnen hinweg.** Dasselbe Feld heißt überall

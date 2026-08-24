@@ -4295,7 +4295,770 @@
         });
       }
 
-      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint, mg: caseMg, mgrole: caseMgRole, mgexpert: caseMgExpert, mgprint: caseMgPrint, ne: caseNe, neschemes: caseNeSchemes, neexpert: caseNeExpert, neprint: caseNePrint, aoa: caseAoa, aoamissions: caseAoaMissions, aoaexpert: caseAoaExpert, aoaprint: caseAoaPrint, sharebtn: caseShareButton };
+      // ------------------------------------------- MC16 Galaxy's Most Wanted
+      function gmwLog() {
+        return {
+          schemaVersion: 1, id: "gmw1", campaignId: "galaxys-most-wanted", stateVersion: 2,
+          title: "The Galaxy's Most Wanted",
+          createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-02T00:00:00.000Z",
+          state: {
+            /* Expert, because the hit points only exist there. caseGmwExpert is
+               the one that starts at standard. */
+            expert: true,
+            /* Two players, and one bought card, because the market panel only
+               grows a <select> once there is a row to hold it — a sheet where
+               nobody has bought anything has no select to inspect. Everything
+               else deliberately absent: normalize() has to build the four
+               artifact slots and the four scenario tiles out of a state that
+               mentions neither. */
+            players: [
+              { hero: "", hp: null, market: ["grapple"] },
+              { hero: "", hp: null },
+            ],
+          },
+        };
+      }
+      /* A version 1 sheet: back then `units` was the printed UNSPENT balance,
+         where the field now holds what was EARNED. Player #1 has 4 left after
+         Grapple (2) and Close Call (3), so 9 were earned; player #2 recorded no
+         balance at all, which has to stay recorded as nothing rather than being
+         inferred from their card. */
+      function gmwLogV1() {
+        var log = gmwLog();
+        log.stateVersion = 1;
+        log.state = {
+          expert: false,
+          players: [
+            { hero: "Rocket Raccoon", hp: null, units: 4,
+              market: ["grapple", "close-call"] },
+            { hero: "Groot", hp: null, market: ["onrush"] },
+          ],
+        };
+        return log;
+      }
+
+      /* The sections the printed sheet has, by their stable data-section keys —
+         not by their labels, which the two printings word differently. */
+      var GMW_SECTIONS = ["players", "market", "collection", "artifacts",
+        "power-stone", "evasion", "headhunter"];
+      /* Names that come off a printed card, as one list. Every one of them is
+         translated in the German printing, so this campaign offers no mixture
+         of tagged and untagged names — which is why the case below pins BOTH
+         branches of the rule instead of relying on one sheet to show both. The
+         scenario tiles are deliberately NOT in here: their German name for
+         Nebula is the same string as the English one, so the "tagged exactly
+         when the string is unchanged" rule cannot see them. */
+      var GMW_NAMES = '[data-section="market"] optgroup option, ' +
+        '[data-section="artifacts"] .flag > span';
+
+      function gmwAddMarketRow(d, player) {
+        var list = d.querySelector('[data-list-id="gmw-market-' + player + '"]');
+        list.parentNode.querySelector(".entry-add").click();
+      }
+      function gmwMarketSelect(d, player, at) {
+        return d.querySelector('[data-market-select="' + player + "-" + at + '"]');
+      }
+      function gmwPick(d, player, at, slug) {
+        var sel = gmwMarketSelect(d, player, at);
+        sel.value = slug;
+        fire(sel, "change");
+        return sel;
+      }
+      /* Whether a given card is selectable in a given list. */
+      function gmwOptionState(d, player, at, slug) {
+        var sel = gmwMarketSelect(d, player, at);
+        return Array.prototype.filter.call(sel.options, function (o) {
+          return o.value === slug;
+        })[0];
+      }
+
+      function caseGmw() {
+        seed({ gmw1: gmwLog() }, "gmw1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var app = d.getElementById("campaign");
+          var at = function (sel) { return app.querySelectorAll(sel); };
+
+          var found = GMW_SECTIONS.filter(function (id) {
+            return !!app.querySelector('[data-section="' + id + '"]');
+          });
+          log("every printed section has a panel",
+            found.length === GMW_SECTIONS.length, found.join());
+          log("and no panel beyond them",
+            at("[data-section]").length === GMW_SECTIONS.length,
+            at("[data-section]").length);
+          /* In the printed order, top to bottom. Read off the document rather
+             than written out, so it keeps checking the order and not the
+             words. */
+          var order = function () {
+            return Array.prototype.map.call(at("[data-section]"), function (n) {
+              return n.getAttribute("data-section");
+            }).join();
+          };
+          log("in the order the sheet prints them",
+            order() === GMW_SECTIONS.join(), order());
+
+          /* The sheet prints a second line inside every heading bar but the
+             player badge, and each one names the scenario that pays the section
+             out. Counted rather than quoted, so a retranslation does not break
+             it. */
+          log("every section but the player badge carries its printed subtitle",
+            at(".sheet-subline").length === GMW_SECTIONS.length - 1 &&
+            !app.querySelector('[data-section="players"] .sheet-subline'),
+            at(".sheet-subline").length);
+          log("and none of them is empty",
+            Array.prototype.every.call(at(".sheet-subline"), function (n) {
+              return n.textContent.trim().length > 0;
+            }));
+
+          /* One column per player in both card panels — the sheet prints one
+             heading over four columns, not one box per heading. */
+          log("the market has a column per player",
+            at('[data-section="market"] .player-card').length === 2,
+            at('[data-section="market"] .player-card').length);
+          log("and the collection has one too",
+            at('[data-section="collection"] .player-card').length === 2,
+            at('[data-section="collection"] .player-card').length);
+
+          /* The whole printed pool, grouped by the unit cost each card charges
+             against the "Unspent Units" field: 28 cards, four at each cost from
+             1 to 7, plus the placeholder. */
+          var sel0 = gmwMarketSelect(d, 0, 0);
+          log("a market row offers the whole printed pool",
+            sel0.querySelectorAll("optgroup option").length === 28,
+            sel0.querySelectorAll("optgroup option").length);
+          log("grouped by unit cost, seven groups of four",
+            sel0.querySelectorAll("optgroup").length === 7 &&
+            Array.prototype.every.call(sel0.querySelectorAll("optgroup"), function (g) {
+              return g.querySelectorAll("option").length === 4;
+            }),
+            sel0.querySelectorAll("optgroup").length);
+          log("and the seeded card is the one selected", sel0.value === "grapple", sel0.value);
+
+          /* Four boxes each, counted off the printed sheet: four artifact rows
+             at the divider lines, four scenario tiles. */
+          log("four artifacts, every one of them named",
+            at('[data-section="artifacts"] .flag').length === 4 &&
+            Array.prototype.every.call(at('[data-section="artifacts"] .flag'), function (f) {
+              return f.querySelector("span").textContent.trim().length > 0;
+            }),
+            at('[data-section="artifacts"] .flag').length);
+          log("four scenario tiles, every one of them named",
+            at('[data-section="headhunter"] .flag').length === 4 &&
+            Array.prototype.every.call(at('[data-section="headhunter"] .flag'), function (f) {
+              return f.querySelector("span").textContent.trim().length > 0;
+            }),
+            at('[data-section="headhunter"] .flag').length);
+          /* THE absence that defines this sheet: Ronan is scenario #5 and does
+             not appear on the printed log once. Four tiles, not five, and the
+             sheet must not grow a fifth anywhere. */
+          log("and no fifth scenario anywhere on the sheet",
+            at(".flag").length === 4 + 4 + 1,
+            at(".flag").length);
+
+          log("a fresh sheet has nothing ticked",
+            Array.prototype.every.call(
+              at('[data-section="artifacts"] .sheet-check, [data-section="headhunter"] .sheet-check'),
+              function (b) { return b.checked === false; }));
+
+          /* One entered number per player and one computed one beside it. The
+             computed one is text rather than an input on purpose — a box you
+             cannot type in reads as broken. */
+          log("every player card computes what is left beside what was earned",
+            at('[data-section="players"] [data-units-left]').length === 2 &&
+            at('[data-section="players"] .units-line input').length === 0,
+            at('[data-section="players"] [data-units-left]').length);
+
+          /* Power Stone Control is a seat, so its options follow the player
+             cards above: two players, two seats, plus "nobody". */
+          var stone = app.querySelector("[data-power-stone]");
+          log("the Power Stone offers a seat per player plus nobody",
+            stone.options.length === 3, stone.options.length);
+          log("and nobody is who holds it on a fresh sheet", stone.value === "");
+          log("with a note saying where the identities come from",
+            app.querySelector("[data-power-stone-hint]").textContent.trim().length > 0);
+
+          /* Both derived lines start out saying the right kind of nothing: the
+             evasion line is silent because nothing is recorded, the ladder says
+             in words that no mark adds anything. */
+          log("nothing recorded means no evasion line",
+            app.querySelector("[data-pincer]").textContent === "");
+          log("and the ladder says the marks add nothing yet",
+            app.querySelector("[data-headhunter-ladder]").textContent.trim().length > 0 &&
+            app.querySelector("[data-headhunter-ladder]").textContent.indexOf("\u00b7") === -1,
+            app.querySelector("[data-headhunter-ladder]").textContent);
+
+          /* The rule itself, derived instead of written out: a name is tagged as
+             English exactly when it is the SAME string in both languages. Read
+             in German, then in English, then switched back — so this keeps
+             checking the rule however many market cards get a German name
+             later, instead of decaying into a list somebody has to maintain. */
+          var names = function () {
+            return Array.prototype.map.call(at(GMW_NAMES), function (n) {
+              return n.textContent.trim();
+            });
+          };
+          var tags = function () {
+            return Array.prototype.map.call(at(GMW_NAMES), function (n) {
+              return n.getAttribute("lang") === "en";
+            });
+          };
+          var germanTags = tags();
+          d.getElementById("btn-lang").click();
+          var english = names(), englishTags = tags();
+          d.getElementById("btn-lang").click();
+          var german = names();
+          log("the language tag follows the name actually shown",
+            german.length === english.length && german.length > 0 &&
+            german.every(function (n, i) { return germanTags[i] === (n === english[i]); }),
+            german.length + "/" + english.length);
+          /* Both directions, because this campaign has no untranslated name
+             left to make a mixture out of: with every string different, the
+             assertion above would also hold if the tag were never set at all.
+             Pinning the English pass as well puts teeth back on it. */
+          log("nothing is tagged as English while German is shown",
+            germanTags.length > 0 && germanTags.indexOf(true) === -1,
+            germanTags.join());
+          log("and everything is while English is",
+            englishTags.length === germanTags.length &&
+            englishTags.indexOf(false) === -1, englishTags.join());
+
+          /* Switching twice rebuilt the sheet twice, so everything below has to
+             be looked up again. */
+          tick(app.querySelectorAll('[data-section="artifacts"] .sheet-check')[1]);
+          tick(app.querySelectorAll('[data-section="headhunter"] .sheet-check')[3]);
+          var evasion = app.querySelector('[data-section="evasion"] .num-input');
+          evasion.value = "2";
+          fire(evasion, "input");
+          fire(evasion, "blur");
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).gmw1.state;
+            /* Slugs read off the stored value rather than written out here, so
+               the assertions survive a renamed card. */
+            log("the market card was stored under its slug",
+              st.players[0].market.length === 1 && st.players[1].market.length === 0,
+              JSON.stringify(st.players.map(function (pl) { return pl.market; })));
+            log("the artifact was stored, and only that one",
+              st.artifacts.length === 1, JSON.stringify(st.artifacts));
+            var marked = Object.keys(st.headhunter).filter(function (k) {
+              return st.headhunter[k];
+            });
+            log("the tile was stored under its own slug, the others untouched",
+              marked.length === 1 && marked[0] === Object.keys(st.headhunter)[3],
+              JSON.stringify(st.headhunter));
+            log("and the evasion counters were stored as a number",
+              st.evasion === 2, st.evasion);
+            finish();
+          }, 500);
+        });
+      }
+
+      /* The signature mechanic: one copy of each Market card for the players as
+         a GROUP, and the two numbers a later setup reads back off this sheet. */
+      function caseGmwMarket() {
+        var seeded = gmwLog();
+        seeded.state.players = [
+          { hero: "Rocket Raccoon", hp: null, market: [] },
+          { hero: "Groot", hp: null, market: [] },
+        ];
+        seed({ gmw1: seeded }, "gmw1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          /* Removing a row that holds a card asks first, and an unanswered
+             dialog wedges the headless browser rather than failing it. */
+          w.confirm = function () { return true; };
+          var app = d.getElementById("campaign");
+
+          /* Nobody has bought anything, so there is no row and nothing to pick
+             from until one is added. */
+          log("a player who has bought nothing has no row",
+            !gmwMarketSelect(d, 0, 0));
+          var cost = function (player, at) {
+            return d.querySelector('[data-market-cost="' + player + "-" + at + '"]');
+          };
+
+          gmwAddMarketRow(d, 0);
+          log("adding a row adds a select", !!gmwMarketSelect(d, 0, 0));
+          /* A row that holds nothing owes nothing. */
+          log("and an empty row is priced at nothing rather than at zero",
+            cost(0, 0).hidden === true && cost(0, 0).textContent === "",
+            cost(0, 0).textContent);
+          log("and a second row cannot be added while the first is empty",
+            d.querySelector('[data-list-id="gmw-market-0"]')
+              .parentNode.querySelector(".entry-add").disabled === true);
+
+          gmwPick(d, 0, 0, "grapple");
+          /* The price sits behind the card and outside the select, because a
+             closed select shows only the name. */
+          log("a chosen card shows what it costs",
+            cost(0, 0).hidden === false && cost(0, 0).textContent === "2",
+            cost(0, 0).textContent);
+          /* The number is all there is room for, so the words go to the
+             screen reader — the bargain .icon-pp strikes in MC27. */
+          log("and carries its meaning in words, not only as a digit",
+            /2/.test(cost(0, 0).getAttribute("aria-label") || "") &&
+            (cost(0, 0).getAttribute("aria-label") || "").length > 3,
+            cost(0, 0).getAttribute("aria-label"));
+          log("picking a card enables the add button again",
+            d.querySelector('[data-list-id="gmw-market-0"]')
+              .parentNode.querySelector(".entry-add").disabled === false);
+
+          gmwAddMarketRow(d, 1);
+          /* The rule the paper can only describe: one copy for the group. */
+          log("a card bought by one player is closed to another",
+            gmwOptionState(d, 1, 0, "grapple").disabled === true);
+          log("but the rest of the pool is untouched",
+            gmwOptionState(d, 1, 0, "onrush").disabled === false);
+          /* One-sided, the MC60/MC32/MC40/MC45 rule: a select never disables
+             its OWN value, so a sheet arriving with a conflict stays operable. */
+          log("and the owner can still see its own card",
+            gmwOptionState(d, 0, 0, "grapple").disabled === false);
+
+          gmwPick(d, 1, 0, "onrush");
+          gmwAddMarketRow(d, 0);
+          log("one player may hold several cards",
+            gmwOptionState(d, 0, 1, "safeguard").disabled === false);
+          log("and what the other one holds is closed here too",
+            gmwOptionState(d, 0, 1, "onrush").disabled === true);
+          gmwPick(d, 0, 1, "safeguard");
+          log("every row prices its own card",
+            cost(0, 0).textContent === "2" && cost(0, 1).textContent === "5",
+            cost(0, 0).textContent + "/" + cost(0, 1).textContent);
+
+          /* Removing the row gives the card back to everybody — and the way to
+             show that is to buy it again, not just to look at the option. */
+          var rows = d.querySelectorAll('[data-list-id="gmw-market-1"] .entry-row');
+          rows[rows.length - 1].querySelector(".entry-remove").click();
+          log("removing a row frees the card again",
+            gmwOptionState(d, 0, 1, "onrush").disabled === false);
+          gmwAddMarketRow(d, 1);
+          gmwPick(d, 1, 0, "onrush");
+          log("and the freed card can be bought again",
+            gmwMarketSelect(d, 1, 0).value === "onrush",
+            gmwMarketSelect(d, 1, 0).value);
+
+          /* The ladder. Read by the scenario numbers in the brackets rather
+             than by the words, so it holds in both languages: the line names
+             each unlocked card together with the scenario it is first checked
+             from, because the thresholds are not all read at once. */
+          var ladder = function () {
+            return app.querySelector("[data-headhunter-ladder]").textContent;
+          };
+          var froms = function () {
+            var out = [], m, re = /\(\D*(\d)\)/g, text = ladder();
+            while ((m = re.exec(text))) out.push(m[1]);
+            return out.join();
+          };
+          var tiles = app.querySelectorAll('[data-section="headhunter"] .sheet-check');
+          log("no marks unlocks nothing", froms() === "", ladder());
+          tick(tiles[0]);
+          log("one mark unlocks one card, checked from scenario 2",
+            froms() === "2", ladder());
+          tick(tiles[1]);
+          tick(tiles[2]);
+          log("three marks unlock three, each from its own scenario",
+            froms() === "2,3,4", ladder());
+          tick(tiles[3]);
+          log("and the fourth is only checked from scenario 5",
+            froms() === "2,3,4,5", ladder());
+          tiles[3].checked = false;
+          fire(tiles[3], "change");
+          log("unticking takes the card back off the ladder",
+            froms() === "2,3,4", ladder());
+
+          /* Scenario #5 opens with 3 minus the recorded counters as extra
+             threat. Matched on "#5:" so the assertion does not depend on the
+             words around it. */
+          var evasion = app.querySelector('[data-section="evasion"] .num-input');
+          var pincer = function () {
+            var m = /#5:\s*(\d+)/.exec(app.querySelector("[data-pincer]").textContent);
+            return m ? m[1] : null;
+          };
+          var setEvasion = function (v) {
+            evasion.value = v;
+            fire(evasion, "input");
+            fire(evasion, "blur");
+          };
+          setEvasion("2");
+          log("two counters leave one threat for scenario 5", pincer() === "1", pincer());
+          setEvasion("0");
+          log("no counters leave the full three", pincer() === "3", pincer());
+          setEvasion("5");
+          log("and more than three cannot hand threat back", pincer() === "0", pincer());
+          setEvasion("");
+          log("nothing recorded says nothing at all",
+            app.querySelector("[data-pincer]").textContent === "");
+
+          /* Power Stone Control shows identities and stores a seat, so typing
+             an identity has to reach the select without a re-render. */
+          var stone = app.querySelector("[data-power-stone]");
+          log("the seats are named by their identities",
+            stone.options[1].textContent.indexOf("Rocket Raccoon") !== -1 &&
+            stone.options[2].textContent.indexOf("Groot") !== -1,
+            stone.options[1].textContent + " / " + stone.options[2].textContent);
+          log("and the note is gone once an identity is entered",
+            app.querySelector("[data-power-stone-hint]").textContent === "");
+          var hero2 = d.querySelectorAll('[data-section="players"] .text-input')[1];
+          hero2.value = "Gamora";
+          fire(hero2, "input");
+          log("a renamed identity reaches the select in place",
+            app.querySelector("[data-power-stone]").options[2].textContent
+              .indexOf("Gamora") !== -1,
+            app.querySelector("[data-power-stone]").options[2].textContent);
+          /* And the column headings of the market and the collection with it —
+             four columns headed "Player #n" are only told apart by counting. */
+          log("and the column headings below follow it too",
+            Array.prototype.every.call(app.querySelectorAll("[data-player-caption='1']"),
+              function (n) { return n.textContent.indexOf("Gamora") !== -1; }) &&
+            app.querySelectorAll("[data-player-caption='1']").length === 2,
+            app.querySelectorAll("[data-player-caption='1']").length);
+          stone = app.querySelector("[data-power-stone]");
+          stone.value = "1";
+          fire(stone, "change");
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).gmw1.state;
+            log("each player kept their own cards, and nobody shares one",
+              st.players[0].market.length === 2 && st.players[1].market.length === 1 &&
+              st.players[0].market.indexOf(st.players[1].market[0]) === -1,
+              JSON.stringify(st.players.map(function (pl) { return pl.market; })));
+            /* A seat, not a name: what is stored is the index, so correcting an
+               identity later cannot leave the record stale. */
+            log("the Power Stone was stored as a seat rather than a name",
+              st.powerStone === 1, JSON.stringify(st.powerStone));
+            log("and nothing derived was stored with it",
+              st.ladder === undefined && st.pincer === undefined);
+            finish();
+          }, 500);
+        });
+      }
+
+      /* The one field this sheet computes instead of asking for, and the
+         migration that turned the printed field into the entered one. */
+      function caseGmwUnits() {
+        seed({ gmw1: gmwLogV1() }, "gmw1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          w.confirm = function () { return true; };
+          var app = d.getElementById("campaign");
+          var card = function (i) {
+            return app.querySelectorAll('[data-section="players"] .player-card')[i];
+          };
+          /* Standard level, so the only number box on a card is the earned one. */
+          var earned = function (i) { return card(i).querySelector(".num-input"); };
+          var line = function (i) { return app.querySelector('[data-units-left="' + i + '"]'); };
+          var left = function (i) { return line(i).querySelector(".units-left").textContent; };
+          var spent = function (i) { return line(i).querySelector(".units-spent").textContent; };
+          var setEarned = function (i, v) {
+            var input = earned(i);
+            input.value = v;
+            fire(input, "input");
+            fire(input, "blur");
+          };
+
+          /* 4 unspent plus Grapple (2) and Close Call (3) is 9 earned. Exact,
+             not a guessed default — the cards were recorded right beside it. */
+          log("a v1 unspent balance arrived as the units earned",
+            earned(0).value === "9", earned(0).value);
+          log("and what is left is what the paper would have said",
+            left(0) === "4", left(0));
+          log("with the card cost named beside it", /5/.test(spent(0)), spent(0));
+          /* Adding up their card would invent an income nobody wrote down. */
+          log("a player who recorded no balance still records none",
+            left(1) === "—", left(1));
+          log("though their cards are counted all the same",
+            /5/.test(spent(1)), spent(1));
+
+          /* What the player cannot pay for is closed as well, on top of the
+             group rule. The budget of a ROW includes the card it already
+             holds: player #1 has 4 left and row 0 holds Grapple (2), so this
+             row can afford 6 but not 7. */
+          var option = function (player, at, slug) {
+            var sel = gmwMarketSelect(d, player, at);
+            return Array.prototype.filter.call(sel.options, function (o) {
+              return o.value === slug;
+            })[0];
+          };
+          log("a card dearer than the row can pay for is closed and marked",
+            option(0, 0, "triple-threat").disabled === true &&
+            option(0, 0, "triple-threat").classList.contains("too-dear"));
+          log("and one it can pay for is neither",
+            option(0, 0, "cargo-hold").disabled === false &&
+            !option(0, 0, "cargo-hold").classList.contains("too-dear"));
+          /* Two different reasons to be closed, and only one of them is about
+             money: Onrush (5) is well within budget but player #2 holds it. */
+          log("a card somebody else holds is closed but not marked as dear",
+            option(0, 0, "onrush").disabled === true &&
+            !option(0, 0, "onrush").classList.contains("too-dear"));
+          /* No budget recorded is not the same statement as no budget. */
+          log("a player who recorded no balance has nothing locked for price",
+            !option(1, 0, "triple-threat").classList.contains("too-dear"));
+
+          setEarned(0, "12");
+          log("raising what was earned raises what is left", left(0) === "7", left(0));
+          log("and unlocks what it can now pay for",
+            option(0, 0, "triple-threat").disabled === false,
+            option(0, 0, "triple-threat").disabled);
+          gmwAddMarketRow(d, 0);
+          gmwPick(d, 0, 2, "cargo-hold");
+          log("buying a card two panels down lowers it again",
+            left(0) === "1", left(0));
+          log("and the cost beside it follows", /11/.test(spent(0)), spent(0));
+
+          /* Overspending is a mistake worth pointing at, so it is shown rather
+             than clamped at zero. */
+          setEarned(0, "3");
+          log("overspending shows a negative rather than stopping at zero",
+            left(0) === "-8", left(0));
+          log("and the row is marked", line(0).classList.contains("is-over"));
+          /* THE way out. An overspent sheet can arrive from an import or an old
+             share link, and a select whose own value is disabled would be a
+             sheet frozen solid — the MC60/MC32/MC40/MC45 rule, applied to a
+             select. The placeholder is the other way out. */
+          log("a row keeps its own card selectable even when overspent",
+            option(0, 0, "grapple").disabled === false &&
+            !option(0, 0, "grapple").classList.contains("too-dear"));
+          log("and the empty choice is never taken away",
+            gmwMarketSelect(d, 0, 0).options[0].disabled === false);
+          log("while everything it cannot pay for is shut",
+            option(0, 0, "brainstorm").disabled === true,
+            option(0, 0, "brainstorm").disabled);
+          /* Whether a native popup honours any of this is the platform's call,
+             and no screenshot can show it — but the computed style can say that
+             the rule matches and out-ranks the UA's own :disabled greying,
+             which is the part this file can be responsible for. Compared
+             against an unmarked option rather than against a hex, so a repaint
+             of the palette does not turn this into a colour test. */
+          var dearStyle = w.getComputedStyle(option(0, 0, "brainstorm"));
+          var plainStyle = w.getComputedStyle(option(0, 0, "grapple"));
+          log("and it is painted, not merely classed",
+            dearStyle.color !== plainStyle.color &&
+            dearStyle.fontStyle === "italic" && plainStyle.fontStyle !== "italic",
+            dearStyle.color + " vs " + plainStyle.color + " / " + dearStyle.fontStyle);
+          /* Colour alone says nothing to a screen reader. */
+          log("with the reason in words and not only in colour",
+            line(0).title.trim().length > 0, line(0).title);
+          setEarned(0, "20");
+          log("coming back into the black clears the mark",
+            !line(0).classList.contains("is-over") && line(0).title === "");
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).gmw1.state;
+            log("the units earned were stored", st.players[0].unitsEarned === 20,
+              st.players[0].unitsEarned);
+            /* Two numbers that can disagree are what this change removed. */
+            log("and nothing derived was stored beside them",
+              st.players[0].unitsLeft === undefined &&
+              st.players[0].units === undefined,
+              JSON.stringify(st.players[0]));
+            finish();
+          }, 500);
+        });
+      }
+
+      function caseGmwExpert() {
+        var seeded = gmwLog();
+        seeded.state.expert = false;
+        /* Filled in, but not all of it visible at standard level — exactly the
+           state that would lose data if hiding were clearing. The units are the
+           interesting neighbour here: they sit right beside the hit points and
+           are NOT behind the gate, because they are earned at both levels. */
+        seeded.state.players = [
+          { hero: "Rocket Raccoon", hp: 6, unitsEarned: 4, market: ["grapple"] },
+        ];
+        seeded.state.evasion = 2;
+        seed({ gmw1: seeded }, "gmw1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var card = function () {
+            return d.querySelector('[data-section="players"] .player-card');
+          };
+          var toggle = function () {
+            return d.querySelector("[data-section=players] .panel-head .flag .sheet-check");
+          };
+
+          log("the switch is in the player panel head", !!toggle());
+          log("it starts unticked", toggle().checked === false);
+          log("standard hides the hit points",
+            card().querySelectorAll(".num-input").length === 1);
+          log("the identity field is not hidden with them",
+            !!card().querySelector(".text-input"));
+          /* The one number that stays: units are the campaign's currency at
+             both levels, so hiding them with the hit points would be a bug. */
+          log("and the units are not hidden with them",
+            card().querySelector(".num-input").value === "4",
+            card().querySelector(".num-input").value);
+          log("nothing else on the sheet goes with them",
+            d.querySelectorAll("[data-section]").length === GMW_SECTIONS.length,
+            d.querySelectorAll("[data-section]").length);
+          /* The computed balance cannot see the unit an expert setup spends on
+             healing, and says so — but only where the trade exists. */
+          log("and at standard level the sheet claims no blind spot",
+            !d.querySelector("[data-section=players] .hint"));
+
+          toggle().checked = true;
+          fire(toggle(), "change");
+          log("expert reveals the hit points",
+            card().querySelectorAll(".num-input").length === 2);
+          log("and the value was still there",
+            card().querySelectorAll(".num-input")[0].value === "6",
+            card().querySelectorAll(".num-input")[0].value);
+          log("expert also owns up to what the sum cannot see",
+            !!d.querySelector("[data-section=players] .hint") &&
+            d.querySelector("[data-section=players] .hint").textContent.trim().length > 0);
+
+          toggle().checked = false;
+          fire(toggle(), "change");
+          log("switching back hides them again",
+            card().querySelectorAll(".num-input").length === 1);
+          /* Two re-renders have rebuilt the whole sheet by now, so what the
+             switch does not govern has to have come back as it was — the two
+             derived lines included, since those are painted after every render
+             rather than stored. */
+          log("and the market list came back with its card",
+            !!gmwMarketSelect(d, 0, 0) && gmwMarketSelect(d, 0, 0).value === "grapple");
+          log("and the derived evasion line came back with it",
+            /#5:\s*1/.test(d.querySelector("[data-pincer]").textContent),
+            d.querySelector("[data-pincer]").textContent);
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).gmw1.state;
+            log("the sheet is back at standard", st.expert === false);
+            log("but the hidden hit points survived", st.players[0].hp === 6,
+              st.players[0].hp);
+            log("and so did everything that was never hidden",
+              st.players[0].unitsEarned === 4 && st.players[0].market.length === 1,
+              JSON.stringify(st.players[0]));
+            finish();
+          }, 500);
+        });
+      }
+
+      function caseGmwPrint() {
+        var seeded = gmwLog();
+        seeded.state.players = [
+          /* Grapple (2) and Armor Plating (4) cost 6 of the 10 earned, so the
+             printout has to carry 10 and 4 rather than one of them. */
+          { hero: "Rocket Raccoon", hp: 9, unitsEarned: 10,
+            market: ["grapple", "armor-plating"],
+            collection: ["Enhanced Reflexes", "~Boot Camp"] },
+          { hero: "Groot", hp: 6, unitsEarned: 0, market: [], collection: [] },
+          /* Nothing on this card at all, so the printout has to skip it: an
+             empty column is not a record. */
+          { hero: "", hp: null, unitsEarned: null, market: [], collection: [] },
+        ];
+        /* Two artifacts recorded and two not, so the printout has to show both
+           states. */
+        seeded.state.artifacts = ["magical-teapot", "crystal-ball"];
+        seeded.state.powerStone = 1;
+        seeded.state.evasion = 2;
+        seeded.state.headhunter = { brotherhood: true, escape: true };
+        seed({ gmw1: seeded }, "gmw1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          w.dispatchEvent(new w.Event("beforeprint"));
+          var pv = d.getElementById("print-view");
+          var text = pv.textContent;
+          var app = d.getElementById("campaign");
+          log("print view built", pv.children.length > 0, pv.children.length);
+          log("print names the campaign",
+            /The Galaxy's Most Wanted \(MC16\)/.test(text) ||
+            /The Galaxy\u2019s Most Wanted \(MC16\)/.test(text), text.slice(0, 160));
+          log("print says which level was played",
+            /\[x\] Expertenmodus/.test(text), text.slice(0, 160));
+          /* Named, not just the bare number: textContent runs the lines
+             together, so a digit on its own proves nothing about where it sat. */
+          log("print carries the hit points",
+            /Lebenspunkte: 9/.test(text) && /Lebenspunkte: 6/.test(text));
+
+          /* The section headings are read off the screen, so a section can be
+             found in the printout without this file knowing its words. */
+          var heading = function (id) {
+            return app.querySelector('[data-section="' + id + '"] h2').textContent.trim();
+          };
+          var printed = function (id) {
+            var want = heading(id);
+            var out = null;
+            Array.prototype.forEach.call(pv.querySelectorAll(".print-section"), function (s) {
+              if (s.querySelector("h2").textContent.trim() === want) out = s;
+            });
+            return out;
+          };
+          log("every printed section has a block in the printout",
+            GMW_SECTIONS.every(function (id) { return !!printed(id); }),
+            GMW_SECTIONS.filter(function (id) { return !printed(id); }).join());
+
+          /* Both unit figures, because a printout carrying only the difference
+             could not be checked against the card list further down. Player #1
+             earned 10 and spent 6 on Grapple and Armor Plating; player #2 has
+             nothing either way, which is two zeroes rather than one. Read out
+             of the player block alone: textContent runs the sections together,
+             so a match against the whole printout proves nothing about where
+             the number sat. */
+          var playerText = printed("players").textContent;
+          log("and both unit figures beside them",
+            /Units: 10/.test(playerText) && /Units: 4/.test(playerText) &&
+            playerText.split("Units: 0").length - 1 === 2,
+            playerText);
+
+          /* Two players with something on their card, one without: the empty
+             one is skipped in every player-shaped section. */
+          log("an empty player card is skipped",
+            printed("players").querySelectorAll(".print-line").length === 3 &&
+            printed("market").querySelectorAll(".print-line").length === 2,
+            printed("players").querySelectorAll(".print-line").length + "/" +
+            printed("market").querySelectorAll(".print-line").length);
+          log("a player who bought nothing prints a dash rather than a gap",
+            /\u2014/.test(printed("market").querySelectorAll(".print-line")[1].textContent),
+            printed("market").querySelectorAll(".print-line")[1].textContent);
+          /* The strike is the sheet's own record, so the printout makes the same
+             mark the pen would. */
+          var col = printed("collection").querySelectorAll(".print-line")[0];
+          log("a struck collection entry prints struck through",
+            col.querySelectorAll(".struck").length === 1 &&
+            col.querySelectorAll("span").length === 2, col.textContent);
+
+          /* Every artifact and every tile, recorded or not: scenario #4 and the
+             setups after it ask about exactly these. */
+          var artLines = printed("artifacts").querySelectorAll(".print-line");
+          log("all four artifacts print, recorded or not", artLines.length === 4,
+            artLines.length);
+          log("and the boxes match what the screen says",
+            Array.prototype.filter.call(artLines, function (l) {
+              return /\[x\]/.test(l.textContent);
+            }).length === 2);
+          var hhLines = printed("headhunter").querySelectorAll(".print-line");
+          log("all four scenario tiles print, marked or not", hhLines.length === 4,
+            hhLines.length);
+          log("and two of them are marked",
+            Array.prototype.filter.call(hhLines, function (l) {
+              return /\[x\]/.test(l.textContent);
+            }).length === 2);
+
+          /* The seat prints as the identity holding it, because a seat number is
+             not what anybody wrote on the paper. */
+          log("the Power Stone prints the identity that holds it",
+            printed("power-stone").textContent.indexOf("Groot") !== -1,
+            printed("power-stone").textContent);
+          log("and the evasion counters print as the number",
+            /2/.test(printed("evasion").querySelector(".print-line").textContent),
+            printed("evasion").querySelector(".print-line").textContent);
+
+          /* The printout records what was written down, not what the screen
+             computes from it — so neither derived line may appear. */
+          log("the derived lines are not printed",
+            !/#5:/.test(text) && text.indexOf(
+              app.querySelector("[data-headhunter-ladder]").textContent.trim()) === -1);
+          finish();
+        });
+      }
+
+      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint, mg: caseMg, mgrole: caseMgRole, mgexpert: caseMgExpert, mgprint: caseMgPrint, ne: caseNe, neschemes: caseNeSchemes, neexpert: caseNeExpert, neprint: caseNePrint, aoa: caseAoa, aoamissions: caseAoaMissions, aoaexpert: caseAoaExpert, aoaprint: caseAoaPrint, gmw: caseGmw, gmwmarket: caseGmwMarket, gmwunits: caseGmwUnits, gmwexpert: caseGmwExpert, gmwprint: caseGmwPrint, sharebtn: caseShareButton };
       (cases[CASE] || caseBasic)();
     </script>
   </body>
