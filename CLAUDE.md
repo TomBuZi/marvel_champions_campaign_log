@@ -105,6 +105,20 @@ Randkunst und gelbes Abzeichen bei MC32 und MC40 dieselbe Farbe: die
 Unterscheidung zweier Kampagnen kann dann nicht am Akzent hängen, sondern muss
 in `--page`, `--bar` und den Panels liegen.
 
+**MC45 hat die Falle dann zu Ende geführt, und die Lehre ist grundsätzlicher:
+das Raster liegt nicht nur auf dem Rand, es tönt den Innenbereich mit.** Der
+sichtbare Grund innerhalb des Rahmens liest sich dort als warme Creme
+(`#F4E8E0`), während der Innenbereich im Content-Stream vollständig kühl ist —
+Weiß, Stahlblau, Mint, Teal-Konturen. Wer die Creme abtastet und abdunkelt,
+macht aus einem kühlen Bogen einen braunen; genau das war der erste Anlauf, und
+es fiel erst auf, als jemand Bogen und Bildschirm nebeneinander hielt. Also:
+**erst entscheiden, welche Fläche überhaupt der Bogen ist**, und dann messen.
+Der orange Rand ist ein Rahmen *um* den Bogen, nicht ein Teil davon — bei MC45
+steht deshalb kein Orange in `--halftone`/`--hatch`, anders als bei MC32 und
+MC40, deren Bögen *innerhalb* des Rahmens orange schraffieren. Und die
+gemessenen Zahlen allein sagen das nicht: sie melden brav eine Cremefläche, die
+nur eine Überlagerung ist.
+
 ```python
 import fitz, collections
 pg = fitz.open("mcXX_....pdf")[0]
@@ -154,6 +168,7 @@ Vorlagen, bewusst verschieden:
 | `campaigns/sinister-motives.js` | eine Zahl, aus der zwei abgeleitete Zustände fallen: erreichte Stufen und freigeschaltete Felder; dazu eine Liste, in der die Position Teil der Eintragung ist |
 | `campaigns/mutant-genesis.js` | Beschriftungen, die aus einer Wahl abgeleitet werden, ohne dass die Wahl entscheidet, was gespeichert bleibt; ein Gitter aus Kartensatz × Szenario; und die Grenze zwischen einer Sperre und einem Hinweis |
 | `campaigns/next-evolution.js` | eine Tabelle, deren Zeile eine gedruckte Karte ist und deren gedruckte Spalten nur gelesen werden; eine Auswahl mit Eindeutigkeit über die Zeilen hinweg; und ein Feld, das erst mit dieser Auswahl aufgeht |
+| `campaigns/age-of-apocalypse.js` | das schlankeste Datenmodell: zwei Wahrheitswerte je gedruckter Zeile, die sich gegenseitig ausschließen und gemeinsam den Zeilennamen durchstreichen — dazu ein Bogen, dessen deutscher Druck vorlag, also nichts als Platzhalter stehen ließ |
 
 Harte Punkte:
 
@@ -296,6 +311,16 @@ nichts übrig ist.
   Kampagnen zählt** („der schlankeste der drei“, „der einzige der vier“): sie
   ist beim nächsten Modul falsch, und niemand denkt daran. Ohne Zahl
   formulieren — „der schlankeste von allen“.
+* **`display: flex` auf einem `<td>` zerstört `border-collapse`.** Eine
+  Tabellenzelle, die zum Flex-Container gemacht wird, ist keine Table-Cell-Box
+  mehr; die Tabelle packt sie in eine anonyme Zelle, und die Rahmen der beiden
+  werden nicht mehr mit den Nachbarzellen verschmolzen. Sichtbar wird das als
+  **eine Spalte mit doppelt so dicken Linien**, während alle anderen einfache
+  haben — und weil es nur diese Spalte betrifft, sieht es nach einem
+  Farb- oder Breitenproblem aus, nicht nach dem Box-Modell. MC60s
+  Schurken-Spalte hatte das monatelang. Braucht ein Zellinhalt Flex, kommt ein
+  Wrapper **in** die Zelle (`.with-die`), nie auf das `<td>`. Kein Test fängt
+  das; es fällt nur auf, wenn jemand hinsieht.
 * **Terminologie über alle Kampagnen hinweg.** Dasselbe Feld heißt überall
   gleich („Verbleibende Lebenspunkte"). Eine Umbenennung in einer Kampagne ist
   keine halbe Arbeit: README, Hilfetexte und Tests gehören dazu.

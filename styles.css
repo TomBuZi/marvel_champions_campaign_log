@@ -834,6 +834,201 @@
   color-scheme: dark;
 }
 
+/* ---------- Campaign skin: Age of Apocalypse (MC45) ----------
+   Sampled from mc45_age_of_apocalypse_campaign_log.pdf, and unlike MC32 and
+   MC40 this palette comes from the VECTORISED INTERIOR ALONE. That is a
+   decision about what the sheet is, so it is worth stating plainly: everything
+   raster on this page is scenery and none of it is in the palette.
+
+   The page is half raster, the same trap MC32 and MC40 carry — one image over
+   the whole page plus one over every panel strip. Two colours only exist there:
+   the orange comic border with its black hatching (#d84b28 averaged out of the
+   rendered pixmap) and the warm cream ground that the overlay lays over the
+   interior (#f4e8e0). NEITHER is used below. The border is a frame around the
+   sheet rather than part of it, and the cream is an overlay tint over a field
+   whose real colour is in the content stream. Reading either into the palette
+   turns a cool blue sheet into a warm brown one, which is what the first cut of
+   this block did.
+
+   So: the vector fills of the content stream, weighted by area, give #ffffff
+   41.6% (the panels and their highlights), #c7aaaa 25.6%, #231f20 12.7% (the
+   frame, the lettering and the big watermark X), #a9cad3 10.5% and #d2ebe2 9.4%
+   (the two tints the cells alternate between), #cec411 0.14% (the "Player
+   Information" badge) and #c4e9fb 0.04% (the five printed checkboxes). Strokes:
+   #1e86a6 over 99% of the stroked length -- every cell outline on the sheet --
+   plus #1f2e40 on the checkbox borders and #400426 on the title rules.
+
+   #c7aaaa in second place is a TRAP and is used nowhere below: it is a 540x540
+   fill lying UNDERNEATH the full-page raster, so it is never visible. It is also
+   the swatch MC40's --page was darkened from, which is the other reason not to
+   reach for it here.
+
+   What is left is an entirely cool sheet: white and two pale tints inside teal
+   outlines, with a near-black ink, a navy box outline, a gold badge and a wine
+   rule under the title. Every value below is one of those.
+
+   THREE OF THEM ARE THE SAME AS MC32'S, AND THAT IS A MEASUREMENT RATHER THAN A
+   COPY. --bar #1e86a6, --pill #a9cad3 and --panel-2 #d2ebe2 are literally the
+   swatches "mg" measured, because the publisher printed both sheets from one
+   template -- just as the badge yellow is shared by MC32, MC40 and this sheet.
+   Do not "clean up" the duplication: it is a fact about the paper. What
+   separates the two campaigns is where the paper separates them. MC32 had to
+   derive both its --page and its --check, because its sheet prints no dark cool
+   field and no checkbox at all; this sheet prints both, so --page comes off the
+   navy of the printed box outline and --check is the printed box itself. MC32 is
+   the teal one, MC40 the rose one, and this is the navy one.
+
+   Roles. --page is the box-outline navy #1f2e40, lifted just far enough that the
+   panels still read as panels on it; --bar is the outline teal, which is exactly
+   its job on the paper; --brick is derived between the two, the way MC32 derived
+   its own. The panels keep the printed white-to-mint gradient, --pill the
+   table's own header row, --check the printed empty box, --zap the badge, and
+   --ink-shadow the wine of the title rules, which is the one warm accent the
+   content stream actually contains.
+
+   AND THERE IS NO ORANGE IN --halftone AND --hatch, which is where MC32 and
+   MC40 both put theirs. Their sheets hatch in orange inside the frame; this one
+   does not -- the orange is entirely outside it. So the comic devices this
+   project draws itself take the sheet's own teal and navy instead, and MC45 is
+   the campaign without orange hatching.
+
+   The mark is derived from the two colours of the control itself rather than
+   borrowed from a neighbour: the printed box is pale blue inside a navy outline,
+   so a ticked one is that navy filled in with the pale blue as the tick. Hence
+   --check-on and --tick are both set here, in all four blocks.
+
+   Contrasts, computed rather than eyeballed. Light: --on-page on --page 10.8,
+   --on-brick on the derived mid navy-teal 7.9, ink on --panel-1 16.3, on
+   --panel-2 13.0, on --pill 9.4, on --check 12.7, --on-zap on the badge 9.0,
+   --text-dim on --panel-1 7.3 and on --panel-2 5.8, and the pale-blue tick on
+   the navy box 10.8. Dark: --on-page on --page 16.2, --on-brick 10.1, ink on the
+   panels 11.8 and 12.2, on --pill 8.0, on --check 12.5, --on-zap 10.0,
+   --text-dim 6.7, and the dark tick on the light teal box 6.8.
+
+   The dark mode carries the whole colour mood and not just the dominant hue: the
+   page stays navy rather than going neutral, the panel gradient still runs teal
+   to mint-green so the green side of the sheet survives, the pill stays a muted
+   steel, and the accent stays the badge gold.
+
+   Four blocks, mirroring the four base blocks. A single [data-campaign] block
+   would be more specific than the bare :root inside the dark media query and
+   would therefore paint the light palette in dark mode; and [data-campaign]
+   alone cannot beat an explicit [data-theme], so the two combinations are
+   spelled out. The repetition is deliberate: a delta-only block drifts apart the
+   next time a theme changes. */
+:root[data-campaign="aoa"] {
+  --page:      #25364c;   /* navy page field -- the printed checkbox outline
+                             #1f2e40, lifted so the panels read as panels  */
+  --bar:       #1e86a6;   /* teal: bars, borders, ink outlines -- the colour
+                             of every cell outline on the sheet            */
+  --brick:     #234e67;   /* mid navy-teal, table body -- derived between
+                             --page and --bar and kept dark enough that the
+                             text on it holds 7.9                          */
+  --panel-1:   #ffffff;   /* panel gradient, top -- as printed             */
+  --panel-2:   #d2ebe2;   /* ... bottom, the sheet's mint                  */
+  --pill:      #a9cad3;   /* heading pill, table header row: the steel blue
+                             of the table's own header row                 */
+  --check:     #c4e9fb;   /* empty checkbox -- printed, not derived        */
+  --zap:       #cec411;   /* accent gold, off the "Player Information"
+                             badge -- the sheet's only yellow              */
+  --ink:       #231f20;   /* near-black text                               */
+
+  --bg-input: #fbfeff;
+  --text-dim: #46586b;    /* dimmed from the navy of the printed box       */
+  --accent-strong: #103f52;
+  --accent-2: #2a9ec0;
+  /* Stays red: here the colour carries meaning, not identity. */
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(206, 196, 17, 0.55);
+  /* The sheet's own teal and navy, because this border hatches OUTSIDE the
+     frame and its orange is therefore not part of the sheet. */
+  --halftone: rgba(30, 134, 166, 0.18);
+  --hatch: rgba(31, 46, 64, 0.10);
+  --on-brick: #e9f3f8;
+  --on-page: #e8f2f7;
+  --on-zap: #231f20;
+  --on-danger: #fff4ef;
+  /* The printed box filled in: its own navy outline as the ground, its own
+     pale blue as the mark. */
+  --check-on: #1f2e40;
+  --tick: #c4e9fb;
+  /* The wine of the title rules -- the one warm colour in the content stream. */
+  --ink-shadow: 4px 4px 0 0 #400426;
+  --title-shadow: #e8f2f7;
+  --zap-strong: #e4da2a;
+  --input-settled: #c2d5da;
+  --backdrop: rgba(6, 14, 22, 0.55);
+}
+/* --accent and --panel-border are left alone on purpose: they are already
+   defined as var(--bar) and follow it by themselves. */
+@media (prefers-color-scheme: dark) {
+  :root[data-campaign="aoa"] {
+    --page: #0d151d; --bar: #6cc0da; --brick: #1d3d4c;
+    --panel-1: #14343e; --panel-2: #10332e; --pill: #234e63;
+    --check: #10303c; --zap: #d9cf2c; --ink: #eaf4f8;
+    --check-on: #6cc0da; --tick: #10303c;
+    --bg-input: #101b24; --panel-border: #2f6b7e; --text-dim: #a3bcc8;
+    --accent: #6cc0da; --accent-strong: #a9e2f2; --accent-2: #86cfe4;
+    --danger: #ff6b5c;
+    --glow: 0 0 0 3px rgba(217, 207, 44, 0.40);
+    --halftone: rgba(108, 192, 218, 0.12);
+    --hatch: rgba(108, 192, 218, 0.08);
+    --ink-shadow: 4px 4px 0 0 #050a0f;
+    --on-brick: #e8f2f7;
+    --on-page: #e8f2f7;
+    --on-zap: #231f20;
+    --on-danger: #2b0a07;
+    --title-shadow: #050a0f;
+    --zap-strong: #ede34a;
+    --input-settled: #0b1218;
+    --backdrop: rgba(4, 9, 14, 0.6);
+  }
+}
+:root[data-campaign="aoa"][data-theme="light"] {
+  --page: #25364c; --bar: #1e86a6; --brick: #234e67;
+  --panel-1: #ffffff; --panel-2: #d2ebe2; --pill: #a9cad3;
+  --check: #c4e9fb; --zap: #cec411; --ink: #231f20;
+  --check-on: #1f2e40; --tick: #c4e9fb;
+  --bg-input: #fbfeff; --panel-border: var(--bar); --text-dim: #46586b;
+  --accent: var(--bar); --accent-strong: #103f52; --accent-2: #2a9ec0;
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(206, 196, 17, 0.55);
+  --halftone: rgba(30, 134, 166, 0.18);
+  --hatch: rgba(31, 46, 64, 0.10);
+  --ink-shadow: 4px 4px 0 0 #400426;
+  --on-brick: #e9f3f8;
+  --on-page: #e8f2f7;
+  --on-zap: #231f20;
+  --on-danger: #fff4ef;
+  --title-shadow: #e8f2f7;
+  --zap-strong: #e4da2a;
+  --input-settled: #c2d5da;
+  --backdrop: rgba(6, 14, 22, 0.55);
+  color-scheme: light;
+}
+:root[data-campaign="aoa"][data-theme="dark"] {
+  --page: #0d151d; --bar: #6cc0da; --brick: #1d3d4c;
+  --panel-1: #14343e; --panel-2: #10332e; --pill: #234e63;
+  --check: #10303c; --zap: #d9cf2c; --ink: #eaf4f8;
+  --check-on: #6cc0da; --tick: #10303c;
+  --bg-input: #101b24; --panel-border: #2f6b7e; --text-dim: #a3bcc8;
+  --accent: #6cc0da; --accent-strong: #a9e2f2; --accent-2: #86cfe4;
+  --danger: #ff6b5c;
+  --glow: 0 0 0 3px rgba(217, 207, 44, 0.40);
+  --halftone: rgba(108, 192, 218, 0.12);
+  --hatch: rgba(108, 192, 218, 0.08);
+  --ink-shadow: 4px 4px 0 0 #050a0f;
+  --on-brick: #e8f2f7;
+  --on-page: #e8f2f7;
+  --on-zap: #231f20;
+  --on-danger: #2b0a07;
+  --title-shadow: #050a0f;
+  --zap-strong: #ede34a;
+  --input-settled: #0b1218;
+  --backdrop: rgba(4, 9, 14, 0.6);
+  color-scheme: dark;
+}
+
 /* ---------- Base ---------- */
 * { box-sizing: border-box; }
 
@@ -1341,6 +1536,54 @@ button:focus-visible {
 .sheet-table.ps-table thead th:last-child,
 .sheet-table.ps-table td:last-child { width: 9%; }
 
+/* MC45's mission table: the printed mission down the side, the printed setup
+   text, then the two outcome columns — and those two carry the printed rule AND
+   the box that records which of them applied, because on the paper the decision
+   is made by reading exactly those two cells. Scoped to .ms-table for the same
+   reason as .fp-table and .ps-table above, and written as .sheet-table.ms-table
+   for the same specificity reason: the generic .sheet-table rule further down
+   centres its cells, and at equal specificity the later rule wins.
+
+   Everything in this table except the two boxes is printed prose, so it reads
+   left-aligned; only the boxes stay centred, and their cells align to the top so
+   a short rule text does not push its box down the row. */
+.sheet-table.ms-table th[scope="row"],
+.sheet-table.ms-table td.rule-cell { text-align: left; }
+.sheet-table.ms-table td.outcome-cell { vertical-align: top; }
+/* All three printed columns are the same kind of thing — an instruction to
+   follow — so they are set at one size. The paper only varies them to make long
+   cells fit, which is a typesetting accident rather than a hierarchy. */
+.sheet-table.ms-table td.rule-cell,
+.sheet-table.ms-table .rule-text {
+  text-align: left;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+.sheet-table.ms-table .rule-text { margin: 0.35rem 0 0; }
+/* The two outcome columns carry the longest strings on the sheet and the
+   mission names the shortest, so the two narrow columns are stated rather than
+   left to the content -- otherwise the boxes stop lining up in a column. */
+.sheet-table.ms-table thead th:first-child { width: 18%; }
+.sheet-table.ms-table thead th:nth-child(2) { width: 22%; }
+/* A mission that was in play is spent, and the rule records that by striking
+   its name out — whichever of the two outcomes followed. ONLY the name: unlike
+   MC32's removed row, the two outcome texts here stay in force for the rest of
+   the campaign precisely BECAUSE the mission was played, so dimming them would
+   fade out the one thing the row is still good for. */
+.sheet-table.ms-table tr.is-struck th[scope="row"] {
+  text-decoration: line-through;
+  opacity: 0.72;
+}
+/* The same mark on a named minion in the footer strip, for the same rule —
+   there it means the minion was defeated. Same 0.72 as everywhere else. */
+.flag.is-struck > span {
+  text-decoration: line-through;
+  opacity: 0.72;
+}
+/* .hint is written for a line ABOVE its controls; under the minion boxes it
+   needs its margin on the other side. */
+[data-section="overseers"] .hint { margin: 0.6rem 0 0; }
+
 /* Two field groups stacked in one panel — MC21's scenario 2 and 3 put the
    pooled cards over a box with its own wording — would otherwise touch: .panel
    is padding, not a grid, and only .player-card carries a gap. Scoped to direct
@@ -1572,12 +1815,13 @@ button:focus-visible {
 }
 
 /* ---------- Icon button (the villain randomiser) ---------- */
-.villain-cell {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  justify-content: center;
-}
+/* MC60's villain cell has no rule of its own: the field and its die sit in a
+   .with-die wrapper inside it, and the cell stays a plain table cell. It used to
+   be display:flex itself, which cost it its table-cell box — border-collapse
+   then could not merge its border with the neighbouring cells', so that one
+   column drew a doubled, heavier line all the way down while every other column
+   drew a single one. A layout that needs a flex container inside a table gets a
+   wrapper, never the <td>. */
 .icon-btn {
   flex: 0 0 auto;
   width: 1.9rem;
@@ -1898,6 +2142,12 @@ body[class*="dnd-"] .entry-list { min-height: 2.2rem; outline: 1px dashed var(--
   .sheet-table.ps-table th[scope="row"] { font-size: 1rem; }
   .sheet-table.ps-table thead th:last-child,
   .sheet-table.ps-table td:last-child { width: auto; }
+  .sheet-table.ms-table th[scope="row"] { font-size: 1rem; }
+  .sheet-table.ms-table thead th:first-child,
+  .sheet-table.ms-table thead th:nth-child(2) { width: auto; }
+  /* Stacked, the outcome box sits next to the column name rather than above a
+     paragraph of it, so the rule text follows on its own line. */
+  .sheet-table.ms-table td.outcome-cell { vertical-align: baseline; }
   .chip-list { grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
 }
 
@@ -1961,6 +2211,10 @@ body[class*="dnd-"] .entry-list { min-height: 2.2rem; outline: 1px dashed var(--
   .print-line { margin: 0.6mm 0; break-inside: avoid; }
   .print-list { margin: 0.6mm 0 0; padding-left: 5mm; }
   .print-list .struck { text-decoration: line-through; }
+  /* MC45 strikes a name inside a print LINE rather than a list entry: the rule
+     there is to cross the mission or minion out, and the printout has to show
+     the same mark the pen would make. */
+  .print-line .struck { text-decoration: line-through; }
 
   .print-disclaimer {
     margin-top: 8mm;
