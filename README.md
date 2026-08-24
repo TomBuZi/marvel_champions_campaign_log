@@ -131,11 +131,12 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   überhaupt sieht, entscheidet seine Rolle; ohne Rolle steht dort der Hinweis,
   erst eine zu wählen. Jeder Spieler muss eine andere Rolle nehmen, eine
   vergebene ist bei den anderen also abgeblendet. Ein Rollenwechsel **löscht
-  nichts**: Eintragungen der alten Rolle bleiben gespeichert, werden nur nicht
-  mehr als Kästchen gezeigt, und die Karte sagt, wie viele es sind. Das ist kein
-  Detail — beim Tausch zweier Rollen geht zwangsläufig einer der beiden kurz
-  ohne Rolle durch, und ein Fehlklick im Auswahlfeld darf keine fünf Häkchen
-  kosten. Gedruckt werden sie mit, in einer eigenen Zeile.
+  nichts**: Eintragungen der alten Rolle bleiben gespeichert und werden nur
+  nicht mehr als Kästchen gezeigt. Das ist kein Detail — beim Tausch zweier
+  Rollen geht zwangsläufig einer der beiden kurz ohne Rolle durch, und ein
+  Fehlklick im Auswahlfeld darf keine fünf Häkchen kosten. Gesagt wird darüber
+  nichts, und gedruckt auch nicht: es ist Buchführung, kein Hinweis, den jemand
+  braucht, und die Eintragungen stehen im JSON-Export und im Share-Link.
 * **Was aus der Kampagne heraus ist, wird gesperrt** (MC32) — und zwar
   **einseitig**: ein bereits gesetztes Kästchen bleibt immer bedienbar, denn
   `normalize()` entscheidet einen Widerspruch nicht, also muss der Ausweg auf
@@ -144,10 +145,14 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   * *Jubilee* — „in play“ und „removed from campaign“ eines Szenarios sind zwei
     Zustände eines Ergebnisses („im Spiel eintragen, **sonst** aus dem Logbuch
     entfernen“) und sperren sich gegenseitig, wie MC60s „Abgeschlossen“ und
-    „Gescheitert“. Und sobald sie entfernt ist, sind die Kästchen **aller
-    späteren Szenarien** zu: sie kommt nicht zurück. Ein trotzdem vorhandener
-    Widerspruch wird zusätzlich benannt — das noch offene Kästchen ist das, das
-    korrigiert werden muss.
+    „Gescheitert“. Die Szenarien hängen außerdem aneinander: die Kästchen eines
+    Szenarios sind erst offen, wenn das **vorige** „in play“ trägt — Szenario 3
+    fragt nur nach ihr, weil der Sieg-Schritt von Szenario 2 sie ins Logbuch
+    geschrieben hat und das Setup von Szenario 3 sie ins Spiel bringt.
+    Szenario 2 hat nichts davor und ist immer offen. Und sobald sie entfernt
+    ist, sind die Kästchen **aller späteren Szenarien** zu: sie kommt nicht
+    zurück. Ein trotzdem vorhandener Widerspruch wird zusätzlich benannt — das
+    noch offene Kästchen ist das, das korrigiert werden muss.
   * *Future Past* — eine Karte im Victory Display ist aus der Kampagne
     entfernt, also ist ihre ganze Zeile im Begegnungsdeck-Gitter durchgestrichen
     und zu. Hier zählt die Einseitigkeit am meisten: eine Karte kann in einem
@@ -156,13 +161,14 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     also nicht sagen, *wann* sie entfernt wurde. Die leeren Zellen zu schließen
     verhindert den nächsten falschen Eintrag; die gesetzten zu schließen würde
     eine richtige Eintragung für einen Fehler erklären.
-* **Sagen statt sperren, wo es um eine Anzahl geht** (MC32) — wie viele
+* **Wo es nur um eine Anzahl geht, passiert nichts** (MC32) — wie viele
   Rollenverbesserungen die Kampagne vergeben hat, hängt an den
   Nebenplan-Kästchen, begrenzt aber nur eine **Anzahl** und keine bestimmte
-  Karte. Das wird gesagt, sobald mehr eingetragen ist als vergeben, und nie
-  gesperrt: sonst wären genau die Kästchen zu, die beim Erreichen der Grenze
-  zufällig leer waren, und ein frischer Bogen — Grenze 1 — käme sofort zu vier
-  Fünfteln zu.
+  Karte. Gesperrt wird deshalb nichts: sonst wären genau die Kästchen zu, die
+  beim Erreichen der Grenze zufällig leer waren, und ein frischer Bogen —
+  Grenze 1 — käme sofort zu vier Fünfteln zu. Mitgezählt wird auch nicht: die
+  Regel kennen die Spieler, das Papier prüft sie ebenfalls nicht, und eine
+  ständig mitlaufende Zahl fängt an, wie eine Grenze auszusehen.
 * **Ein bis vier Spieler** — Karten werden hinzugefügt, wenn jemand mitspielt, statt
   vier feste Plätze zu zeigen. Der gedruckte Bogen muss alle vier vorhalten; ein
   Bildschirm nicht.
@@ -195,7 +201,9 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   nicht im Menü — er ist die eine Handlung, die man mitten im Spiel braucht, und
   es gibt ihn deshalb genau einmal. Was er tut, hängt am Gerät: auf einem Zeigegerät
   landet der Link in der Zwischenablage, auf einem Touchgerät öffnet er das
-  System-Teilen. Entschieden wird das am **Zeiger**
+  System-Teilen; der Knopf trägt das übliche Teilen-Zeichen, drei Punkte mit
+  zwei Verbindungslinien, in CSS gezeichnet wie die anderen Zeichen hier, weil
+  Unicode keines dafür hat. Entschieden wird das am **Zeiger**
   (`(hover: none) and (pointer: coarse)`), nicht an der Kennung des Browsers:
   `navigator.share` gibt es auch auf dem Desktop, wo ein Teilen-Dialog die falsche
   Antwort ist. Wird der Dialog abgebrochen, passiert nichts — abbrechen ist eine
@@ -443,7 +451,7 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (541 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (544 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   langpath | print | import | lock |
                                     #   lockconflict | random | randomspread |

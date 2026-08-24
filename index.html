@@ -34,7 +34,11 @@
           class="btn btn-icon"
           data-i18n-title="shareLink"
           data-i18n-aria="shareLink">
-          ⤴
+          <!-- The classic share mark — three dots joined by two lines — drawn
+               in CSS like every other device here, because no code point
+               carries it. Decoration only: the button's own label is what
+               names the action. -->
+          <span class="icon-share" aria-hidden="true"></span>
         </button>
         <button
           id="btn-menu"

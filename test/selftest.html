@@ -2905,6 +2905,9 @@
             roleSel(1).options.length === 5, roleSel(1).options.length);
           log("with no role there are no boxes", boxes(1).length === 0);
           log("and the card says to pick one first", note(1).length > 0, note(1));
+          /* Kept, so the later assertions can compare against it rather than
+             spelling out a sentence that is going to be translated. */
+          var noRoleNote = note(1);
 
           setRole(1, "brawler");
           log("a role brings exactly five boxes", boxes(1).length === 5, boxes(1).length);
@@ -2945,12 +2948,16 @@
           setRole(1, "peacekeeper");
           log("the box is gone with the role", boxNames(1).indexOf(marked) === -1,
             boxNames(1));
-          log("and the card admits the mark is still kept", note(1).length > 0, note(1));
+          /* Kept, and deliberately not mentioned: the behaviour is bookkeeping,
+             not something to interrupt anyone with. So what is asserted is
+             silence plus survival — the mark has to come back untouched. */
+          log("and nothing is said about the mark being kept", note(1) === "", note(1));
           setRole(1, "brawler");
           log("switching back brings the mark with it", boxes(1)[0].checked);
           setRole(1, "");
           log("clearing the role leaves no boxes", boxes(1).length === 0);
-          log("and still says the mark is kept", note(1).length > 0, note(1));
+          log("and says only that a role has to be picked",
+            note(1) === noRoleNote, note(1));
           setRole(1, "brawler");
 
           /* The count note. The campaign has granted one so far — scenario 1's —
@@ -2961,21 +2968,32 @@
              four fifths shut. */
           tick(boxes(1)[1]);
           tick(boxes(1)[2]);
-          log("more marks than granted is said out loud", note(1).length > 0, note(1));
+          log("three marks against one granted is not commented on",
+            note(1) === "", note(1));
           var openAll = function (n) {
             return Array.prototype.every.call(boxes(n), function (b) { return !b.disabled; });
           };
-          log("but no upgrade box is ever closed", openAll(1) === true);
+          log("and no upgrade box is ever closed", openAll(1) === true);
           var ss = d.querySelectorAll('[data-section="side-schemes"] .sheet-check');
           tick(ss[0]);
           tick(ss[1]);
-          log("granting more clears the note", note(1) === "", note(1));
-          log("and still nothing is closed", openAll(1) === true);
+          log("granting more changes neither of those",
+            note(1) === "" && openAll(1) === true, note(1));
 
           /* Jubilee, the one pair that does lock: two states of one outcome,
              printed side by side under one scenario. */
           var jb = function (key) { return d.querySelector('[data-jubilee="' + key + '"]'); };
-          log("a clean scenario has both boxes open",
+          /* Scenario 2 has nothing before it, so it is the only one that is
+             open on a fresh sheet. */
+          log("the first Jubilee scenario is always open", !jb("s2InPlay").disabled);
+          /* And the ones after it mean nothing until she is recorded in play:
+             scenario 3 only asks because scenario 2's victory step wrote her
+             into the log. */
+          log("a later scenario is closed until she is recorded there",
+            jb("s3InPlay").disabled === true && jb("s3Removed").disabled === true);
+          log("and it says why", jb("s3InPlay").title.length > 0, jb("s3InPlay").title);
+          tick(jb("s2InPlay"));
+          log("recording her opens the next scenario",
             !jb("s3InPlay").disabled && !jb("s3Removed").disabled);
           tick(jb("s3InPlay"));
           log("in play closes removed", jb("s3Removed").disabled === true);
@@ -3022,7 +3040,10 @@
              again, which is the whole point of the lock being one-sided. */
           jb("s3Removed").checked = false;
           fire(jb("s3Removed"), "change");
-          log("correcting the earlier scenario opens them again",
+          log("undoing the removal alone is not enough",
+            jb("s4InPlay").disabled === true, jb("s4InPlay").title);
+          tick(jb("s3InPlay"));
+          log("recording her there opens the later scenario again",
             !jb("s4InPlay").disabled && !jb("s4Removed").disabled);
 
           w.dispatchEvent(new w.Event("pagehide"));
@@ -3151,14 +3172,6 @@
             upNames(1).every(function (name) { return text.indexOf(name) !== -1; }),
             upNames(1).join());
 
-          /* A mark under a role the player no longer holds is not on screen as a
-             box, and the printout must not swallow it. Read through the card's
-             own note, which is the only thing on screen that says it is there. */
-          var orphanNote = app.querySelector('.player-card[data-player="2"] ' +
-            "[data-upgrades] .lock-note").textContent.trim();
-          log("and the marks kept under another role",
-            orphanNote.length > 0 && text.indexOf(orphanNote) !== -1, orphanNote);
-
           /* The section headings are read off the screen too, so a section can
              be found in the printout without this file knowing its words. */
           var heading = function (id) {
@@ -3172,6 +3185,16 @@
             });
             return out;
           };
+          /* Marks kept under a role the player no longer holds are not on the
+             sheet as it reads now, so the printout does not carry them either —
+             they live on in the JSON export and in a share link. Counted rather
+             than named, so this survives translation: per player a name line, a
+             role line, the heading and five boxes, plus the level line on top
+             and nothing else. */
+          var playerLines = printed("players").querySelectorAll(".print-line");
+          log("and no line beyond the sheet itself",
+            playerLines.length === 1 + 2 * 8, playerLines.length);
+
           /* Whole sets, set or not: which side schemes were NOT defeated decides
              how many upgrades the next scenario grants. */
           var ssLines = printed("side-schemes").querySelectorAll(".print-line");

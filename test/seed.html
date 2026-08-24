@@ -118,7 +118,9 @@ var logs = {
       expert: true,
       /* Drei Spieler, absichtlich in drei verschiedenen Zustaenden, damit ein
          Screenshot alle drei zeigt: Rolle mit Haken; Rolle gewechselt, also
-         Eintragungen einer anderen Rolle im Bestand; und gar keine Rolle. */
+         Eintragungen einer anderen Rolle im Bestand — die bleiben gespeichert,
+         werden aber weder angezeigt noch kommentiert; und gar keine Rolle,
+         wo der Hinweis steht, erst eine zu waehlen. */
       players: [
         { hero: "Colossus", hp: 9, role: "brawler",
           upgrades: ["brawler-coup-de-grace", "brawler-brazen-defense", "brawler-war-cry"] },
@@ -128,8 +130,8 @@ var logs = {
           upgrades: ["defender-surprise", "defender-bodyguard", "peacekeeper-mentorship"] },
         { hero: "Wolverine", hp: 11, role: "", upgrades: [] }
       ],
-      /* Zwei von vier: die Kampagne hat damit drei Verbesserungen vergeben,
-         und Spieler #1 hat genau drei — der Anzahl-Hinweis bleibt also aus. */
+      /* Zwei von vier. Wie viele Verbesserungen die Kampagne damit vergeben
+         hat, zaehlt der Bogen absichtlich nicht mit. */
       sideSchemes: ["frightened-police", "enemy-of-my-enemy"],
       futurePastVictory: ["nimrod", "nano-sentinel-tech"],
       /* Dieselbe Karte in Spalte 1 und 2 — das ist erlaubt und soll im
@@ -139,8 +141,10 @@ var logs = {
          Zeile, deren gesetzte Zelle bedienbar bleibt. */
       futurePastDeck: [["bastion", "nimrod"], ["bastion", "nimrods-portal"],
                        ["bastions-machinations"], []],
-      /* S3 entfernt und S4 im Spiel: der Widerspruchs-Marker steht damit im
-         Screenshot, ohne dass etwas gesperrt ist. */
+      /* S2 im Spiel, damit S3 ueberhaupt offen ist; dort entfernt, und S4
+         trotzdem im Spiel: so zeigt der Screenshot den Widerspruchs-Marker,
+         das gesetzte Kaestchen, das trotz der Sperre bedienbar bleibt, und
+         daneben das leere, das zu ist. */
       jubilee: { s2InPlay: true, s3InPlay: false, s3Removed: true,
                  s4InPlay: true, s4Removed: false },
       captiveAllies: ["rictor", "wolfsbane"],
