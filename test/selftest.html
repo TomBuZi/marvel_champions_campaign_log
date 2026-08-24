@@ -229,11 +229,14 @@
           return base;
         };
         var future = mk({ id: "aaa", title: "Future schema", schemaVersion: 99 });
-        /* A campaign that will never exist — "mutant-genesis", same id as in
-           caseImport. This once named a real campaign that had not shipped
-           yet; the day it shipped it became known, and this case silently
-           stopped testing quarantine at all. Keep the id fictional. */
-        var unknown = mk({ id: "bbb", title: "Unknown campaign", campaignId: "mutant-genesis" });
+        /* A campaign that will never exist — "no-such-campaign", the same id as
+           in caseImport. This has now been broken TWICE by a real campaign
+           shipping under the id the fixture had borrowed (MC24 first, then
+           MC32 as "mutant-genesis"), each time silently turning three
+           quarantine assertions into assertions about nothing. So the id is
+           deliberately not a campaign name at all, and test/lint.js now checks
+           that no registered campaign has claimed it. */
+        var unknown = mk({ id: "bbb", title: "Unknown campaign", campaignId: "no-such-campaign" });
         var newerSheet = mk({ id: "ccc", title: "Newer sheet", stateVersion: 42 });
         var before = { aaa: JSON.stringify(future), bbb: JSON.stringify(unknown), ccc: JSON.stringify(newerSheet) };
         seed({ aaa: future, bbb: unknown, ccc: newerSheet }, "aaa");
@@ -249,13 +252,13 @@
           log("picker marks quarantined logs",
             (d.getElementById("log-select").textContent.match(/⚠/g) || []).length === 3);
           log("unknown campaign gets its own optgroup",
-            /mutant-genesis/.test(d.getElementById("log-select").innerHTML));
+            /no-such-campaign/.test(d.getElementById("log-select").innerHTML));
 
           var sel = d.getElementById("log-select");
           sel.value = "bbb";
           fire(sel, "change");
           log("unknown-campaign notice names the campaign",
-            /mutant-genesis/.test(d.getElementById("notice").textContent),
+            /no-such-campaign/.test(d.getElementById("notice").textContent),
             d.getElementById("notice").textContent.slice(0, 70));
           sel.value = "ccc";
           fire(sel, "change");
@@ -641,7 +644,9 @@
                     answer = true;
 
                     // 5) A log from a campaign we do not know is kept verbatim.
-                    var alien = mk("imp-4", "Fremde Kampagne", { campaignId: "mutant-genesis" });
+                    /* Same sentinel as caseQuarantine, and for the same
+                       reason — see the comment there. */
+                    var alien = mk("imp-4", "Fremde Kampagne", { campaignId: "no-such-campaign" });
                     alien.somethingWeDoNotKnow = 7;
                     var alienJson = JSON.stringify(alien);
                     drop(alien, function (s) { return !!s["imp-4"]; }, function () {
@@ -651,7 +656,7 @@
                         JSON.stringify(s5["imp-4"]) === alienJson);
                       log("unknown-campaign import quarantined",
                         !d.getElementById("notice").hidden &&
-                        /mutant-genesis/.test(d.getElementById("notice").textContent));
+                        /no-such-campaign/.test(d.getElementById("notice").textContent));
 
                       // 6) Garbage is refused without touching the store.
                       var before = localStorage.getItem("mcclog:logs");
@@ -2647,7 +2652,530 @@
         });
       }
 
-      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint };
+      // ----------------------------------------------------------- MC32
+      /* The MC32 sheet has no printed row lines anywhere, so where its blank
+         areas mean cards the module supplies the set — as boxes where the sheet
+         asks WHICH cards, and as a grid where the same five cards recur once per
+         scenario. On top of that, which five upgrade boxes a player sees follows
+         the role they picked. These cases are about the sets being the right
+         sets, the grid keeping its columns, the role deciding labels without
+         ever deciding what is stored, and exactly one pair of boxes locking. */
+      function mgLog() {
+        return {
+          schemaVersion: 1, id: "mg1", campaignId: "mutant-genesis", stateVersion: 1,
+          title: "Mutant Genesis",
+          createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-02T00:00:00.000Z",
+          state: {
+            /* Expert, because the hit points only exist there. caseMgExpert is
+               the one that starts at standard. */
+            expert: true,
+            players: [{ hero: "", hp: null, role: "", upgrades: [] }],
+            /* Everything else deliberately absent: normalize() has to build both
+               sets, the four-column grid and the five Jubilee boxes out of a
+               state that mentions none of them. */
+          },
+        };
+      }
+
+      /* The sections the printed sheet has, by their stable data-section keys —
+         not by their labels, which are still to be translated. "Role Upgrades in
+         Play" is not among them: its Player #1..#4 column is just the player
+         list again, so its boxes sit in the player cards. */
+      var MG_SECTIONS = ["players", "side-schemes", "future-past-victory",
+        "future-past-deck", "jubilee", "abduction-protocols", "removed-allies"];
+
+      function caseMg() {
+        seed({ mg1: mgLog() }, "mg1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var app = d.getElementById("campaign");
+          var at = function (sel) { return app.querySelectorAll(sel); };
+
+          var found = MG_SECTIONS.filter(function (id) {
+            return !!app.querySelector('[data-section="' + id + '"]');
+          });
+          log("every printed section has a panel",
+            found.length === MG_SECTIONS.length, found.join());
+          log("and no panel beyond them",
+            at("[data-section]").length === MG_SECTIONS.length,
+            at("[data-section]").length);
+          /* The one that must NOT be a panel: the sheet's Player #1..#4 column
+             is the player list again, so the boxes belong in the cards. */
+          log("the role upgrades are not a panel of their own",
+            !app.querySelector('[data-section="role-upgrades"]'));
+          log("they sit in the player card instead",
+            !!app.querySelector(".player-card [data-upgrades]"));
+
+          /* Which cards, so boxes over the whole set — and the side schemes keep
+             one scenario column each, because the sheet prints a SCENARIO pill
+             over every one of those boxes. */
+          log("the four side schemes keep their four scenario columns",
+            at('[data-section="side-schemes"] .cell').length === 4 &&
+            at('[data-section="side-schemes"] .sheet-check').length === 4,
+            at('[data-section="side-schemes"] .cell').length);
+          log("the victory display is the whole Future Past set",
+            at('[data-section="future-past-victory"] .sheet-check').length === 5,
+            at('[data-section="future-past-victory"] .sheet-check').length);
+          log("the captive allies are four boxes",
+            at('[data-section="abduction-protocols"] .sheet-check').length === 4,
+            at('[data-section="abduction-protocols"] .sheet-check').length);
+
+          /* The encounter deck is the one grid: the same five cards once per
+             scenario, so a cell means nothing without both, and <th scope> is
+             what conveys that. */
+          log("the deck grid is five cards by four scenarios",
+            at('[data-section="future-past-deck"] .sheet-check').length === 20,
+            at('[data-section="future-past-deck"] .sheet-check').length);
+          log("with a row header per card and a column header per scenario",
+            at('[data-section="future-past-deck"] th[scope="row"]').length === 5 &&
+            at('[data-section="future-past-deck"] th[scope="col"]').length === 5,
+            at('[data-section="future-past-deck"] th[scope="row"]').length + "/" +
+            at('[data-section="future-past-deck"] th[scope="col"]').length);
+
+          /* Named, and named out of two DIFFERENT sets. The card names are still
+             to be translated, so what is checked is the relationship between the
+             panels rather than the words in them — wiring the wrong pool to a
+             panel would make them overlap. */
+          var names = function (section) {
+            return Array.prototype.map.call(
+              at('[data-section="' + section + '"] .flag > span'),
+              function (n) { return n.textContent.trim(); });
+          };
+          var fpNames = names("future-past-victory");
+          var apNames = names("abduction-protocols");
+          log("every box is named",
+            fpNames.length + apNames.length === 9 &&
+            fpNames.concat(apNames).every(function (n) { return n.length > 0; }),
+            fpNames.concat(apNames).join(" | "));
+          log("and the two panels draw from different sets",
+            fpNames.every(function (n) { return apNames.indexOf(n) === -1; }),
+            fpNames.join() + " vs " + apNames.join());
+          /* The grid draws on the same set as the victory display — one Future
+             Past set, read twice. Compared as sets, because the grid lists the
+             cards down the side rather than in pills. */
+          var gridNames = Array.prototype.map.call(
+            at('[data-section="future-past-deck"] th[scope="row"]'),
+            function (n) { return n.textContent.trim(); });
+          log("and the grid reads the same set as the victory display",
+            gridNames.length === fpNames.length &&
+            gridNames.every(function (n) { return fpNames.indexOf(n) !== -1; }),
+            gridNames.join());
+
+          /* The rule itself, derived instead of written out: a name is tagged as
+             English exactly when it is the SAME string in both languages. Read
+             in German, then in English, then switched back — so this keeps
+             checking the rule however many names get translated later, instead
+             of decaying into a list somebody has to maintain. */
+          var tagged = Array.prototype.map.call(
+            at('[data-section="future-past-victory"] .flag > span > span'),
+            function (n) { return n.getAttribute("lang") === "en"; });
+          d.getElementById("btn-lang").click();
+          var english = names("future-past-victory");
+          d.getElementById("btn-lang").click();
+          var german = names("future-past-victory");
+          log("the language tag follows the name actually shown",
+            german.length === english.length && german.length > 0 &&
+            german.every(function (n, i) { return tagged[i] === (n === english[i]); }),
+            german.join() + " / " + english.join() + " / " + tagged.join());
+
+          /* Switching twice rebuilt the sheet twice, so everything below has to
+             be looked up again. */
+          var fp = at('[data-section="future-past-victory"] .sheet-check');
+          /* Ticked out of pool order on purpose: a set comes back in the pool's
+             order, and that is what makes normalize() a fixpoint. */
+          tick(fp[4]);
+          tick(fp[1]);
+
+          /* The same card in two scenarios' columns — allowed, and the normal
+             case: a card recorded after scenario 1 is shuffled back into the
+             encounter deck at scenario 2's setup. Row 2 is the second card of
+             the set, columns 1 and 2 its first two cells. */
+          var rows = at('[data-section="future-past-deck"] tbody tr');
+          var cells = rows[1].querySelectorAll(".sheet-check");
+          tick(cells[0]);
+          tick(cells[1]);
+          log("the same card can stand in two columns at once",
+            cells[0].checked && cells[1].checked);
+
+          var ss = at('[data-section="side-schemes"] .sheet-check');
+          tick(ss[0]);
+          var jub = app.querySelector('[data-jubilee="s2InPlay"]');
+          log("scenario 2 has only the one printed Jubilee box",
+            !!jub && !app.querySelector('[data-jubilee="s2Removed"]'));
+          tick(jub);
+          var cap = at('[data-section="abduction-protocols"] .sheet-check');
+          tick(cap[2]);
+          addEntry(d, "mg-removed-allies", "Lockheed");
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).mg1.state;
+            log("a set is stored in the pool's order, not the clicking order",
+              st.futurePastVictory.length === 2 &&
+              st.futurePastVictory[0] !== st.futurePastVictory[1],
+              JSON.stringify(st.futurePastVictory));
+            log("the grid is stored as four columns",
+              st.futurePastDeck.length === 4, st.futurePastDeck.length);
+            log("and the repeated card sits in both of them",
+              st.futurePastDeck[0].length === 1 && st.futurePastDeck[1].length === 1 &&
+              st.futurePastDeck[0][0] === st.futurePastDeck[1][0],
+              JSON.stringify(st.futurePastDeck));
+            log("the side scheme, the Jubilee box and the ally were stored",
+              st.sideSchemes.length === 1 && st.jubilee.s2InPlay === true &&
+              st.captiveAllies.length === 1,
+              JSON.stringify([st.sideSchemes, st.jubilee.s2InPlay, st.captiveAllies]));
+            log("and so was the free-text ally",
+              st.removedAllies.length === 1 && st.removedAllies[0] === "Lockheed",
+              JSON.stringify(st.removedAllies));
+            finish();
+          }, 500);
+        });
+      }
+
+      /* The derived-state case: the role decides which five boxes are shown and
+         nothing else, the count note says what it cannot enforce, and exactly
+         one pair of boxes on this sheet locks. */
+      function caseMgRole() {
+        var seeded = mgLog();
+        seeded.state.players = [
+          { hero: "Colossus", hp: 9, role: "", upgrades: [] },
+          { hero: "Shadowcat", hp: 6, role: "", upgrades: [] },
+        ];
+        /* Scenario 4 arrives contradicting itself, the way an import or a
+           hand-edited file can. Scenario 3 is left clean for the lock itself. */
+        seeded.state.jubilee = { s2InPlay: false, s3InPlay: false, s3Removed: false,
+                                 s4InPlay: true, s4Removed: true };
+        seed({ mg1: seeded }, "mg1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var roleSel = function (n) {
+            return d.querySelector('.player-card[data-player="' + n + '"] .pool-select');
+          };
+          var boxes = function (n) {
+            return d.querySelectorAll('.player-card[data-player="' + n + '"] ' +
+              "[data-upgrades] .sheet-check");
+          };
+          var note = function (n) {
+            return d.querySelector('.player-card[data-player="' + n + '"] ' +
+              "[data-upgrades] .lock-note").textContent.trim();
+          };
+          var boxNames = function (n) {
+            return Array.prototype.map.call(
+              d.querySelectorAll('.player-card[data-player="' + n + '"] ' +
+                "[data-upgrades] .flag > span"),
+              function (s) { return s.textContent.trim(); }).join("|");
+          };
+          var setRole = function (n, value) {
+            var sel = roleSel(n);
+            sel.value = value;
+            fire(sel, "change");
+          };
+
+          log("the role is a pool of the four printed roles",
+            roleSel(1).options.length === 5, roleSel(1).options.length);
+          log("with no role there are no boxes", boxes(1).length === 0);
+          log("and the card says to pick one first", note(1).length > 0, note(1));
+
+          setRole(1, "brawler");
+          log("a role brings exactly five boxes", boxes(1).length === 5, boxes(1).length);
+          var brawler = boxNames(1);
+          log("all five are named and distinct",
+            brawler.split("|").length === 5 &&
+            brawler.split("|").every(function (s) { return s.length > 0; }) &&
+            brawler.split("|").filter(function (s, i, a) { return a.indexOf(s) === i; })
+              .length === 5, brawler);
+          log("and the note is gone", note(1) === "", note(1));
+
+          /* Each player must take a different role, so the taken one closes for
+             the others while staying selectable in its own select. */
+          var taken = function (sel) {
+            return Array.prototype.filter.call(sel.options, function (o) {
+              return o.value === "brawler";
+            })[0].disabled;
+          };
+          log("a role taken closes for the other player", taken(roleSel(2)) === true);
+          log("but stays selectable in its own select", taken(roleSel(1)) === false);
+
+          /* Read off the screen rather than written out here: the labels are
+             still to be translated, and the assertion should not move with them.
+             Compared as joined strings, not as sets — Coup de Grace is in two
+             roles, so two roles are allowed to share a name. */
+          setRole(1, "commander");
+          log("another role brings another five", boxes(1).length === 5, boxes(1).length);
+          log("and they are not the same five", boxNames(1) !== brawler, boxNames(1));
+
+          /* THE regression test. A mark made under one role has to survive being
+             hidden by another and come back — a mis-clicked dropdown must not
+             cost the record, and swapping two players' roles necessarily passes
+             through a moment with no role at all. */
+          setRole(1, "brawler");
+          var marked = boxNames(1).split("|")[0];
+          tick(boxes(1)[0]);
+          log("a mark can be made under the role", boxes(1)[0].checked);
+          setRole(1, "peacekeeper");
+          log("the box is gone with the role", boxNames(1).indexOf(marked) === -1,
+            boxNames(1));
+          log("and the card admits the mark is still kept", note(1).length > 0, note(1));
+          setRole(1, "brawler");
+          log("switching back brings the mark with it", boxes(1)[0].checked);
+          setRole(1, "");
+          log("clearing the role leaves no boxes", boxes(1).length === 0);
+          log("and still says the mark is kept", note(1).length > 0, note(1));
+          setRole(1, "brawler");
+
+          /* The count note. The campaign has granted one so far — scenario 1's —
+             so three marks are more than it can have handed out and the card
+             says so. Checking two side-scheme boxes raises it to three and the
+             note goes away. It NEVER closes a box: the rule caps a number
+             rather than naming a card, and a fresh sheet would otherwise arrive
+             four fifths shut. */
+          tick(boxes(1)[1]);
+          tick(boxes(1)[2]);
+          log("more marks than granted is said out loud", note(1).length > 0, note(1));
+          var openAll = function (n) {
+            return Array.prototype.every.call(boxes(n), function (b) { return !b.disabled; });
+          };
+          log("but no upgrade box is ever closed", openAll(1) === true);
+          var ss = d.querySelectorAll('[data-section="side-schemes"] .sheet-check');
+          tick(ss[0]);
+          tick(ss[1]);
+          log("granting more clears the note", note(1) === "", note(1));
+          log("and still nothing is closed", openAll(1) === true);
+
+          /* Jubilee, the one pair that does lock: two states of one outcome,
+             printed side by side under one scenario. */
+          var jb = function (key) { return d.querySelector('[data-jubilee="' + key + '"]'); };
+          log("a clean scenario has both boxes open",
+            !jb("s3InPlay").disabled && !jb("s3Removed").disabled);
+          tick(jb("s3InPlay"));
+          log("in play closes removed", jb("s3Removed").disabled === true);
+          log("and does not close itself", jb("s3InPlay").disabled === false);
+          jb("s3InPlay").checked = false;
+          fire(jb("s3InPlay"), "change");
+          log("clearing it opens the other again", jb("s3Removed").disabled === false);
+          /* One-sided on purpose: a sheet that arrives with both set would
+             otherwise be frozen solid with no way out. */
+          log("a scenario that arrives contradicting itself stays operable",
+            jb("s4InPlay").checked && jb("s4Removed").checked &&
+            !jb("s4InPlay").disabled && !jb("s4Removed").disabled);
+
+          /* Across scenarios it is only said, never enforced: the sheet prints
+             no arrow between the columns, and a group may well correct the
+             earlier one after filling in the later. */
+          var cellNote = function (key) {
+            return jb(key).closest(".cell").querySelector(".lock-note").textContent.trim();
+          };
+          tick(jb("s3Removed"));
+          log("removed earlier and in play later is marked",
+            cellNote("s4InPlay").length > 0, cellNote("s4InPlay"));
+          log("and neither of those boxes is closed by it",
+            !jb("s4InPlay").disabled && !jb("s3Removed").disabled);
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).mg1.state;
+            log("the role is stored", st.players[0].role === "brawler",
+              st.players[0].role);
+            log("and the three marks with it", st.players[0].upgrades.length === 3,
+              JSON.stringify(st.players[0].upgrades));
+            log("the second player kept no role", st.players[1].role === "",
+              st.players[1].role);
+            finish();
+          }, 500);
+        });
+      }
+
+      function caseMgExpert() {
+        var seeded = mgLog();
+        seeded.state.expert = false;
+        /* Filled in, but not visible at standard level — exactly the state that
+           would lose data if hiding were clearing. */
+        seeded.state.players = [{ hero: "Colossus", hp: 6, role: "brawler",
+                                  upgrades: ["brawler-war-cry"] }];
+        seed({ mg1: seeded }, "mg1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var card = function () { return d.querySelector(".player-card"); };
+          var toggle = function () {
+            return d.querySelector("[data-section=players] .panel-head .flag .sheet-check");
+          };
+
+          log("the switch is in the player panel head", !!toggle());
+          log("it starts unticked", toggle().checked === false);
+          log("standard hides the hit points", !card().querySelector(".num-input"));
+          log("the identity field is not hidden with them",
+            !!card().querySelector(".text-input"));
+          /* The level governs the hit points and nothing else on this sheet: the
+             sheet prints "(expert)" under those and nowhere else. */
+          log("standard leaves the role", !!card().querySelector(".pool-select"));
+          log("and leaves its five boxes",
+            card().querySelectorAll("[data-upgrades] .sheet-check").length === 5,
+            card().querySelectorAll("[data-upgrades] .sheet-check").length);
+          log("and every printed section is still there",
+            d.querySelectorAll("[data-section]").length === MG_SECTIONS.length,
+            d.querySelectorAll("[data-section]").length);
+
+          toggle().checked = true;
+          fire(toggle(), "change");
+          log("expert reveals the hit points", !!card().querySelector(".num-input"));
+          log("and the value was still there",
+            card().querySelector(".num-input").value === "6",
+            card().querySelector(".num-input").value);
+
+          toggle().checked = false;
+          fire(toggle(), "change");
+          log("switching back hides them again", !card().querySelector(".num-input"));
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).mg1.state;
+            log("the sheet is back at standard", st.expert === false);
+            log("but the hidden hit points survived", st.players[0].hp === 6,
+              st.players[0].hp);
+            finish();
+          }, 500);
+        });
+      }
+
+      function caseMgPrint() {
+        var seeded = mgLog();
+        seeded.state.players = [
+          { hero: "Colossus", hp: 9, role: "brawler",
+            upgrades: ["brawler-coup-de-grace", "brawler-war-cry"] },
+          /* Peacekeeper now, Defender before: the printout has to carry what is
+             stored under the role that is no longer held. One own mark against
+             three granted, so the count note stays out of the way and the card's
+             note is the orphan one and nothing else. */
+          { hero: "Shadowcat", hp: 6, role: "peacekeeper",
+            upgrades: ["defender-bodyguard", "peacekeeper-mentorship"] },
+        ];
+        seeded.state.sideSchemes = ["frightened-police", "find-the-prisoners"];
+        seeded.state.futurePastVictory = ["nimrod"];
+        /* One column deliberately empty: it has to print anyway. */
+        seeded.state.futurePastDeck = [["bastion"], ["bastion"], [], ["nimrods-portal"]];
+        seeded.state.jubilee = { s2InPlay: true, s3InPlay: false, s3Removed: true,
+                                 s4InPlay: false, s4Removed: false };
+        seeded.state.captiveAllies = ["rictor"];
+        seeded.state.removedAllies = ["Lockheed", "~Nightcrawler"];
+        seed({ mg1: seeded }, "mg1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          w.dispatchEvent(new w.Event("beforeprint"));
+          var pv = d.getElementById("print-view");
+          var text = pv.textContent;
+          var app = d.getElementById("campaign");
+          log("print view built", pv.children.length > 0, pv.children.length);
+          log("print names the campaign", /Mutant Genesis \(MC32\)/.test(text));
+          log("print says which level was played",
+            /\[x\] Expertenmodus/.test(text), text.slice(0, 120));
+          /* Named, not just the bare number: textContent runs the lines
+             together, so a digit on its own proves nothing about where it sat. */
+          log("print carries the hit points",
+            /Lebenspunkte: 9/.test(text) && /Lebenspunkte: 6/.test(text));
+
+          /* Names come off the sheet rather than out of this file: they are
+             still to be translated, and the printout has to carry whatever is
+             shown. */
+          var shown = function (sel) {
+            var s2 = app.querySelector(sel);
+            return s2.options[s2.selectedIndex].textContent.trim();
+          };
+          var role1 = shown('.player-card[data-player="1"] .pool-select');
+          var role2 = shown('.player-card[data-player="2"] .pool-select');
+          log("print carries each player's role",
+            text.indexOf(role1) !== -1 && text.indexOf(role2) !== -1,
+            role1 + " / " + role2);
+
+          var upNames = function (n) {
+            return Array.prototype.map.call(
+              app.querySelectorAll('.player-card[data-player="' + n + '"] ' +
+                "[data-upgrades] .flag > span"),
+              function (s) { return s.textContent.trim(); });
+          };
+          log("and all five boxes of the role that is held, set or not",
+            upNames(1).length === 5 &&
+            upNames(1).every(function (name) { return text.indexOf(name) !== -1; }),
+            upNames(1).join());
+
+          /* A mark under a role the player no longer holds is not on screen as a
+             box, and the printout must not swallow it. Read through the card's
+             own note, which is the only thing on screen that says it is there. */
+          var orphanNote = app.querySelector('.player-card[data-player="2"] ' +
+            "[data-upgrades] .lock-note").textContent.trim();
+          log("and the marks kept under another role",
+            orphanNote.length > 0 && text.indexOf(orphanNote) !== -1, orphanNote);
+
+          /* The section headings are read off the screen too, so a section can
+             be found in the printout without this file knowing its words. */
+          var heading = function (id) {
+            return app.querySelector('[data-section="' + id + '"] h2').textContent.trim();
+          };
+          var printed = function (id) {
+            var want = heading(id);
+            var out = null;
+            Array.prototype.forEach.call(pv.querySelectorAll(".print-section"), function (s) {
+              if (s.querySelector("h2").textContent.trim() === want) out = s;
+            });
+            return out;
+          };
+          /* Whole sets, set or not: which side schemes were NOT defeated decides
+             how many upgrades the next scenario grants. */
+          var ssLines = printed("side-schemes").querySelectorAll(".print-line");
+          log("every side-scheme box prints, set or not", ssLines.length === 4,
+            ssLines.length);
+          log("and matches what the boxes on screen say",
+            Array.prototype.filter.call(ssLines, function (l) {
+              return l.textContent.indexOf("[x]") === 0;
+            }).length ===
+            Array.prototype.filter.call(
+              app.querySelectorAll('[data-section="side-schemes"] .sheet-check'),
+              function (b) { return b.checked; }).length);
+
+          /* Four scenario blocks of five cards each, the empty column included:
+             an empty column says that scenario carried nothing forward, and the
+             sheet leaves the place visible either way. */
+          var deckLines = printed("future-past-deck").querySelectorAll(".print-line");
+          log("the whole grid prints, empty columns included",
+            deckLines.length === 4 + 4 * 5, deckLines.length);
+          /* And each block says which scenario it is, in the same words the
+             grid's own column headers carry on screen. */
+          var colLabels = Array.prototype.map.call(
+            app.querySelectorAll('[data-section="future-past-deck"] th[scope="col"]'),
+            function (th) { return th.textContent.trim(); }).slice(1);
+          log("and each block says which scenario it is",
+            colLabels.length === 4 && colLabels.every(function (l) {
+              return printed("future-past-deck").textContent.indexOf(l) !== -1;
+            }), colLabels.join());
+          /* Three scenario blocks, one box for scenario 2 and two each for 3
+             and 4 — exactly what the sheet prints. */
+          var jubLines = printed("jubilee").querySelectorAll(".print-line");
+          log("Jubilee prints the boxes the sheet has", jubLines.length === 3 + 5,
+            jubLines.length);
+
+          var fpLines = printed("future-past-victory").querySelectorAll(".print-line");
+          var apLines = printed("abduction-protocols").querySelectorAll(".print-line");
+          log("both card sets print whole", fpLines.length === 5 && apLines.length === 4,
+            fpLines.length + "/" + apLines.length);
+
+          /* The free-text list keeps its own shape, and a "~" entry prints
+             struck rather than with the marker showing. */
+          var items = printed("removed-allies").querySelectorAll(".print-list li");
+          log("the free-text allies print as a list", items.length === 2, items.length);
+          log("and a struck one prints struck",
+            items[1].className === "struck" &&
+            items[1].textContent.indexOf("~") === -1,
+            items[1].className + " / " + items[1].textContent);
+
+          /* Never printed: that a box is closed, and the wording of any rule. */
+          log("the printout does not say what the screen closed",
+            text.indexOf("[") !== -1 &&
+            text.indexOf(app.querySelector('[data-jubilee="s3InPlay"]').title) === -1,
+            app.querySelector('[data-jubilee="s3InPlay"]').title);
+          finish();
+        });
+      }
+
+      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint, mg: caseMg, mgrole: caseMgRole, mgexpert: caseMgExpert, mgprint: caseMgPrint };
       (cases[CASE] || caseBasic)();
     </script>
   </body>

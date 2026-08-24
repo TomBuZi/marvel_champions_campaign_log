@@ -543,6 +543,207 @@ for (const def of campaigns) {
       m1.players[1].planningAhead === "" && m1.players[1].aspectAdvantage === "7",
       JSON.stringify([m1.players[1].aspectAdvantage, m1.players[1].planningAhead]));
   }
+
+  if (def.id === "mutant-genesis") {
+    /* The generic fixture feeds MC60's `scenarios`, MC21's `flags` and MC10's
+       `removed`, none of which is a field on this sheet. None of it may land. */
+    check(p + "no scenarios key on this sheet", once.scenarios === undefined);
+    check(p + "no flags key on this sheet", once.flags === undefined);
+    check(p + "no removed key on this sheet", once.removed === undefined);
+    check(p + "a notes field is not part of this sheet",
+      def.normalize({ notes: "anything" }).notes === undefined);
+
+    /* The level is a real boolean, and standard is the default: a sheet that
+       says nothing is not an expert campaign. */
+    check(p + "the level defaults to standard", empty.expert === false);
+    check(p + "a tolerant truthy level reads as expert",
+      def.normalize({ expert: "true" }).expert === true);
+    /* Hiding is not clearing: the hit points are the only field the sheet marks
+       "(expert)", so they have to survive a sheet that is currently standard.
+       They are still in the JSON export and in a share link. */
+    check(p + "a standard sheet keeps its hidden hit points",
+      def.normalize({ expert: false, players: [{ hero: "Colossus", hp: 9 }] })
+        .players[0].hp === 9);
+
+    check(p + "player list capped at 4", once.players.length === 4, once.players.length);
+    check(p + "an empty player list still yields one player",
+      def.normalize({ players: [] }).players.length === 1);
+    check(p + "hero trimmed, hp clamped",
+      once.players[0].hero === "Daredevil" && once.players[0].hp === 99,
+      once.players[0].hero + "/" + once.players[0].hp);
+    check(p + "a blank hit point field stays null",
+      def.normalize({ players: [{ hp: "" }] }).players[0].hp === null);
+    /* The role and its marks live ON the player, so the key set says so: a
+       parallel list keyed by index would shift every column up onto the wrong
+       hero the moment a player is removed. */
+    check(p + "a player carries the identity, the hit points, the role and its marks",
+      eq(Object.keys(once.players[0]).sort(), ["hero", "hp", "role", "upgrades"]),
+      JSON.stringify(Object.keys(once.players[0])));
+
+    /* The twenty role upgrades by SLUG, not by label. Deliberate: CLAUDE.md
+       warns against nailing an assertion to anything transient, and the slugs
+       are the opposite of transient — they are the persisted keys, and this
+       whole module rests on labels changing while keys do not. Pinning the
+       labels would decay the moment the German printing is entered; pinning the
+       slugs catches a role losing an upgrade, a slug being renamed, and a
+       dropped role prefix, which would silently merge the four titles that
+       appear under two roles. */
+    const MG_ROLES = ["brawler", "commander", "defender", "peacekeeper"];
+    const MG_UPGRADES = [
+      "brawler-coup-de-grace", "brawler-swagger", "brawler-brazen-defense",
+      "brawler-ferocious-attack", "brawler-war-cry",
+      "commander-coup-de-grace", "commander-compassion", "commander-group-assault",
+      "commander-shock-and-awe", "commander-improvisation",
+      "defender-swagger", "defender-surprise", "defender-heroic-intervention",
+      "defender-determined-defense", "defender-bodyguard",
+      "peacekeeper-surprise", "peacekeeper-compassion", "peacekeeper-rescue-operation",
+      "peacekeeper-mentorship", "peacekeeper-fortitude",
+    ];
+    /* One assertion pinning the exact set, the canonical order AND the
+       unknown-slug drop at once — the input arrives reversed and salted. */
+    check(p + "all twenty role upgrades are known, in table order",
+      eq(def.normalize({ players: [{ upgrades:
+        MG_UPGRADES.slice().reverse().concat(["made-up", 7, null]) }] })
+        .players[0].upgrades, MG_UPGRADES));
+    /* Five per role — the number the sheet does not print. It is trustworthy
+       because three readings agree, and two of them are checkable here: the
+       size of each role's set, and one grant at scenario 1 plus one for each
+       printed side-scheme box. */
+    check(p + "and exactly five per role",
+      MG_ROLES.every((r) =>
+        MG_UPGRADES.filter((s) => s.indexOf(r + "-") === 0).length === 5));
+    check(p + "which is what the campaign can grant",
+      1 + def.normalize({ sideSchemes: ["frightened-police", "enemy-of-my-enemy",
+        "find-the-prisoners", "surprise-attack"] }).sideSchemes.length === 5);
+    /* The four titles that appear under two roles are two different cards. */
+    check(p + "the same title under two roles is two entries",
+      def.normalize({ players: [{ upgrades:
+        ["brawler-coup-de-grace", "commander-coup-de-grace"] }] })
+        .players[0].upgrades.length === 2);
+
+    /* THE regression test for the derived state: the role decides what is
+       SHOWN, never what is stored. A mis-clicked dropdown must not cost five
+       marks, and "each player must choose a different role" makes a swap — which
+       has to pass through a moment with no role at all — a normal move. */
+    check(p + "a mark outside the current role survives",
+      eq(def.normalize({ players: [{ role: "commander",
+        upgrades: ["brawler-war-cry"] }] }).players[0].upgrades,
+        ["brawler-war-cry"]));
+    check(p + "and so does one with no role at all",
+      eq(def.normalize({ players: [{ role: "", upgrades: ["brawler-war-cry"] }] })
+        .players[0].upgrades, ["brawler-war-cry"]));
+    const badRole = def.normalize({ players: [{ role: "tank",
+      upgrades: ["brawler-war-cry"] }] });
+    check(p + "an unknown role is cleared without touching the marks",
+      badRole.players[0].role === "" && badRole.players[0].upgrades.length === 1,
+      JSON.stringify(badRole.players[0]));
+    /* Each player a different role — and whoever loses that contest keeps their
+       marks, or the mere order of an import would decide whose five survive. */
+    const dupRole = def.normalize({ players: [
+      { role: "brawler", upgrades: ["brawler-war-cry"] },
+      { role: "brawler", upgrades: ["brawler-swagger"] }] });
+    check(p + "two players cannot hold the same role",
+      dupRole.players[0].role === "brawler" && dupRole.players[1].role === "",
+      JSON.stringify([dupRole.players[0].role, dupRole.players[1].role]));
+    check(p + "but the player who lost the role keeps their marks",
+      eq(dupRole.players[1].upgrades, ["brawler-swagger"]));
+
+    /* The two Future Past sections are shaped by what the sheet prints: no
+       columns above, four columns below. */
+    check(p + "the victory display is one set, not a grid",
+      Array.isArray(empty.futurePastVictory) && eq(empty.futurePastVictory, []));
+    check(p + "the deck grid always has the four printed columns",
+      def.normalize({ futurePastDeck: [["nimrod"]] }).futurePastDeck.length === 4 &&
+      def.normalize({ futurePastDeck: [[], [], [], [], ["nimrod"]] })
+        .futurePastDeck.length === 4);
+    check(p + "and its columns start empty",
+      empty.futurePastDeck.every((col) => Array.isArray(col) && col.length === 0));
+    /* No cross-column uniqueness, unlike MC27's Osborn Tech cells: a card
+       recorded after scenario 1 is shuffled back into the encounter deck at
+       scenario 2's setup, so deduplicating across columns would delete the
+       campaign's normal case. */
+    check(p + "the same card may stand in two scenarios' columns",
+      eq(def.normalize({ futurePastDeck: [["nimrod"], ["nimrod"], [], []] }).futurePastDeck,
+        [["nimrod"], ["nimrod"], [], []]));
+    /* Within a column it is a set in pool order — that ordering is what makes
+       normalize() a fixpoint — while the ROW is never sorted, because column 3
+       means scenario 3. */
+    check(p + "a column drops what it does not know and keeps pool order",
+      eq(def.normalize({ futurePastDeck: [["nano-sentinel-tech", "made-up",
+        "bastion", "bastion"]] }).futurePastDeck[0],
+        ["bastion", "nano-sentinel-tech"]));
+    check(p + "a card in column 3 stays in column 3",
+      eq(def.normalize({ futurePastDeck: [[], [], ["nimrod"], []] }).futurePastDeck,
+        [[], [], ["nimrod"], []]));
+
+    /* Jubilee: the boxes the sheet prints and no others — one for scenario 2,
+       two each for scenarios 3 and 4. */
+    const MG_JUBILEE = ["s2InPlay", "s3InPlay", "s3Removed", "s4InPlay", "s4Removed"];
+    check(p + "all five printed Jubilee boxes exist as real booleans",
+      eq(Object.keys(empty.jubilee).sort(), MG_JUBILEE.slice().sort()) &&
+      MG_JUBILEE.every((k) => empty.jubilee[k] === false),
+      JSON.stringify(empty.jubilee));
+    check(p + "an invented Jubilee box is dropped",
+      def.normalize({ jubilee: { s5InPlay: true } }).jubilee.s5InPlay === undefined);
+    /* The two boxes of a scenario are read independently: a sheet that
+       contradicts itself keeps both, because which one was meant is not ours to
+       guess and picking a winner would destroy the other. The lock on screen is
+       one-sided for the same reason. */
+    const bothJub = def.normalize({ jubilee: { s3InPlay: 1, s3Removed: "true" } });
+    check(p + "a contradicting sheet keeps both boxes",
+      bothJub.jubilee.s3InPlay === true && bothJub.jubilee.s3Removed === true);
+
+    /* A fixture of the sheet's own fields: unknown slugs, repeats within a
+       section, a role taken twice, a grid too long and a column that is not a
+       list at all, and marks belonging to two different roles on one player. */
+    const dirtyMg = {
+      players: [
+        { hero: "  Colossus  ", hp: "500", role: "brawler",
+          upgrades: ["brawler-war-cry", "made-up", "brawler-war-cry",
+                     "defender-bodyguard", "brawler-coup-de-grace"] },
+        { hero: "Shadowcat", role: "brawler", upgrades: "not a list" },  // role taken
+        { hero: "x".repeat(500), role: 7, upgrades: [null, 42] },
+        "not even an object",
+      ],
+      expert: 1,
+      sideSchemes: ["surprise-attack", "made-up", "surprise-attack", "frightened-police"],
+      futurePastVictory: ["nano-sentinel-tech", "nimrod", "nimrod"],
+      futurePastDeck: [["bastion", "bastion"], "not a list", ["made-up"], [], ["nimrod"]],
+      jubilee: { s2InPlay: "true", s4Removed: 1, invented: true },
+      captiveAllies: ["wolfsbane", 7, "rictor"],
+      removedAllies: ["  keep  ", "", null, "~struck", 42],
+      scenarios: [{ slug: "does-not-exist" }],
+      flags: { invented: true },
+      somethingUnknown: { nested: [1, 2, 3] },
+    };
+    const g1 = def.normalize(dirtyMg);
+    check(p + "MC32 fixture is idempotent", eq(g1, def.normalize(g1)), JSON.stringify(g1));
+    check(p + "a set drops what it does not know and keeps pool order",
+      eq(g1.sideSchemes, ["frightened-police", "surprise-attack"]) &&
+      eq(g1.futurePastVictory, ["nimrod", "nano-sentinel-tech"]) &&
+      eq(g1.captiveAllies, ["rictor", "wolfsbane"]),
+      JSON.stringify([g1.sideSchemes, g1.futurePastVictory, g1.captiveAllies]));
+    check(p + "a card ticked twice is one entry",
+      g1.futurePastDeck[0].length === 1 && g1.futurePastVictory.length === 2);
+    check(p + "a column that is not a list reads as empty, and the row keeps its length",
+      eq(g1.futurePastDeck, [["bastion"], [], [], []]),
+      JSON.stringify(g1.futurePastDeck));
+    check(p + "the fixture's marks survive across two roles",
+      eq(g1.players[0].upgrades,
+        ["brawler-coup-de-grace", "brawler-war-cry", "defender-bodyguard"]),
+      JSON.stringify(g1.players[0].upgrades));
+    check(p + "an unusable upgrade list is simply no marks",
+      eq(g1.players[1].upgrades, []) && eq(g1.players[2].upgrades, []));
+    check(p + "a role held twice is cleared on the later player",
+      g1.players[0].role === "brawler" && g1.players[1].role === "" &&
+      g1.players[2].role === "",
+      JSON.stringify([g1.players[0].role, g1.players[1].role, g1.players[2].role]));
+    /* Free text, because these allies come out of the players' own decks —
+       trimmed, blanks dropped, and a "~" kept because it is the strike marker. */
+    check(p + "the free-text ally list is trimmed and blanks dropped",
+      eq(g1.removedAllies, ["keep", "~struck", "42"]),
+      JSON.stringify(g1.removedAllies));
+  }
 }
 
 // ------------------------------------------------------------------- roster
@@ -607,6 +808,21 @@ for (let i = html.indexOf(MARKER); i !== -1; i = html.indexOf(MARKER, i + 1)) {
     i18nWithChildren.push(name + "[" + key + "]");
   }
 }
+/* The selftest quarantines a log from a campaign that does not exist, and it
+   has now been broken twice by a real campaign shipping under the id the
+   fixture had borrowed — each time turning several assertions into assertions
+   about nothing, silently. So the sentinel is checked here: if a campaign ever
+   claims it, this fails loudly instead. */
+{
+  const selftest = read("test/selftest.html");
+  const sentinel = "no-such-campaign";
+  check("the selftest's unknown-campaign sentinel is still used",
+    selftest.includes('campaignId: "' + sentinel + '"'));
+  check("and no registered campaign has claimed it",
+    !campaigns.some((def) => def.id === sentinel),
+    campaigns.map((d) => d.id).join());
+}
+
 check("no data-i18n on an element with child elements",
   i18nWithChildren.length === 0, i18nWithChildren.join(", "));
 
