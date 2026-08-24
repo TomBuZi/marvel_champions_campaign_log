@@ -405,6 +405,28 @@
     return log ? { log: log } : (looksLikeLog(parsed) ? { raw: parsed } : null);
   }
 
+  /* A phone hands the link to the system share sheet, a desktop puts it on the
+     clipboard. Decided by the POINTER rather than by sniffing the user agent:
+     navigator.share exists on desktop Safari and desktop Edge too, where a
+     share sheet is the wrong answer and copying is what people expect. A
+     coarse pointer with no hover is the same test CSS would make. */
+  function wantsShareSheet() {
+    return typeof navigator.share === "function" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+  }
+
+  async function copyLink(url, long) {
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast(long ? tr().linkCopiedLong : tr().linkCopied, long ? 7000 : 0);
+    } catch (e) {
+      /* No clipboard permission, or no clipboard at all: show the link so it
+         can still be copied by hand rather than failing silently. */
+      window.prompt(tr().linkCopyManual, url);
+    }
+  }
+
   async function shareLink() {
     var log = activeLog();
     if (!log) return;
@@ -414,12 +436,23 @@
        Browsers cope with long URLs; messengers, mail clients and QR codes
        truncate them, and a truncated link fails silently. */
     var long = url.length > SHARE_LINK_WARN;
-    try {
-      await navigator.clipboard.writeText(url);
-      showToast(long ? tr().linkCopiedLong : tr().linkCopied, long ? 7000 : 0);
-    } catch (e) {
-      window.prompt(tr().linkCopyManual, url);
+
+    if (wantsShareSheet()) {
+      try {
+        await navigator.share({ title: log.title || tr().appTitle, url: url });
+        /* No toast on success: the system sheet already said what happened.
+           The length warning still goes out, because a truncated link fails
+           without saying so and that is worth interrupting for. */
+        if (long) showToast(tr().linkLongWarn, 7000);
+        return;
+      } catch (e) {
+        /* Closing the sheet is a decision, not a failure: it must not turn
+           into a surprise clipboard write. Anything else — no permission, an
+           unsupported payload — falls through to the clipboard. */
+        if (e && e.name === "AbortError") return;
+      }
     }
+    await copyLink(url, long);
   }
 
   // ---- Export / Import (JSON file) -----------------------------------------

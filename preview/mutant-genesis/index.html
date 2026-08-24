@@ -23,6 +23,19 @@
           <span class="sr-only" data-i18n="logLabel">Bogen</span>
           <select id="log-select" data-i18n-aria="logLabel"></select>
         </label>
+        <!-- The one action that is not administration, so the one action that
+             is not in the menu: sharing the sheet is what people reach for
+             mid-game, and it belongs one tap away rather than two. It stays a
+             single control — there is deliberately no second "Link teilen" in
+             the menu. -->
+        <button
+          id="btn-share"
+          type="button"
+          class="btn btn-icon"
+          data-i18n-title="shareLink"
+          data-i18n-aria="shareLink">
+          ⤴
+        </button>
         <button
           id="btn-menu"
           type="button"
@@ -37,7 +50,8 @@
       </div>
     </header>
 
-    <!-- All actions live here. Deliberately not role="menu": that would imply
+    <!-- Every administrative action lives here — sharing is the exception and
+         sits in the bar above. Deliberately not role="menu": that would imply
          arrow-key navigation; as a group of buttons, Tab works correctly.
          Native popover gives light-dismiss, Esc and top-layer stacking. -->
     <div id="main-menu" popover class="menu" data-i18n-aria="menu">
@@ -51,7 +65,6 @@
       <p class="menu-heading" data-i18n="menuData">Daten</p>
       <button id="btn-export" type="button" class="menu-item" data-i18n="export">Exportieren (.json)</button>
       <button id="btn-import" type="button" class="menu-item" data-i18n="import">Importieren …</button>
-      <button id="btn-share" type="button" class="menu-item" data-i18n="shareLink">Link teilen</button>
       <button
         id="btn-print"
         type="button"
