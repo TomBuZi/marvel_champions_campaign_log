@@ -311,6 +311,16 @@ nichts übrig ist.
   Kampagnen zählt** („der schlankeste der drei“, „der einzige der vier“): sie
   ist beim nächsten Modul falsch, und niemand denkt daran. Ohne Zahl
   formulieren — „der schlankeste von allen“.
+* **`display: flex` auf einem `<td>` zerstört `border-collapse`.** Eine
+  Tabellenzelle, die zum Flex-Container gemacht wird, ist keine Table-Cell-Box
+  mehr; die Tabelle packt sie in eine anonyme Zelle, und die Rahmen der beiden
+  werden nicht mehr mit den Nachbarzellen verschmolzen. Sichtbar wird das als
+  **eine Spalte mit doppelt so dicken Linien**, während alle anderen einfache
+  haben — und weil es nur diese Spalte betrifft, sieht es nach einem
+  Farb- oder Breitenproblem aus, nicht nach dem Box-Modell. MC60s
+  Schurken-Spalte hatte das monatelang. Braucht ein Zellinhalt Flex, kommt ein
+  Wrapper **in** die Zelle (`.with-die`), nie auf das `<td>`. Kein Test fängt
+  das; es fällt nur auf, wenn jemand hinsieht.
 * **Terminologie über alle Kampagnen hinweg.** Dasselbe Feld heißt überall
   gleich („Verbleibende Lebenspunkte"). Eine Umbenennung in einer Kampagne ist
   keine halbe Arbeit: README, Hilfetexte und Tests gehören dazu.

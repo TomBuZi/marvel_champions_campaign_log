@@ -1815,12 +1815,13 @@ button:focus-visible {
 }
 
 /* ---------- Icon button (the villain randomiser) ---------- */
-.villain-cell {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  justify-content: center;
-}
+/* MC60's villain cell has no rule of its own: the field and its die sit in a
+   .with-die wrapper inside it, and the cell stays a plain table cell. It used to
+   be display:flex itself, which cost it its table-cell box — border-collapse
+   then could not merge its border with the neighbouring cells', so that one
+   column drew a doubled, heavier line all the way down while every other column
+   drew a single one. A layout that needs a flex container inside a table gets a
+   wrapper, never the <td>. */
 .icon-btn {
   flex: 0 0 auto;
   width: 1.9rem;
