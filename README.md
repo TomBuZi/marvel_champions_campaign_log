@@ -202,8 +202,14 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   es gibt ihn deshalb genau einmal. Was er tut, hängt am Gerät: auf einem Zeigegerät
   landet der Link in der Zwischenablage, auf einem Touchgerät öffnet er das
   System-Teilen; der Knopf trägt das übliche Teilen-Zeichen, drei Punkte mit
-  zwei Verbindungslinien, in CSS gezeichnet wie die anderen Zeichen hier, weil
-  Unicode keines dafür hat. Entschieden wird das am **Zeiger**
+  zwei Verbindungslinien. Es ist das einzige Inline-SVG im Projekt, und zwar aus
+  demselben Grund, aus dem alles andere hier CSS ist: Halbtonraster und
+  Schraffur sind Texturen und dürfen ungefähr sein, dieses Zeichen ist eine
+  Figur und muss stimmen. Gezeichnet statt aus einem Icon-Satz genommen, weil es
+  *nur* seine Geometrie ist — Kreise mit r=3 auf dem 24er-Raster und zwei Balken
+  zwischen ihren Rändern —, und eine lizenzierte Kopie brächte
+  Nennungspflicht und ein Fremdasset für vier Zeilen Rechnung. Entschieden wird
+  das am **Zeiger**
   (`(hover: none) and (pointer: coarse)`), nicht an der Kennung des Browsers:
   `navigator.share` gibt es auch auf dem Desktop, wo ein Teilen-Dialog die falsche
   Antwort ist. Wird der Dialog abgebrochen, passiert nichts — abbrechen ist eine

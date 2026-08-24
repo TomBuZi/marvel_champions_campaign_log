@@ -34,11 +34,22 @@
           class="btn btn-icon"
           data-i18n-title="shareLink"
           data-i18n-aria="shareLink">
-          <!-- The classic share mark — three dots joined by two lines — drawn
-               in CSS like every other device here, because no code point
-               carries it. Decoration only: the button's own label is what
-               names the action. -->
-          <span class="icon-share" aria-hidden="true"></span>
+          <!-- The classic share mark: three dots joined by two lines. Drawn
+               here rather than taken from an icon set, because the figure IS
+               its geometry — circles of r=3 at (18,5), (6,12) and (18,19) on
+               the usual 24 grid, and two 2-wide bars between their edges — so
+               a licensed copy would add an attribution obligation and a
+               third-party asset for four lines of arithmetic. SVG rather than
+               CSS, unlike the other devices in this project: gradients give
+               soft dots and an approximated angle, and an icon has to be crisp
+               at any size. Decoration only — the button's own label names the
+               action. -->
+          <svg class="icon-share" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M8.59 10.49 15.41 6.51M8.59 13.51 15.41 17.49" />
+            <circle cx="18" cy="5" r="3" />
+            <circle cx="6" cy="12" r="3" />
+            <circle cx="18" cy="19" r="3" />
+          </svg>
         </button>
         <button
           id="btn-menu"
