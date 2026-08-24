@@ -1083,19 +1083,54 @@ for (const def of campaigns) {
     /* And the units are NOT behind that gate: they are earned at both levels,
        so switching to standard must not take them with the hit points. */
     check(p + "a standard sheet keeps its units",
-      def.normalize({ expert: false, players: [{ hero: "Groot", units: 5 }] })
-        .players[0].units === 5);
+      def.normalize({ expert: false, players: [{ hero: "Groot", unitsEarned: 5 }] })
+        .players[0].unitsEarned === 5);
 
     check(p + "player list capped at 4", once.players.length === 4, once.players.length);
     check(p + "an empty player list still yields one player",
       def.normalize({ players: [] }).players.length === 1);
     check(p + "a player carries exactly the five fields the sheet asks for",
       eq(Object.keys(empty.players[0]).sort(),
-        ["collection", "hero", "hp", "market", "units"]),
+        ["collection", "hero", "hp", "market", "unitsEarned"]),
       JSON.stringify(Object.keys(empty.players[0])));
-    check(p + "units are clamped like hit points",
-      def.normalize({ players: [{ units: "500" }, { units: -4 }, { units: "" }] })
-        .players.map((pl) => pl.units).join() === "99,0,");
+    check(p + "units earned are clamped like hit points",
+      def.normalize({ players: [{ unitsEarned: "500" }, { unitsEarned: -4 },
+        { unitsEarned: "" }] })
+        .players.map((pl) => pl.unitsEarned).join() === "99,0,");
+    /* What is left is DERIVED and must never be stored: two numbers that can
+       disagree are exactly what this change was meant to get rid of. */
+    check(p + "the unspent balance is not a stored field",
+      def.normalize({ players: [{ unitsEarned: 5, unitsLeft: 3, units: 3 }] })
+        .players[0].unitsLeft === undefined &&
+      def.normalize({ players: [{ unitsEarned: 5, units: 3 }] })
+        .players[0].units === undefined);
+
+    /* THE migration. Version 1 stored the printed field — `units` was the
+       UNSPENT balance — and version 2 stores what was earned. Read as a v2
+       sheet without conversion, every v1 player would be understated by
+       whatever they had already spent. The conversion is exact rather than a
+       guessed default, because unspent plus spent IS earned and the cards are
+       recorded right there: Grapple 2 + Onrush 5 = 7 spent, so 4 unspent means
+       11 earned. Pinned by cost rather than by name, since the card names are
+       still being translated. */
+    const gmwV1 = def.normalize(def.migrate(
+      { players: [{ hero: "Groot", units: 4, market: ["grapple", "onrush"] }] }, 1));
+    check(p + "a v1 unspent balance migrates to the units earned",
+      gmwV1.players[0].unitsEarned === 11, gmwV1.players[0].unitsEarned);
+    check(p + "and the old key does not survive the trip",
+      gmwV1.players[0].units === undefined);
+    /* A player who recorded no balance gets none: adding up their cards would
+       invent an income they never wrote down. */
+    check(p + "a v1 player with no balance recorded keeps none",
+      def.normalize(def.migrate(
+        { players: [{ hero: "Groot", market: ["grapple"] }] }, 1))
+        .players[0].unitsEarned === null);
+    check(p + "migrating a v1 sheet is idempotent once normalized",
+      eq(gmwV1, def.normalize(gmwV1)), JSON.stringify(gmwV1.players[0]));
+    /* And it leaves a current sheet exactly as it found it. */
+    check(p + "migrate leaves a current state alone",
+      eq(def.normalize(def.migrate(JSON.parse(JSON.stringify(empty)), def.stateVersion)),
+        empty));
 
     /* The 28 Market cards, pinned BY SLUG rather than by name: the slug is what
        is persisted, and 23 of the names are still waiting for a German
@@ -1219,13 +1254,13 @@ for (const def of campaigns) {
 
     const dirtyGmw = {
       players: [
-        { hero: "  Rocket Raccoon  ", hp: "500", units: "7",
+        { hero: "  Rocket Raccoon  ", hp: "500", unitsEarned: "7",
           market: ["grapple", "grapple", "made-up"], collection: ["  Aid  ", "", 42] },
-        { hero: "x".repeat(500), hp: "", units: -3,
+        { hero: "x".repeat(500), hp: "", unitsEarned: -3,
           market: ["grapple", "onrush"], collection: "one\ntwo" },
         "not even an object",
-        { hero: "Groot", hp: 11, units: 0, market: "not a list" },
-        { hero: "one too many", hp: 3, units: 9 },
+        { hero: "Groot", hp: 11, unitsEarned: 0, market: "not a list" },
+        { hero: "one too many", hp: 3, unitsEarned: 9 },
       ],
       expert: 1,
       artifacts: ["crystal-ball", "crystal-ball", "made-up", "magical-teapot"],
@@ -1241,9 +1276,9 @@ for (const def of campaigns) {
     check(p + "MC16 fixture is idempotent", eq(g1, def.normalize(g1)), JSON.stringify(g1));
     check(p + "the fixture keeps four players and clamps them",
       g1.players.length === 4 && g1.players[0].hero === "Rocket Raccoon" &&
-      g1.players[0].hp === 99 && g1.players[0].units === 7 &&
-      g1.players[1].hp === null && g1.players[1].units === 0,
-      JSON.stringify(g1.players.map((pl) => [pl.hero, pl.hp, pl.units])));
+      g1.players[0].hp === 99 && g1.players[0].unitsEarned === 7 &&
+      g1.players[1].hp === null && g1.players[1].unitsEarned === 0,
+      JSON.stringify(g1.players.map((pl) => [pl.hero, pl.hp, pl.unitsEarned])));
     check(p + "the fixture resolves the group rule in player order",
       eq(g1.players[0].market, ["grapple"]) &&
       eq(g1.players[1].market, ["onrush"]) &&

@@ -33,8 +33,9 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     gedruckte MC10-Bogen hat das alles nicht, weil die fünf Szenarien in fester
     Reihenfolge gespielt werden.
   * *The Galaxy's Most Wanted (MC16)* — ein Bogen, dessen Spielerbereich eine
-    Einkaufsliste ist: je Spieler Identität, Lebenspunkte und **übrige
-    Units**, darunter „Marktkarten im Spielerdeck“ und „Karten in der Sammlung“
+    Einkaufsliste ist: je Spieler Identität, Lebenspunkte und **verdiente
+    Units**, daneben die **übrigen Units** als einzige gerechnete Zahl dieses
+    Projekts, darunter „Marktkarten im Spielerdeck“ und „Karten in der Sammlung“
     als je **eine** Überschrift über allen vier Spielerspalten, so wie das
     Papier sie druckt. Dann die vier *Galaktische Artefakte*-Nebenpläne als
     Kästchen über dem Satz, und zuletzt Kontrolle des Machtsteins,
@@ -112,9 +113,11 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     Expertenstufe.
   * *The Galaxy's Most Wanted (MC16)* — die verbleibenden Lebenspunkte, und hier
     kennzeichnet der gedruckte Bogen sie ausnahmsweise selbst, indem er
-    „(Experte)“ unter das Feld setzt. Die **übrigen Units** bleiben ausdrücklich
-    stehen: sie werden auf beiden Stufen verdient und ausgegeben, die
-    Expertenregeln geben ihnen nur eine weitere Verwendung.
+    „(Experte)“ unter das Feld setzt. Die **Units** bleiben ausdrücklich stehen:
+    sie werden auf beiden Stufen verdient und ausgegeben, die Expertenregeln
+    geben ihnen nur eine weitere Verwendung. Genau die ist auch das Einzige, was
+    die gerechneten „übrigen Units“ nicht sehen können — deshalb sagt der
+    Spielerbereich es, solange der Haken gesetzt ist.
   * *The Mad Titan's Shadow (MC21)* — die verbleibenden Lebenspunkte. Die neun
     Kästchen bleiben auf beiden Stufen stehen.
   * *Sinister Motives (MC27)* — die verbleibenden Lebenspunkte; das ist auch das
@@ -198,9 +201,9 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   Kampagne nur ein Exemplar verwenden“. Das Papier druckt dort eine leere
   Fläche, hier steht je Spieler eine **wachsende** Liste von Auswahlfeldern über
   den 28 gedruckten Marktkarten, gruppiert nach ihren Unit-Kosten von 1 bis 7 —
-  denn genau diese Kosten werden gegen das Feld „Übrige Units“ daneben
-  abgerechnet. Eine Karte, die irgendein Spieler gekauft hat, ist bei allen
-  anderen abgeblendet; ein Spieler selbst darf beliebig viele halten. Die vier
+  und weil der Bogen diese Kosten kennt, rechnet er mit ihnen (siehe unten).
+  Eine Karte, die irgendein Spieler gekauft hat, ist bei allen anderen
+  abgeblendet; ein Spieler selbst darf beliebig viele halten. Die vier
   **Galaktische-Artefakte-Nebenpläne** dagegen sind Kästchen über dem Satz,
   obwohl der Bogen vier **numerierte** Zeilen druckt: anders als bei MC27s
   Osborn Tech und MC40s Marauders trägt die Nummer hier nichts — das Set hat
@@ -215,6 +218,22 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   keine verfügbare Quelle her, und die übrigen erscheinen so lange mit ihrem
   englischen. Das ist offene Arbeit, keine Entscheidung: die deutsche Ausgabe
   übersetzt diese Karten sehr wohl.
+* **Ein gedrucktes Feld, das gerechnet statt gefragt wird** (MC16) — und das
+  einzige im ganzen Projekt. Der Bogen druckt „Übrige Units“, ein Feld für den
+  Bleistift: man schreibt den Kontostand hinein und radiert ihn bei jedem Kauf
+  wieder aus. Eingetragen werden hier stattdessen die **verdienten** Units, und
+  „Übrige Units“ fällt daraus — verdient minus die Unit-Kosten der Marktkarten,
+  die danebenstehen. Der Grund ist, dass der Bogen jede dieser Kosten ohnehin
+  kennt: ein zweites Mal danach zu fragen hieße, den Leser rechnen zu lassen,
+  was die Datei rechnen kann, und eine „übrige“ Zahl, die den Karten daneben
+  still widerspricht, ist ein Fehler, den niemand sieht. Wer mehr ausgibt als er
+  verdient hat, sieht die Zahl **rot**, statt bei null zu stoppen — Überziehen
+  ist ein Fehler, auf den man zeigen will, und welches Ende davon falsch ist,
+  kann der Bogen nicht wissen. Die Farbe ist dabei nie das einzige Signal: die
+  Zeile trägt den Grund auch als Text. Eines sieht die Rechnung nicht, und das
+  steht auf dem Bildschirm: auf Expertenstufe darf beim Spielaufbau der
+  Szenarien 2 bis 5 jeder Spieler eine Unit fürs Heilen ausgeben, und das hält
+  der Bogen nirgends fest.
 * **Abgeleitete Beschriftungen** (MC32) — welche fünf Verbesserungen ein Spieler
   überhaupt sieht, entscheidet seine Rolle; ohne Rolle steht dort der Hinweis,
   erst eine zu wählen. Jeder Spieler muss eine andere Rolle nehmen, eine

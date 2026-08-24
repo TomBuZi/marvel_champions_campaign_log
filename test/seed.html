@@ -224,7 +224,7 @@ var logs = {
     }
   },
   mc16: {
-    schemaVersion: 1, id: "seed-8", campaignId: "galaxys-most-wanted", stateVersion: 1,
+    schemaVersion: 1, id: "seed-8", campaignId: "galaxys-most-wanted", stateVersion: 2,
     title: "Galaxy's Most Wanted, Durchgang 1",
     createdAt: "2026-08-20T18:00:00.000Z", updatedAt: "2026-08-24T21:40:00.000Z",
     state: {
@@ -235,13 +235,19 @@ var logs = {
          Sprach-Tag im Bild zu pruefen ist. Und keine Karte doppelt, denn die
          Gruppenregel laesst genau das nicht zu. */
       players: [
-        { hero: "Rocket Raccoon", hp: 7, units: 4,
+        /* Verdient 12, ausgegeben 7 (Panzerung 4 + Knapp daneben 3) — bleiben
+           5. Die "Uebrigen Units" stehen nirgends im Zustand: sie werden
+           gerechnet. */
+        { hero: "Rocket Raccoon", hp: 7, unitsEarned: 12,
           market: ["armor-plating", "close-call"],
           collection: ["Enhanced Reflexes", "~Boot Camp"] },
-        { hero: "Groot", hp: 11, units: 2,
+        /* Absichtlich ueberzogen: 1 verdient, Grapple kostet 2, macht -1 in
+           Rot. Wie MC45s Widerspruchszeile gehoert der Fehlerzustand in den
+           Beispielbogen, sonst prueft ihn kein Blick. */
+        { hero: "Groot", hp: 11, unitsEarned: 1,
           market: ["grapple"],
           collection: ["Nova"] },
-        { hero: "Gamora", hp: 6, units: 0,
+        { hero: "Gamora", hp: 6, unitsEarned: 0,
           market: [],
           collection: [] }
       ],

@@ -1902,6 +1902,36 @@ button:focus-visible {
   color: var(--text-dim);
 }
 
+/* A field the sheet works out instead of asking for — MC16's "Unspent Units",
+   which is its units earned minus what the recorded Market cards cost. Laid
+   out like .num-field so it lines up with the boxes above it, but it is text
+   and not an input: a box you cannot type in reads as broken.
+
+   It sits inside a .field-label, whose uppercase small-caps styling is for the
+   caption and not for the value, hence the resets. */
+.units-line {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.units-left {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.units-spent {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--text-dim);
+}
+/* Overspent. The colour is the alert, but it is never the only one: the row
+   also carries the reason as its title. */
+.units-line.is-over .units-left { color: var(--danger); }
+.units-line:empty { display: none; }
+
 /* ---------- Sheet table ---------- */
 .sheet-table {
   width: 100%;

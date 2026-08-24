@@ -4298,7 +4298,7 @@
       // ------------------------------------------- MC16 Galaxy's Most Wanted
       function gmwLog() {
         return {
-          schemaVersion: 1, id: "gmw1", campaignId: "galaxys-most-wanted", stateVersion: 1,
+          schemaVersion: 1, id: "gmw1", campaignId: "galaxys-most-wanted", stateVersion: 2,
           title: "The Galaxy's Most Wanted",
           createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-02T00:00:00.000Z",
           state: {
@@ -4318,6 +4318,25 @@
           },
         };
       }
+      /* A version 1 sheet: back then `units` was the printed UNSPENT balance,
+         where the field now holds what was EARNED. Player #1 has 4 left after
+         Grapple (2) and Close Call (3), so 9 were earned; player #2 recorded no
+         balance at all, which has to stay recorded as nothing rather than being
+         inferred from their card. */
+      function gmwLogV1() {
+        var log = gmwLog();
+        log.stateVersion = 1;
+        log.state = {
+          expert: false,
+          players: [
+            { hero: "Rocket Raccoon", hp: null, units: 4,
+              market: ["grapple", "close-call"] },
+            { hero: "Groot", hp: null, market: ["onrush"] },
+          ],
+        };
+        return log;
+      }
+
       /* The sections the printed sheet has, by their stable data-section keys —
          not by their labels, which the two printings word differently. */
       var GMW_SECTIONS = ["players", "market", "collection", "artifacts",
@@ -4440,6 +4459,14 @@
             Array.prototype.every.call(
               at('[data-section="artifacts"] .sheet-check, [data-section="headhunter"] .sheet-check'),
               function (b) { return b.checked === false; }));
+
+          /* One entered number per player and one computed one beside it. The
+             computed one is text rather than an input on purpose — a box you
+             cannot type in reads as broken. */
+          log("every player card computes what is left beside what was earned",
+            at('[data-section="players"] [data-units-left]').length === 2 &&
+            at('[data-section="players"] .units-line input').length === 0,
+            at('[data-section="players"] [data-units-left]').length);
 
           /* Power Stone Control is a seat, so its options follow the player
              cards above: two players, two seats, plus "nobody". */
@@ -4677,6 +4704,78 @@
         });
       }
 
+      /* The one field this sheet computes instead of asking for, and the
+         migration that turned the printed field into the entered one. */
+      function caseGmwUnits() {
+        seed({ gmw1: gmwLogV1() }, "gmw1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          w.confirm = function () { return true; };
+          var app = d.getElementById("campaign");
+          var card = function (i) {
+            return app.querySelectorAll('[data-section="players"] .player-card')[i];
+          };
+          /* Standard level, so the only number box on a card is the earned one. */
+          var earned = function (i) { return card(i).querySelector(".num-input"); };
+          var line = function (i) { return app.querySelector('[data-units-left="' + i + '"]'); };
+          var left = function (i) { return line(i).querySelector(".units-left").textContent; };
+          var spent = function (i) { return line(i).querySelector(".units-spent").textContent; };
+          var setEarned = function (i, v) {
+            var input = earned(i);
+            input.value = v;
+            fire(input, "input");
+            fire(input, "blur");
+          };
+
+          /* 4 unspent plus Grapple (2) and Close Call (3) is 9 earned. Exact,
+             not a guessed default — the cards were recorded right beside it. */
+          log("a v1 unspent balance arrived as the units earned",
+            earned(0).value === "9", earned(0).value);
+          log("and what is left is what the paper would have said",
+            left(0) === "4", left(0));
+          log("with the card cost named beside it", /5/.test(spent(0)), spent(0));
+          /* Adding up their card would invent an income nobody wrote down. */
+          log("a player who recorded no balance still records none",
+            left(1) === "—", left(1));
+          log("though their cards are counted all the same",
+            /5/.test(spent(1)), spent(1));
+
+          setEarned(0, "12");
+          log("raising what was earned raises what is left", left(0) === "7", left(0));
+          gmwAddMarketRow(d, 0);
+          gmwPick(d, 0, 2, "cargo-hold");
+          log("buying a card two panels down lowers it again",
+            left(0) === "1", left(0));
+          log("and the cost beside it follows", /11/.test(spent(0)), spent(0));
+
+          /* Overspending is a mistake worth pointing at, so it is shown rather
+             than clamped at zero. */
+          setEarned(0, "3");
+          log("overspending shows a negative rather than stopping at zero",
+            left(0) === "-8", left(0));
+          log("and the row is marked", line(0).classList.contains("is-over"));
+          /* Colour alone says nothing to a screen reader. */
+          log("with the reason in words and not only in colour",
+            line(0).title.trim().length > 0, line(0).title);
+          setEarned(0, "20");
+          log("coming back into the black clears the mark",
+            !line(0).classList.contains("is-over") && line(0).title === "");
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).gmw1.state;
+            log("the units earned were stored", st.players[0].unitsEarned === 20,
+              st.players[0].unitsEarned);
+            /* Two numbers that can disagree are what this change removed. */
+            log("and nothing derived was stored beside them",
+              st.players[0].unitsLeft === undefined &&
+              st.players[0].units === undefined,
+              JSON.stringify(st.players[0]));
+            finish();
+          }, 500);
+        });
+      }
+
       function caseGmwExpert() {
         var seeded = gmwLog();
         seeded.state.expert = false;
@@ -4685,7 +4784,7 @@
            interesting neighbour here: they sit right beside the hit points and
            are NOT behind the gate, because they are earned at both levels. */
         seeded.state.players = [
-          { hero: "Rocket Raccoon", hp: 6, units: 4, market: ["grapple"] },
+          { hero: "Rocket Raccoon", hp: 6, unitsEarned: 4, market: ["grapple"] },
         ];
         seeded.state.evasion = 2;
         seed({ gmw1: seeded }, "gmw1");
@@ -4712,6 +4811,10 @@
           log("nothing else on the sheet goes with them",
             d.querySelectorAll("[data-section]").length === GMW_SECTIONS.length,
             d.querySelectorAll("[data-section]").length);
+          /* The computed balance cannot see the unit an expert setup spends on
+             healing, and says so — but only where the trade exists. */
+          log("and at standard level the sheet claims no blind spot",
+            !d.querySelector("[data-section=players] .hint"));
 
           toggle().checked = true;
           fire(toggle(), "change");
@@ -4720,6 +4823,9 @@
           log("and the value was still there",
             card().querySelectorAll(".num-input")[0].value === "6",
             card().querySelectorAll(".num-input")[0].value);
+          log("expert also owns up to what the sum cannot see",
+            !!d.querySelector("[data-section=players] .hint") &&
+            d.querySelector("[data-section=players] .hint").textContent.trim().length > 0);
 
           toggle().checked = false;
           fire(toggle(), "change");
@@ -4742,7 +4848,7 @@
             log("but the hidden hit points survived", st.players[0].hp === 6,
               st.players[0].hp);
             log("and so did everything that was never hidden",
-              st.players[0].units === 4 && st.players[0].market.length === 1,
+              st.players[0].unitsEarned === 4 && st.players[0].market.length === 1,
               JSON.stringify(st.players[0]));
             finish();
           }, 500);
@@ -4752,13 +4858,15 @@
       function caseGmwPrint() {
         var seeded = gmwLog();
         seeded.state.players = [
-          { hero: "Rocket Raccoon", hp: 9, units: 4,
+          /* Grapple (2) and Armor Plating (4) cost 6 of the 10 earned, so the
+             printout has to carry 10 and 4 rather than one of them. */
+          { hero: "Rocket Raccoon", hp: 9, unitsEarned: 10,
             market: ["grapple", "armor-plating"],
             collection: ["Enhanced Reflexes", "~Boot Camp"] },
-          { hero: "Groot", hp: 6, units: 0, market: [], collection: [] },
+          { hero: "Groot", hp: 6, unitsEarned: 0, market: [], collection: [] },
           /* Nothing on this card at all, so the printout has to skip it: an
              empty column is not a record. */
-          { hero: "", hp: null, units: null, market: [], collection: [] },
+          { hero: "", hp: null, unitsEarned: null, market: [], collection: [] },
         ];
         /* Two artifacts recorded and two not, so the printout has to show both
            states. */
@@ -4783,8 +4891,6 @@
              together, so a digit on its own proves nothing about where it sat. */
           log("print carries the hit points",
             /Lebenspunkte: 9/.test(text) && /Lebenspunkte: 6/.test(text));
-          log("and the units beside them",
-            /Units: 4/.test(text) && /Units: 0/.test(text));
 
           /* The section headings are read off the screen, so a section can be
              found in the printout without this file knowing its words. */
@@ -4802,6 +4908,19 @@
           log("every printed section has a block in the printout",
             GMW_SECTIONS.every(function (id) { return !!printed(id); }),
             GMW_SECTIONS.filter(function (id) { return !printed(id); }).join());
+
+          /* Both unit figures, because a printout carrying only the difference
+             could not be checked against the card list further down. Player #1
+             earned 10 and spent 6 on Grapple and Armor Plating; player #2 has
+             nothing either way, which is two zeroes rather than one. Read out
+             of the player block alone: textContent runs the sections together,
+             so a match against the whole printout proves nothing about where
+             the number sat. */
+          var playerText = printed("players").textContent;
+          log("and both unit figures beside them",
+            /Units: 10/.test(playerText) && /Units: 4/.test(playerText) &&
+            playerText.split("Units: 0").length - 1 === 2,
+            playerText);
 
           /* Two players with something on their card, one without: the empty
              one is skipped in every player-shaped section. */
@@ -4855,7 +4974,7 @@
         });
       }
 
-      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint, mg: caseMg, mgrole: caseMgRole, mgexpert: caseMgExpert, mgprint: caseMgPrint, ne: caseNe, neschemes: caseNeSchemes, neexpert: caseNeExpert, neprint: caseNePrint, aoa: caseAoa, aoamissions: caseAoaMissions, aoaexpert: caseAoaExpert, aoaprint: caseAoaPrint, gmw: caseGmw, gmwmarket: caseGmwMarket, gmwexpert: caseGmwExpert, gmwprint: caseGmwPrint, sharebtn: caseShareButton };
+      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint, mg: caseMg, mgrole: caseMgRole, mgexpert: caseMgExpert, mgprint: caseMgPrint, ne: caseNe, neschemes: caseNeSchemes, neexpert: caseNeExpert, neprint: caseNePrint, aoa: caseAoa, aoamissions: caseAoaMissions, aoaexpert: caseAoaExpert, aoaprint: caseAoaPrint, gmw: caseGmw, gmwmarket: caseGmwMarket, gmwunits: caseGmwUnits, gmwexpert: caseGmwExpert, gmwprint: caseGmwPrint, sharebtn: caseShareButton };
       (cases[CASE] || caseBasic)();
     </script>
   </body>
