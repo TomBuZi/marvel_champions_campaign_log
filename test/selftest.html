@@ -3252,6 +3252,474 @@
         });
       }
 
+
+      // ----------------------------------------------------------- MC40
+      /* The MC40 sheet is a player block, three small boxes in one strip and one
+         grid of six printed side schemes by five columns. Its signature is the
+         grid: five scenarios over six rows with mutual exclusion, and an
+         "Earned?" box that only opens once its row was chosen. */
+      function neLog() {
+        return {
+          schemaVersion: 1, id: "ne1", campaignId: "next-evolution", stateVersion: 1,
+          title: "NeXt Evolution",
+          createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-02T00:00:00.000Z",
+          state: {
+            /* Expert, because the hit points only exist there. caseNeExpert is
+               the one that starts at standard. */
+            expert: true,
+            players: [{ hero: "", hp: null }],
+            /* Everything else deliberately absent: normalize() has to build the
+               three marauder slots, the two damage slots and all six grid rows
+               out of a state that mentions none of them. */
+          },
+        };
+      }
+      var NE_SECTIONS = ["players", "marauders", "morlocks", "hope-damage",
+        "side-schemes"];
+
+      function caseNe() {
+        seed({ ne1: neLog() }, "ne1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var app = d.getElementById("campaign");
+          var at = function (sel) { return app.querySelectorAll(sel); };
+
+          var found = NE_SECTIONS.filter(function (id) {
+            return !!app.querySelector('[data-section="' + id + '"]');
+          });
+          log("every printed section has a panel",
+            found.length === NE_SECTIONS.length, found.join());
+          log("and no panel beyond them",
+            at("[data-section]").length === NE_SECTIONS.length,
+            at("[data-section]").length);
+          /* In the printed order, top to bottom: the player block, the strip of
+             three, then the grid. Read off the document rather than written out,
+             so it keeps checking the order and not the words. */
+          log("in the order the sheet prints them",
+            Array.prototype.map.call(at("[data-section]"), function (n) {
+              return n.getAttribute("data-section");
+            }).join() === NE_SECTIONS.join(),
+            Array.prototype.map.call(at("[data-section]"), function (n) {
+              return n.getAttribute("data-section");
+            }).join());
+
+          /* The sheet prints three boxes across in one strip, and all three are
+             in it — not two of them paired off and one left over. */
+          var strip = app.querySelector('.scenario-row[data-cols="3"]');
+          log("the three small boxes share one strip",
+            !!strip && strip.querySelectorAll("[data-section]").length === 3,
+            strip ? strip.querySelectorAll("[data-section]").length : "no strip");
+
+          /* Three numbered lines, three dropdowns, and all three drawing on the
+             same printed set of villains — a wrong pool wired to a slot would
+             show up as a different option count. */
+          var slots = at('[data-section="marauders"] .pool-select');
+          log("the marauders are three slots", slots.length === 3, slots.length);
+          var opts = Array.prototype.map.call(slots, function (s) {
+            return s.options.length;
+          });
+          /* The placeholder plus the seven printed villains, and the seven is
+             not a guess: the villain deck of Morlock Siege is exactly those
+             seven cards, and lint.js pins them by slug. */
+          log("all out of one printed pool of seven",
+            opts.length === 3 && opts.every(function (n) { return n === 1 + 7; }),
+            opts.join());
+
+          /* One number, and two — the sheet prints one blank area under
+             "Morlocks Saved" and two labelled lines under Hope's damage. */
+          log("morlocks saved is one number",
+            at('[data-section="morlocks"] .num-input').length === 1,
+            at('[data-section="morlocks"] .num-input').length);
+          log("hope's damage is two numbers",
+            at('[data-section="hope-damage"] .num-input').length === 2,
+            at('[data-section="hope-damage"] .num-input').length);
+
+          /* The grid: the five printed columns as column headers, the six
+             printed schemes as row headers, and per row one dropdown, two
+             read-only card cells and one box. */
+          log("the grid has the five printed columns",
+            at('[data-section="side-schemes"] th[scope="col"]').length === 5,
+            at('[data-section="side-schemes"] th[scope="col"]').length);
+          var rows = at('[data-section="side-schemes"] tbody tr');
+          log("and the six printed rows", rows.length === 6, rows.length);
+          log("each row is one scheme, one choice, two printed cards and one box",
+            Array.prototype.every.call(rows, function (tr) {
+              return tr.querySelectorAll('th[scope="row"]').length === 1 &&
+                tr.querySelectorAll(".pool-select").length === 1 &&
+                tr.querySelectorAll("td.card-name").length === 2 &&
+                tr.querySelectorAll(".sheet-check").length === 1;
+            }));
+          /* Six rows against five scenarios: one row must stay empty at the end,
+             so the choice cannot be more than five deep. */
+          var chosen = rows[0].querySelector(".pool-select");
+          log("and the choice is the campaign's five scenarios",
+            chosen.options.length === 1 + 5, chosen.options.length);
+
+          /* A bare checkbox in a grid is unnameable, so every box carries its
+             row AND its column. Checked against the words on screen rather than
+             against a string in here, so it survives the German print. */
+          log("every box in the grid is named by its own row",
+            Array.prototype.every.call(rows, function (tr) {
+              var name = tr.querySelector('th[scope="row"]').textContent.trim();
+              var label = tr.querySelector(".sheet-check").getAttribute("aria-label") || "";
+              return label.indexOf(name) === 0 && label.length > name.length;
+            }),
+            rows[0].querySelector(".sheet-check").getAttribute("aria-label"));
+
+          /* Every printed name is on screen, and the three columns of a row are
+             three DIFFERENT cards — wiring the encounter card where the
+             environment belongs would make two columns identical. */
+          var col = function (sel) {
+            return Array.prototype.map.call(at('[data-section="side-schemes"] ' + sel),
+              function (n) { return n.textContent.trim(); });
+          };
+          var schemes = col('th[scope="row"]');
+          var cards = col("td.card-name");
+          log("every printed cell is named",
+            schemes.length === 6 && cards.length === 12 &&
+            schemes.concat(cards).every(function (n) { return n.length > 0; }),
+            schemes.concat(cards).join(" | "));
+          log("and a row's three cards are three different cards",
+            schemes.every(function (name, i) {
+              return name !== cards[2 * i] && name !== cards[2 * i + 1] &&
+                cards[2 * i] !== cards[2 * i + 1];
+            }), schemes.join() + " vs " + cards.join());
+
+          /* The rule itself, derived instead of written out: a name is tagged as
+             English exactly when it is the SAME string in both languages. Read
+             in German, then in English, then switched back — so this keeps
+             checking the rule however many names get translated later, instead
+             of decaying into a list somebody has to maintain.
+
+             Checked over the row headers AND the two printed card columns,
+             because this sheet is the first where one table holds both cases:
+             the schemes and the environments are translated, the four minions
+             keep their English names. A mixture is what a per-entry rule has to
+             survive, and a list maintained by hand would not. */
+          var tagFor = function (sel) {
+            return Array.prototype.map.call(at('[data-section="side-schemes"] ' + sel),
+              function (n) { return n.getAttribute("lang") === "en"; });
+          };
+          var taggedRows = tagFor('th[scope="row"]');
+          var taggedCards = tagFor("td.card-name");
+          d.getElementById("btn-lang").click();
+          var english = col('th[scope="row"]');
+          var englishCards = col("td.card-name");
+          d.getElementById("btn-lang").click();
+          var german = col('th[scope="row"]');
+          var germanCards = col("td.card-name");
+          log("the language tag follows the name actually shown",
+            german.length === english.length && german.length > 0 &&
+            german.every(function (n, i) { return taggedRows[i] === (n === english[i]); }),
+            german.join() + " / " + english.join() + " / " + taggedRows.join());
+          log("and does so per card, in a table that holds both cases",
+            germanCards.length === englishCards.length && germanCards.length > 0 &&
+            germanCards.every(function (n, i) {
+              return taggedCards[i] === (n === englishCards[i]);
+            }),
+            germanCards.join() + " / " + englishCards.join() + " / " + taggedCards.join());
+          /* And it really is a mixture rather than all-or-nothing, or the
+             assertion above would hold with the rule wired backwards. */
+          log("and the table holds tagged and untagged cards side by side",
+            taggedCards.indexOf(true) !== -1 && taggedCards.indexOf(false) !== -1,
+            taggedCards.join());
+
+          /* Switching twice rebuilt the sheet twice, so everything below has to
+             be looked up again. */
+          var villains = app.querySelectorAll('[data-section="marauders"] .pool-select');
+          var second = villains[0].options[1].value;
+          villains[0].value = second;
+          fire(villains[0], "change");
+          log("a villain written in one line is closed in the others",
+            villains[1].querySelector('option[value="' + second + '"]').disabled &&
+            villains[2].querySelector('option[value="' + second + '"]').disabled);
+          log("but stays selectable in its own line",
+            !villains[0].querySelector('option[value="' + second + '"]').disabled);
+
+          /* Numbers go in and come back out of storage, because "Morlocks
+             Saved" and Hope's damage are the only fields on this sheet that are
+             neither a pool nor a box. */
+          var mor = app.querySelector('[data-section="morlocks"] .num-input');
+          mor.value = "3";
+          fire(mor, "input");
+          var hope = app.querySelectorAll('[data-section="hope-damage"] .num-input');
+          hope[1].value = "2";
+          fire(hope[1], "input");
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).ne1.state;
+            log("the marauder slot was stored in its own place",
+              st.marauders[0] === second && st.marauders[1] === "" &&
+              st.marauders[2] === "", JSON.stringify(st.marauders));
+            log("the numbers were stored, blanks staying blank",
+              st.morlocksSaved === 3 && st.hopeDamage[0] === null &&
+              st.hopeDamage[1] === 2, JSON.stringify(st.hopeDamage));
+            finish();
+          }, 500);
+        });
+      }
+
+      /* The signature mechanic: five scenarios spread over six rows, and the
+         "Earned?" box that follows the choice. */
+      function caseNeSchemes() {
+        var seeded = neLog();
+        /* Row 4 arrives ticked with no scenario at all — the contradiction an
+           import or a hand-edited file can bring in. It has to stay operable,
+           and it has to be named. */
+        seeded.state.schemes = [{}, {}, {}, { scenario: null, earned: true }, {}, {}];
+        seed({ ne1: seeded }, "ne1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var app = d.getElementById("campaign");
+          var rows = function () {
+            return app.querySelectorAll('[data-section="side-schemes"] tbody tr');
+          };
+          var sel = function (i) { return rows()[i].querySelector(".pool-select"); };
+          var box = function (i) { return rows()[i].querySelector(".sheet-check"); };
+          var note = function () {
+            return app.querySelector('[data-section="side-schemes"] > .lock-note');
+          };
+
+          log("an unchosen row keeps its box closed", box(0).disabled === true);
+          log("and says why", (box(0).title || "").length > 0, box(0).title);
+          /* One-sided: the ticked row is the contradiction, and closing it would
+             call a record an error and leave no way back. */
+          log("but a row that is already ticked stays operable",
+            box(3).checked === true && box(3).disabled === false);
+          log("and the contradiction is named", (note().textContent || "").length > 0,
+            note().textContent);
+
+          /* Choosing a scenario opens that row's box and closes the option
+             everywhere else — each scenario picks one scheme, each scheme once. */
+          var third = sel(0).options[3].value;
+          sel(0).value = third;
+          fire(sel(0), "change");
+          log("choosing a scenario opens the box", box(0).disabled === false);
+          log("and closes that scenario in every other row",
+            [1, 2, 3, 4, 5].every(function (i) {
+              return sel(i).querySelector('option[value="' + third + '"]').disabled;
+            }), third);
+          log("while its own row keeps it selectable",
+            !sel(0).querySelector('option[value="' + third + '"]').disabled);
+
+          tick(box(0));
+          log("the box can then be ticked", box(0).checked === true);
+
+          /* Clearing the choice again does NOT close a box that is now ticked —
+             the same one-sided rule, reached from the other direction. */
+          sel(0).value = "";
+          fire(sel(0), "change");
+          log("clearing the choice leaves the ticked box operable",
+            box(0).checked === true && box(0).disabled === false);
+          log("and that scenario is free again everywhere",
+            [1, 2, 3, 4, 5].every(function (i) {
+              return !sel(i).querySelector('option[value="' + third + '"]').disabled;
+            }));
+
+          /* Untick it and the row closes again, so the lock is live rather than
+             decided once at render time. */
+          box(0).checked = false;
+          fire(box(0), "change");
+          log("unticking it closes the row again", box(0).disabled === true);
+
+          /* Clearing the seeded contradiction clears the note — the note follows
+             the sheet rather than the moment it was loaded. */
+          box(3).checked = false;
+          fire(box(3), "change");
+          log("clearing the contradiction clears the note",
+            note().textContent === "", note().textContent);
+
+          /* Two rows cannot hold the same scenario even when the file says so:
+             the later row loses its scenario and KEEPS its tick, or the order of
+             an import would decide whose record survives. */
+          var again = sel(1).options[1].value;
+          sel(1).value = again;
+          fire(sel(1), "change");
+          tick(box(1));
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).ne1.state;
+            log("the choice and the tick were stored on their own row",
+              st.schemes[1].scenario === Number(again) &&
+              st.schemes[1].earned === true, JSON.stringify(st.schemes[1]));
+            log("and the other rows stayed as they were",
+              st.schemes[0].scenario === null && st.schemes[0].earned === false &&
+              st.schemes[3].earned === false, JSON.stringify(st.schemes));
+            finish();
+          }, 500);
+        });
+      }
+
+      function caseNeExpert() {
+        var seeded = neLog();
+        seeded.state.expert = false;
+        /* Filled in, but not visible at standard level — exactly the state that
+           would lose data if hiding were clearing. This sheet does not print
+           "(expert)" beside the field at all; the rulebook is what records it
+           at expert level only, so the gate is worth a case of its own. */
+        seeded.state.players = [{ hero: "Cable", hp: 6 }];
+        seeded.state.morlocksSaved = 3;
+        seed({ ne1: seeded }, "ne1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var card = function () { return d.querySelector(".player-card"); };
+          var toggle = function () {
+            return d.querySelector("[data-section=players] .panel-head .flag .sheet-check");
+          };
+
+          log("the switch is in the player panel head", !!toggle());
+          log("it starts unticked", toggle().checked === false);
+          log("standard hides the hit points", !card().querySelector(".num-input"));
+          log("the identity field is not hidden with them",
+            !!card().querySelector(".text-input"));
+          /* The level governs the hit points and nothing else: the numbers in
+             the strip are recorded by every campaign level. */
+          log("and no other number is hidden with them",
+            d.querySelectorAll('[data-section="morlocks"] .num-input').length === 1 &&
+            d.querySelectorAll('[data-section="hope-damage"] .num-input').length === 2);
+          log("and every printed section is still there",
+            d.querySelectorAll("[data-section]").length === NE_SECTIONS.length,
+            d.querySelectorAll("[data-section]").length);
+
+          toggle().checked = true;
+          fire(toggle(), "change");
+          log("expert reveals the hit points",
+            !!card().querySelector(".num-input"));
+          log("and the value was still there",
+            card().querySelector(".num-input").value === "6",
+            card().querySelector(".num-input").value);
+
+          toggle().checked = false;
+          fire(toggle(), "change");
+          log("switching back hides them again", !card().querySelector(".num-input"));
+          /* Two re-renders have rebuilt the whole sheet by now, so the fields the
+             switch does not govern have to have come back with their values. */
+          log("and the rest of the sheet came back filled in",
+            d.querySelector('[data-section="morlocks"] .num-input').value === "3",
+            d.querySelector('[data-section="morlocks"] .num-input').value);
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).ne1.state;
+            log("the sheet is back at standard", st.expert === false);
+            log("but the hidden hit points survived", st.players[0].hp === 6,
+              st.players[0].hp);
+            finish();
+          }, 500);
+        });
+      }
+
+      function caseNePrint() {
+        var seeded = neLog();
+        seeded.state.players = [{ hero: "Cable", hp: 9 }, { hero: "Domino", hp: 6 }];
+        /* One slot deliberately empty: the sheet keeps the numbered line visible
+           whether or not a villain is written on it. */
+        seeded.state.marauders = ["greycrow", "", "vertigo"];
+        seeded.state.morlocksSaved = 3;
+        /* One blank, one filled — the sheet prints both lines either way. */
+        seeded.state.hopeDamage = [null, 2];
+        /* Two rows chosen and earned, one chosen and not, three untouched —
+           including the one row that has to stay empty at the end. */
+        seeded.state.schemes = [
+          { scenario: 1, earned: true },
+          { scenario: 2, earned: true },
+          { scenario: 3, earned: false },
+          {}, {}, {},
+        ];
+        seed({ ne1: seeded }, "ne1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          w.dispatchEvent(new w.Event("beforeprint"));
+          var pv = d.getElementById("print-view");
+          var text = pv.textContent;
+          var app = d.getElementById("campaign");
+          log("print view built", pv.children.length > 0, pv.children.length);
+          log("print names the campaign", /NeXt Evolution \(MC40\)/.test(text));
+          log("print says which level was played",
+            /\[x\] Expertenmodus/.test(text), text.slice(0, 120));
+          /* Named, not just the bare number: textContent runs the lines
+             together, so a digit on its own proves nothing about where it sat. */
+          log("print carries the hit points",
+            /Lebenspunkte: 9/.test(text) && /Lebenspunkte: 6/.test(text));
+
+          /* The section headings are read off the screen, so a section can be
+             found in the printout without this file knowing its words — they are
+             still to be transcribed from the German print. */
+          var heading = function (id) {
+            return app.querySelector('[data-section="' + id + '"] h2').textContent.trim();
+          };
+          var printed = function (id) {
+            var want = heading(id);
+            var out = null;
+            Array.prototype.forEach.call(pv.querySelectorAll(".print-section"), function (s) {
+              if (s.querySelector("h2").textContent.trim() === want) out = s;
+            });
+            return out;
+          };
+          log("every printed section has a block in the printout",
+            NE_SECTIONS.every(function (id) { return !!printed(id); }),
+            NE_SECTIONS.filter(function (id) { return !printed(id); }).join());
+
+          /* All three numbered lines, the empty one included. */
+          var marLines = printed("marauders").querySelectorAll(".print-line");
+          log("all three marauder lines print", marLines.length === 3, marLines.length);
+          var villains = Array.prototype.map.call(
+            app.querySelectorAll('[data-section="marauders"] .pool-select'),
+            function (s) { return s.options[s.selectedIndex].textContent.trim(); });
+          log("and carry the names the screen shows",
+            text.indexOf(villains[0]) !== -1 && text.indexOf(villains[2]) !== -1,
+            villains.join(" / "));
+          /* The middle line is the empty one: it prints its dash rather than
+             vanishing, because a missing line would silently renumber the two
+             villains that ARE written down. */
+          log("and the empty line keeps its place",
+            marLines[1].textContent.indexOf("2.") === 0 &&
+            /—/.test(marLines[1].textContent),
+            marLines[1].textContent);
+
+          var morLines = printed("morlocks").querySelectorAll(".print-line");
+          log("morlocks saved prints its one number",
+            morLines.length === 1 && morLines[0].textContent.trim() === "3",
+            morLines.length + " / " + morLines[0].textContent);
+          var hopeLines = printed("hope-damage").querySelectorAll(".print-line");
+          log("hope's damage prints both lines, the blank one included",
+            hopeLines.length === 2 && /—/.test(hopeLines[0].textContent) &&
+            /2/.test(hopeLines[1].textContent),
+            hopeLines[0].textContent + " | " + hopeLines[1].textContent);
+
+          /* Every printed row on its own line, the three untouched ones
+             included: six rows against five scenarios means an empty row is the
+             normal outcome and not a gap. */
+          var ssLines = printed("side-schemes").querySelectorAll(".print-line");
+          log("every grid row prints, chosen or not", ssLines.length === 6,
+            ssLines.length);
+          log("and the boxes match what the screen says",
+            Array.prototype.filter.call(ssLines, function (l) {
+              return l.textContent.indexOf("[x]") === 0;
+            }).length ===
+            Array.prototype.filter.call(
+              app.querySelectorAll('[data-section="side-schemes"] .sheet-check'),
+              function (b) { return b.checked; }).length);
+          /* The row prints its two card names too — the pairing is what the
+             table is for, so a printout without it would not be the sheet. */
+          var cards = Array.prototype.map.call(
+            app.querySelectorAll('[data-section="side-schemes"] td.card-name'),
+            function (n) { return n.textContent.trim(); });
+          log("and each row's printed cards come with it",
+            cards.length === 12 && cards.every(function (n) {
+              return printed("side-schemes").textContent.indexOf(n) !== -1;
+            }), cards.join());
+
+          /* Never printed: that a box is closed, and the wording of any rule. */
+          var closed = app.querySelector('[data-section="side-schemes"] tbody tr:last-child .sheet-check');
+          log("the printout does not say what the screen closed",
+            closed.disabled === true && text.indexOf(closed.title) === -1,
+            closed.title);
+          finish();
+        });
+      }
+
       /* The share button is the one action that sits in the bar rather than in
          the menu, and it takes two different routes: a phone gets the system
          share sheet, a desktop gets the clipboard. Both routes are stubbed here
@@ -3350,7 +3818,7 @@
         });
       }
 
-      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint, mg: caseMg, mgrole: caseMgRole, mgexpert: caseMgExpert, mgprint: caseMgPrint, sharebtn: caseShareButton };
+      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint, mg: caseMg, mgrole: caseMgRole, mgexpert: caseMgExpert, mgprint: caseMgPrint, ne: caseNe, neschemes: caseNeSchemes, neexpert: caseNeExpert, neprint: caseNePrint, sharebtn: caseShareButton };
       (cases[CASE] || caseBasic)();
     </script>
   </body>

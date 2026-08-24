@@ -671,6 +671,169 @@
   color-scheme: dark;
 }
 
+/* ---------- Campaign skin: NeXt Evolution (MC40) ----------
+   Sampled from mc40_next_evolution_campaign_log-compressed.pdf, and this sheet
+   needed BOTH methods, so each value below says which one it came from.
+
+   The vector fills of the content stream, weighted by area, give: #ffffff 35.6%
+   (the panel highlights and frames), #c7aaaa 29.9% (the page field and the warm
+   panel tint), #030505 25.9% (the black comic hatching of the border),
+   #d1ced2 8.4% (the cool panel tint), #cec411 and #231f20 (the "Player
+   Information" badge and its lettering). What that measurement CANNOT see is
+   the orange ground the hatching sits on: get_images() reports one image over
+   the whole page plus one over every panel strip, so the border's orange is
+   raster only. Averaged out of the rendered pixmap at 150 dpi it is #cf5d36 —
+   the loudest colour on the sheet and completely absent from the numbers above.
+   That is MC32's lesson, and it is no coincidence: the publisher printed both
+   sheets from the same template, which is also why the badge yellow here is the
+   same swatch MC32 measured. The separation between the two campaigns is
+   therefore carried by --page, --bar and the panels, not by the accent.
+
+   Also raster, measured the same way: the dusty rose page ground reads #d3c7c7
+   under the overlay (the #c7aaaa fill lightened by it), the warm panel runs
+   #d9cfcf to #d5c8c7, the table header row is #d5c6c5, an empty "Earned?" cell
+   is #e9e7e9, and the cream band behind the grid heading is #f4e8e1. Every
+   glyph and every panel outline on the sheet is the wine #3c0f27.
+
+   Roles. --page is the dusty rose, darkened from the sampled #c7aaaa the way
+   MC21's rust and MC32's teal were darkened, because the printed tint carries
+   no text at all; --bar is the wine, which is exactly its job on the paper;
+   --brick is derived between the two. The panels keep the printed white-to-rose
+   gradient, --pill the header row, --check the empty cell, --zap the badge
+   yellow. The orange lives in --halftone and --hatch, because on the sheet it
+   IS hatching rather than a field — and it carries no text on purpose: ink on
+   it reaches only 4.1.
+
+   Contrasts, computed rather than eyeballed. Light: --on-page on --page 6.0,
+   --on-brick on the derived mid rose 8.9, ink on --panel-1 16.6, on --panel-2
+   11.0, on --pill 10.6, on --check 14.2, --on-zap on the badge yellow 9.0, and
+   the yellow tick on the wine box 8.9. Dark: --on-page on --page 15.8,
+   --on-brick 11.4, ink on the panels 14.5 and 15.0, on --pill 10.3, on --check
+   14.9, --on-zap 10.4, and the dark tick on the light rose box 7.6. The dark
+   --page is a shade below the darker panel end on purpose: the whole palette
+   sits in one narrow band of wine, and without that step the panels stop
+   reading as panels.
+
+   The dark mode carries the whole colour mood and not just the dominant hue:
+   wine, rose, cream, the badge yellow and the orange hatching are all still
+   there, with the paper turned to night and the mark inverted — a wine box with
+   a yellow tick in the light, a rose box with a wine tick in the dark. That is
+   the base theme's own move, so --check-on never has to be redefined for it.
+
+   Four blocks, mirroring the four base blocks. A single [data-campaign] block
+   would be more specific than the bare :root inside the dark media query and
+   would therefore paint the light palette in dark mode; and [data-campaign]
+   alone cannot beat an explicit [data-theme], so the two combinations are
+   spelled out. The repetition is deliberate: a delta-only block drifts apart
+   the next time a theme changes. */
+:root[data-campaign="ne"] {
+  --page:      #7e4a55;   /* dusty rose page field -- darkened from the
+                             sampled #c7aaaa, which cannot carry text     */
+  --bar:       #3c0f27;   /* wine: bars, borders, ink outlines -- the
+                             colour of every frame and glyph on the sheet */
+  --brick:     #6b3040;   /* mid rose-wine, table body -- derived and kept
+                             dark enough that the text on it holds 8.9    */
+  --panel-1:   #fdf8f6;   /* panel gradient, top -- the printed white
+                             highlight, warmed by the cream band          */
+  --panel-2:   #d7cbcb;   /* ... bottom, the sheet's dusty rose panel     */
+  --pill:      #d5c6c5;   /* heading pill, table header row: the rose of
+                             the grid's own header row                    */
+  --check:     #e9e7e9;   /* empty checkbox, off an empty "Earned?" cell  */
+  --zap:       #cec411;   /* accent yellow, off the "Player Information"
+                             badge -- the sheet's only yellow             */
+  --ink:       #2e0f1f;   /* near-black wine text                        */
+
+  --bg-input: #fffbfa;
+  --text-dim: #6d4a55;
+  --accent-strong: #521029;
+  --accent-2: #8a4a60;
+  /* Stays red: here the colour carries meaning, not identity. */
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(206, 196, 17, 0.55);
+  /* The border's orange, as the halftone and the hatching it is on paper. */
+  --halftone: rgba(207, 93, 54, 0.20);
+  --hatch: rgba(207, 93, 54, 0.12);
+  --on-brick: #fbf1ee;
+  --on-page: #f7ece6;
+  --on-zap: #231f20;
+  --on-danger: #fff4ef;
+  /* The mark is the sheet's own yellow on a wine box. */
+  --tick: #cec411;
+  --title-shadow: #f7ece6;
+  --zap-strong: #e4da2a;
+  --input-settled: #cdbcbc;
+  --backdrop: rgba(24, 6, 14, 0.55);
+}
+/* --accent, --panel-border, --ink-shadow and --check-on are left alone on
+   purpose: they are already defined as var(--bar) and follow it by themselves. */
+@media (prefers-color-scheme: dark) {
+  :root[data-campaign="ne"] {
+    --page: #180610; --bar: #d98fa5; --brick: #4a2130;
+    --panel-1: #2e1120; --panel-2: #26101b; --pill: #50283a;
+    --check: #2a0f1b; --zap: #ddd32c; --ink: #f7e8e4;
+    --bg-input: #250c17; --panel-border: #7d4356; --text-dim: #c99faa;
+    --accent: #d98fa5; --accent-strong: #f0c4cf; --accent-2: #e5a5b6;
+    --danger: #ff6b5c;
+    --glow: 0 0 0 3px rgba(221, 211, 44, 0.40);
+    --halftone: rgba(214, 100, 62, 0.14);
+    --hatch: rgba(214, 100, 62, 0.10);
+    --ink-shadow: 4px 4px 0 0 #12040a;
+    --on-brick: #f7e8e4;
+    --on-page: #f7e8e4;
+    --on-zap: #231f20;
+    --on-danger: #2b0a07;
+    --tick: #200a14;
+    --title-shadow: #12040a;
+    --zap-strong: #eae04a;
+    --input-settled: #1a0710;
+    --backdrop: rgba(14, 4, 9, 0.6);
+  }
+}
+:root[data-campaign="ne"][data-theme="light"] {
+  --page: #7e4a55; --bar: #3c0f27; --brick: #6b3040;
+  --panel-1: #fdf8f6; --panel-2: #d7cbcb; --pill: #d5c6c5;
+  --check: #e9e7e9; --zap: #cec411; --ink: #2e0f1f;
+  --bg-input: #fffbfa; --panel-border: var(--bar); --text-dim: #6d4a55;
+  --accent: var(--bar); --accent-strong: #521029; --accent-2: #8a4a60;
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(206, 196, 17, 0.55);
+  --halftone: rgba(207, 93, 54, 0.20);
+  --hatch: rgba(207, 93, 54, 0.12);
+  --ink-shadow: 4px 4px 0 0 var(--bar);
+  --on-brick: #fbf1ee;
+  --on-page: #f7ece6;
+  --on-zap: #231f20;
+  --on-danger: #fff4ef;
+  --tick: #cec411;
+  --title-shadow: #f7ece6;
+  --zap-strong: #e4da2a;
+  --input-settled: #cdbcbc;
+  --backdrop: rgba(24, 6, 14, 0.55);
+  color-scheme: light;
+}
+:root[data-campaign="ne"][data-theme="dark"] {
+  --page: #180610; --bar: #d98fa5; --brick: #4a2130;
+  --panel-1: #2e1120; --panel-2: #26101b; --pill: #50283a;
+  --check: #2a0f1b; --zap: #ddd32c; --ink: #f7e8e4;
+  --bg-input: #250c17; --panel-border: #7d4356; --text-dim: #c99faa;
+  --accent: #d98fa5; --accent-strong: #f0c4cf; --accent-2: #e5a5b6;
+  --danger: #ff6b5c;
+  --glow: 0 0 0 3px rgba(221, 211, 44, 0.40);
+  --halftone: rgba(214, 100, 62, 0.14);
+  --hatch: rgba(214, 100, 62, 0.10);
+  --ink-shadow: 4px 4px 0 0 #12040a;
+  --on-brick: #f7e8e4;
+  --on-page: #f7e8e4;
+  --on-zap: #231f20;
+  --on-danger: #2b0a07;
+  --tick: #200a14;
+  --title-shadow: #12040a;
+  --zap-strong: #eae04a;
+  --input-settled: #1a0710;
+  --backdrop: rgba(14, 4, 9, 0.6);
+  color-scheme: dark;
+}
+
 /* ---------- Base ---------- */
 * { box-sizing: border-box; }
 
@@ -959,6 +1122,14 @@ button:focus-visible {
 @media (min-width: 48rem) {
   .scenario-row { grid-template-columns: 1fr 1fr; }
 }
+/* MC40 prints three boxes across in one strip, so the row needs a third column
+   that MC10's pair never asked for. Keyed on the attribute, the way .cell-row is
+   keyed on its cell count, so nothing that does not set it is touched -- and it
+   still passes through two-and-one before stacking, because one of the three
+   boxes is three dropdowns tall and three squeezed columns would be worse. */
+@media (min-width: 62rem) {
+  .scenario-row[data-cols="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 
 /* MC27's unlabelled cell grid — the Osborn Tech row, one cell per rung of the
    reputation track. Keyed on the number of cells, the way .player-grid is keyed
@@ -1152,6 +1323,23 @@ button:focus-visible {
    boxes line up in columns the way they do on the sheet. */
 .sheet-table.fp-table thead th:not(:first-child),
 .sheet-table.fp-table td { width: 15%; }
+
+/* MC40's Campaign Player Side Schemes grid: the printed side scheme down the
+   side, then the one scenario that picked it, then the two card names the row
+   prints, then the box. Scoped to .ps-table for the same reason as .fp-table
+   above, and written as .sheet-table.ps-table for the same specificity reason:
+   the generic .sheet-table rule further down centres its cells, and at equal
+   specificity the later rule wins.
+
+   The three printed columns read as text rather than as controls, so they are
+   left-aligned; only the two columns that are filled in stay centred. */
+.sheet-table.ps-table th[scope="row"],
+.sheet-table.ps-table td.card-name { text-align: left; }
+/* "Earned?" is the narrow column on the sheet too, and the two card columns
+   carry the longest strings, so the widths are stated rather than left to the
+   content -- otherwise the boxes stop lining up in a column. */
+.sheet-table.ps-table thead th:last-child,
+.sheet-table.ps-table td:last-child { width: 9%; }
 
 /* Two field groups stacked in one panel — MC21's scenario 2 and 3 put the
    pooled cards over a box with its own wording — would otherwise touch: .panel
@@ -1707,6 +1895,9 @@ body[class*="dnd-"] .entry-list { min-height: 2.2rem; outline: 1px dashed var(--
   .sheet-table.fp-table th[scope="row"] { font-size: 1rem; }
   .sheet-table.fp-table thead th:not(:first-child),
   .sheet-table.fp-table td { width: auto; }
+  .sheet-table.ps-table th[scope="row"] { font-size: 1rem; }
+  .sheet-table.ps-table thead th:last-child,
+  .sheet-table.ps-table td:last-child { width: auto; }
   .chip-list { grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
 }
 

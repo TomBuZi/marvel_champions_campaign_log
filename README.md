@@ -7,7 +7,8 @@ Eintippen statt ausdrucken: automatisch gespeichert, zweisprachig, teilbar, druc
 
 Umgesetzt sind die Kampagnen **Fear No Evil (MC60)**,
 **The Rise of Red Skull (MC10)**, **The Mad Titan's Shadow (MC21)**,
-**Sinister Motives (MC27)** und **Mutant Genesis (MC32)**.
+**Sinister Motives (MC27)**, **Mutant Genesis (MC32)** und
+**NeXt Evolution (MC40)**.
 Die Kampagne wird beim Anlegen eines Bogens gewählt
 und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
 [Eine Kampagne hinzufügen](#eine-kampagne-hinzufügen).
@@ -19,7 +20,7 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
 ## Was die App kann
 
 * **Der ganze Bogen, je Kampagne der ihre.** Jedes Modul folgt seiner Vorlage Feld
-  für Feld, und die fünf Vorlagen sind sehr verschieden:
+  für Feld, und die Vorlagen sind sehr verschieden:
   * *Fear No Evil (MC60)* — Spielerplätze mit Identität und verbleibenden
     Lebenspunkten, die fünf Szenarien mit Schurken-Zuordnung und Fortschritt, die
     aus der Kampagne entfernten Verbündeten und Persona-Unterstützungen, und die
@@ -64,8 +65,19 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     Captives* oder *Find the Prisoners* als Freitextliste. Das fünfte Szenario
     gegen Magneto fehlt auch auf dem gedruckten Bogen: im Finale gibt es nichts
     mehr festzuhalten.
+  * *NeXt Evolution (MC40)* — der tabellenlastigste: je Spieler Identität und
+    Lebenspunkte, darunter drei kleine Kästen nebeneinander, wie der Bogen sie
+    druckt — *Besiegte Marauders* als drei numerierte Auswahlfelder über den
+    sieben Marauder-Schurken, *Gerettete Morlocks* als eine Zahl und *Schaden
+    auf Hope Summers* als zwei, für Szenario 3 und 4. Darunter das Gitter der
+    sechs **Spieler-Nebenpläne der Kampagne**: drei seiner fünf Spalten sind
+    gedruckter Text — der Nebenplan, die Begegnungskarte, die für den Rest der
+    Kampagne ins Begegnungsdeck kommt, und die Umgebung, die die Zeile auszahlt
+    —, eingetragen werden nur *Szenarionummer* und *Verdient?*. Sechs Zeilen
+    stehen fünf Szenarien gegenüber, eine Zeile bleibt am Ende also
+    zwangsläufig leer.
 * **Standard- oder Expertenstufe** — der Haken „Expertenmodus“ oben im
-  Spielerbereich, in allen fünf Kampagnen an derselben Stelle. Auf Standardstufe
+  Spielerbereich, in jeder Kampagne an derselben Stelle. Auf Standardstufe
   blendet der Bogen aus, was es dort nicht gibt, statt danach zu fragen:
   * *Fear No Evil (MC60)* — die verbleibenden Lebenspunkte.
   * *The Rise of Red Skull (MC10)* — die verbleibenden Lebenspunkte **und** die
@@ -79,6 +91,12 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   * *Mutant Genesis (MC32)* — die verbleibenden Lebenspunkte, und nur die: der
     gedruckte Bogen setzt „(expert)“ unter dieses eine Feld. Rolle und
     Rollenverbesserungen bleiben auf beiden Stufen stehen.
+  * *NeXt Evolution (MC40)* — die verbleibenden Lebenspunkte. Hier kennzeichnet
+    der gedruckte Bogen sie **nicht**, das Regelheft aber schon, unter
+    „Bleibender Schaden“: „Während einer Experten-Kampagne von NeXt Evolution
+    muss jeder Spieler seine verbleibenden Lebenspunkte im Kampagnenlogbuch
+    notieren, nachdem ihr ein Szenario gewonnen habt.“ Alles andere bleibt auf
+    beiden Stufen stehen.
 
   **Ausblenden ist nicht Löschen**: wer versehentlich umschaltet, findet nach dem
   Zurückschalten alles wieder vor. Gedruckt wird der Haken mit, weil er
@@ -92,7 +110,7 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   und ein importierter Bogen darf Eintragungen tragen, die die aktuelle Zahl
   noch nicht erreicht. Was freigeschaltet ist, wird aus der einen Zahl
   abgeleitet und nie gespeichert.
-* **Karten statt Freitext** (MC10, MC27, MC32) — wo auf Papier eine leere Zeile steht, stehen
+* **Karten statt Freitext** (MC10, MC27, MC32, MC40) — wo auf Papier eine leere Zeile steht, stehen
   hier die tatsächlichen Karten. Bei MC10 hat jedes dieser Felder genau vier gedruckte
   Möglichkeiten, und jedes trägt seine eigene Regel aus der Kampagne:
   * *Verpflichtungen* — jeder Spieler hat seinen eigenen Satz aller vier, zwei
@@ -127,6 +145,15 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   fünf einer Rolle — Kästchen, deren Beschriftungen aus der gewählten Rolle
   fallen. Nur die Verbündeten unter *Rescue Captives* oder *Find the Prisoners*
   bleiben Freitext: sie kommen aus den eigenen Decks der Spieler.
+
+  Bei MC40 ist es der Satz der sieben Marauder-Schurken, und die Form folgt
+  wieder der Frage: *Besiegte Marauders* druckt drei **numerierte** Zeilen, also
+  drei Auswahlfelder statt Kästchen über dem ganzen Satz — die Position ist Teil
+  der Eintragung, wie bei MC27s Osborn Tech. Derselbe Schurke zweimal ist kein
+  Eintrag, sondern ein Tippfehler, deshalb ist eine belegte Zeile bei den
+  anderen abgeblendet. Dass es drei sind, sagen zwei unabhängige Lesungen: der
+  Bogen druckt drei Zeilen, und Szenario 1 ist gewonnen, wenn drei der sieben
+  Schurken besiegt sind.
 * **Abgeleitete Beschriftungen** (MC32) — welche fünf Verbesserungen ein Spieler
   überhaupt sieht, entscheidet seine Rolle; ohne Rolle steht dort der Hinweis,
   erst eine zu wählen. Jeder Spieler muss eine andere Rolle nehmen, eine
@@ -161,6 +188,18 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     also nicht sagen, *wann* sie entfernt wurde. Die leeren Zellen zu schließen
     verhindert den nächsten falschen Eintrag; die gesetzten zu schließen würde
     eine richtige Eintragung für einen Fehler erklären.
+  * *Kampagnen-Nebenpläne* (MC40) — jedes Szenario wählt einen Nebenplan, „der
+    noch nicht gewählt wurde“, also ist ein in einer Zeile eingetragenes
+    Szenario bei den übrigen abgeblendet. Und *Verdient?* ist zu, solange die
+    Zeile kein Szenario trägt: verdient wird eine Umgebung, indem der **gewählte**
+    Nebenplan besiegt wird, und ein nie gewählter war nie im Spiel. Auch das
+    einseitig — verliert eine Zeile ihr Szenario, weil zwei dasselbe trugen,
+    bleibt ihr Häkchen bedienbar, und der Widerspruch wird unter der Tabelle
+    benannt. **Nicht** markiert wird eine Zeile mit Szenario ohne Häkchen: nach
+    dem Regelheft ist dieser Nebenplan aus der Kampagne heraus, aber erst
+    *nachdem* das Szenario gewonnen ist, und dieser Bogen hält keinen
+    Fortschritt fest — er kann „noch nicht“ und „endgültig“ nicht
+    auseinanderhalten und behauptet es deshalb auch nicht.
 * **Wo es nur um eine Anzahl geht, passiert nichts** (MC32) — wie viele
   Rollenverbesserungen die Kampagne vergeben hat, hängt an den
   Nebenplan-Kästchen, begrenzt aber nur eine **Anzahl** und keine bestimmte
@@ -378,6 +417,7 @@ auch über `file://` und direkt aus dem Repo-Root über GitHub Pages.
 | `campaigns/mad-titans-shadow.js` | die Kampagne MC21: Spieler und neun benannte Kästchen in vier Szenario-Abschnitten; das schlankeste der Module |
 | `campaigns/sinister-motives.js` | die Kampagne MC27: die vier Kartensätze der Kampagne, drei Belohnungsfelder in der Spielerkarte und die Reputationsleiste, die Stufen *und* Felder freischaltet |
 | `campaigns/mutant-genesis.js` | die Kampagne MC32: benannte Kästchen über fünf gedruckten Kartensätzen, ein Gitter aus Kartensatz × Szenario, und Beschriftungen, die aus der gewählten Rolle eines Spielers fallen |
+| `campaigns/next-evolution.js` | die Kampagne MC40: drei numerierte Auswahlfelder aus einem gedruckten Schurkensatz, zwei freie Zahlen, und ein Gitter, dessen drei gedruckte Spalten nur gelesen werden |
 | `test/lint.js` | Prüfungen ohne Browser: Wörterbücher, Kampagnendefinition, Datenmodell, Paketierung |
 | `test/selftest.html`, `test/run-browser.js` | Selbsttest, der die echte Seite in einem iframe fernsteuert |
 | `fonts/` | Exo 2 (OFL, selbst gehostet), `OFL.txt` daneben |
@@ -431,7 +471,7 @@ gekostet haben.
    spezifischer als das bloße `:root` in der Dark-Media-Query und würde im Dunkelmodus
    die helle Palette malen.
 
-Als Vorlagen dienen die fünf vorhandenen Module, und sie sind bewusst
+Als Vorlagen dienen die vorhandenen Module, und sie sind bewusst
 unterschiedlich: `campaigns/fear-no-evil.js` zeigt abgeleiteten Zustand, gegenseitige
 Sperren, eine Auslosung und ein `migrate()`; `campaigns/rise-of-red-skull.js` ist das
 schlanke Gegenstück — reine Eingabefelder, kein `migrate()`, keine erfundenen Felder;
@@ -440,7 +480,10 @@ schlanke Gegenstück — reine Eingabefelder, kein `migrate()`, keine erfundenen
 *Position* Teil der Eintragung ist, und einen abgeleiteten Zustand, der aus einer
 einzigen Zahl fällt; `campaigns/mutant-genesis.js` zeigt Beschriftungen, die aus einer
 Wahl abgeleitet werden, ein Gitter aus Kartensatz × Szenario, und die Grenze zwischen
-einer Sperre und einem Hinweis.
+einer Sperre und einem Hinweis; `campaigns/next-evolution.js` ist das
+tabellenförmigste — eine Tabelle, deren Zeile durch eine gedruckte Karte bestimmt
+ist und deren gedruckte Spalten nur gelesen werden, mit einer Auswahl über die
+Zeilen hinweg und einem Feld, das erst mit dieser Auswahl aufgeht.
 
 `ctx` liefert `{ state, lang, t(key, …args), save(), rerender(), toast(msg), w }`;
 `w` ist die Widget-Sammlung aus `widgets.js`.
@@ -457,7 +500,7 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (544 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (606 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   langpath | print | import | lock |
                                     #   lockconflict | random | randomspread |
@@ -467,14 +510,15 @@ node test/run-browser.js print      # nur ein Fall: basic | quarantine | share |
                                     #   rrsexpert | mts | mtsexpert | mtsprint |
                                     #   sm | smrep | smexpert | smprint |
                                     #   mg | mgrole | mgexpert | mgprint |
+                                    #   ne | neschemes | neexpert | neprint |
                                     #   sharebtn
 BROWSER_LANG=de-DE node test/run-browser.js   # unter einer anderen Browser-Sprache
 ```
 
 `test/seed.html` legt einen ausgefüllten Beispielbogen an und springt in die App —
 praktisch für Screenshots und für den Druckvergleich. `?c=mc10` nimmt den MC10-Bogen,
-`?c=mc21` den MC21-Bogen, `?c=mc27` den MC27-Bogen und `?c=mc32` den MC32-Bogen statt
-MC60, `?expert=0` stellt
+`?c=mc21` den MC21-Bogen, `?c=mc27` den MC27-Bogen, `?c=mc32` den MC32-Bogen und
+`?c=mc40` den MC40-Bogen statt MC60, `?expert=0` stellt
 den Bogen auf
 Standardstufe, und `?theme=dark` nagelt das
 Theme fest; letzteres braucht man, um zu prüfen, dass der Druck auch aus einer
@@ -612,6 +656,21 @@ im Footer der Seite. Der Ko-fi-Link öffnet in einem neuen Tab und trägt
 * **Schurken- und Heldennamen bleiben in beiden Sprachen englisch.** Das ist die
   Konvention der deutschen Ausgabe: dort behalten Figuren ihre Namen (Rhino, Klaw,
   Ultron), übersetzt werden nur Szenario- und Hauptplan-Namen.
+* **Ein englisch angezeigter Kartenname heißt zwei verschiedene Dinge**, und die
+  Kartentabelle des Moduls sagt jeweils, welches. Bei MC10, MC21, MC32 und MC40
+  ist er eine **Entscheidung**: der Name bleibt im deutschen Druck englisch,
+  siehe den ersten Punkt. Bei MC27 ist er **offene Arbeit**: der deutsche
+  Wortlaut ist noch nicht eingetragen, und der englische steht als Platzhalter.
+  Ohne diesen Kommentar räumt ein späterer Leser das Falsche auf. Es migriert in
+  keinem Fall etwas, weil gespeichert nur der Slug wird.
+* **MC40 hat beide Fälle in einer Tabelle**, und deshalb ist es das Modul, an dem
+  sich die Regel prüfen lässt: dieselbe Gitterzeile trägt einen übersetzten
+  Nebenplan- und Umgebungsnamen und daneben eine Begegnungskarte, die englisch
+  bleibt, weil sie eine Figur ist — Malice, Vanisher, Scrambler, Lady
+  Mastermind. Überladen und Unter Druck sind dagegen eine Verräterei und ein
+  Nebenplan und daher übersetzt. Der Selbsttest prüft die Sprachauszeichnung
+  hier als Äquivalenz über diese gemischte Tabelle, was eine handgepflegte
+  Liste nicht überlebt hätte.
 * **Die deutschen Szenarionamen sind vorläufig.** Von MC60 gibt es noch keine
   offizielle deutsche Ausgabe; sie stehen als eine Zeile je Szenario in
   `campaigns/fear-no-evil.js` und sind dort zu korrigieren, sobald es eine gibt.
