@@ -108,10 +108,14 @@
    and 4 (p. 23). The heading appears once here, so the singular wins — which is
    also what the English sheet says on both of its pages.
 
-   GERMAN IS OPEN WORK FOR THE MARKET CARDS, and the `de: null` in MARKET means
-   the opposite of the one in MC10, MC21, MC40 and MC45. There it is a DECISION:
-   the German printing keeps those names English. Here it is "not entered yet",
-   the MC27 reading — see the comment on the table itself.
+   AND GERMAN IS NOT OPEN WORK FOR THE CARDS EITHER, which is unusual: every
+   one of the 28 Market cards carries a German name, entered off the German
+   cards themselves. That is why there is no `de: null` anywhere in this file —
+   it is the first campaign module without one, so a reader who knows the
+   convention from MC10, MC21, MC40 and MC45 will not find the "stays English"
+   decision here, and one who knows MC27 will not find its "not entered yet"
+   either. Neither applies. See the comment on MARKET for where the names came
+   from and which of them a second pair of eyes would be worth on.
 
    emptyState() and normalize() must not touch the DOM — not at load time and
    not when called. CI exercises them headlessly to prove that normalize() is
@@ -151,62 +155,78 @@
      what the "Unspent Units" field is spent against; four cards at every cost
      from 1 to 7.
 
-     `de: null` HERE MEANS "NOT ENTERED YET", NOT "STAYS ENGLISH". This is the
-     MC27 reading and the opposite of MC10's, so it must not be "tidied up" into
-     a decision. The evidence that it is open work: the German printing DOES
-     translate these cards, and five of them are legible on the card images on
-     page 4 of the German rulebook. Those five are filled in below, and each was
-     matched to its English card by the card TEXT rather than by its position in
-     that illustration — the illustration is a fanned stack and the text
-     extraction interleaves it. The other 23 have no German name in any source
-     available here: marvelsdb's translations/de for pack `gmw` carries English
+     ALL 28 GERMAN NAMES ARE ENTERED, and not one of them came from a machine-
+     readable source: marvelsdb's translations/de for pack `gmw` carries English
      copies only, and C:\Repos\demarvelcdb\translations_local has no `gmw` file
-     at all. They wait for someone with the German cards in hand. Only the slug
-     is ever persisted, so filling one in later migrates nothing and invalidates
-     no saved sheet. */
-  var MARKET = [
-    { slug: "brainstorm",             en: "Brainstorm",             cost: 1, de: null },
-    { slug: "by-any-means",           en: "By Any Means",           cost: 1, de: null },
-    { slug: "contingency-plan",       en: "Contingency Plan",       cost: 1, de: "Notfallplan" },
-    { slug: "in-defiance",            en: "In Defiance",            cost: 1, de: null },
+     at all. Five are legible on the card images on page 4 of the German
+     rulebook — Notfallplan, Knapp daneben, Panzerung, Navigationskonsole and
+     Entfesselte Macht — and each of those was matched to its English card by
+     the card TEXT rather than by its position in that illustration, which is a
+     fanned stack the text extraction interleaves. The remaining 23 were read
+     off the German cards. So there is no `de: null` here at all, and adding one
+     back would be a claim about the German printing rather than a gap.
 
-    { slug: "calculate-the-odds",     en: "Calculate the Odds",     cost: 2, de: null },
-    { slug: "creative-solution",      en: "Creative Solution",      cost: 2, de: null },
-    { slug: "grapple",                en: "Grapple",                cost: 2, de: null },
-    { slug: "wing-it",                en: "Wing It",                cost: 2, de: null },
+     THREE ARE WORTH A SECOND LOOK against the cards, and they are flagged here
+     rather than silently normalised, because a printed name is the print's to
+     decide and not ours:
+       * "Schutzmassnahme" (Safeguard) — ss where German would normally set ß.
+       * "Erprobt und Bewährt" (Tried and True) — the capital B is unusual in a
+         German title; the cards print titles in caps, so the case had to be
+         chosen when transcribing.
+       * "Bring den Kampf zu ihnen!" (Take the Fight to Them) — arrived here as
+         "Kampfzu" and the space was restored, since that is a slip rather than
+         a spelling.
+     Only the slug is ever persisted, so correcting any of them migrates nothing
+     and invalidates no saved sheet. */
+  var MARKET = [
+    { slug: "brainstorm",             en: "Brainstorm",             cost: 1, de: "Brainstorming" },
+    { slug: "by-any-means",           en: "By Any Means",           cost: 1, de: "Mit allen Mitteln" },
+    { slug: "contingency-plan",       en: "Contingency Plan",       cost: 1, de: "Notfallplan" },
+    { slug: "in-defiance",            en: "In Defiance",            cost: 1, de: "Dagegenhalten" },
+
+    { slug: "calculate-the-odds",     en: "Calculate the Odds",     cost: 2, de: "Die Chancen berechnen" },
+    { slug: "creative-solution",      en: "Creative Solution",      cost: 2, de: "Kreative Lösung" },
+    { slug: "grapple",                en: "Grapple",                cost: 2, de: "Rauferei" },
+    { slug: "wing-it",                en: "Wing It",                cost: 2, de: "Improvisieren" },
 
     { slug: "close-call",             en: "Close Call",             cost: 3, de: "Knapp daneben" },
-    { slug: "defy-danger",            en: "Defy Danger",            cost: 3, de: null },
-    { slug: "in-harms-way",           en: "In Harm's Way",          cost: 3, de: null },
-    { slug: "take-the-fight-to-them", en: "Take the Fight to Them", cost: 3, de: null },
+    { slug: "defy-danger",            en: "Defy Danger",            cost: 3, de: "Der Gefahr trotzen" },
+    { slug: "in-harms-way",           en: "In Harm's Way",          cost: 3, de: "Gefahrvolle Rettung" },
+    { slug: "take-the-fight-to-them", en: "Take the Fight to Them", cost: 3, de: "Bring den Kampf zu ihnen!" },
 
     { slug: "armor-plating",          en: "Armor Plating",          cost: 4, de: "Panzerung" },
-    { slug: "heavy-cannon",           en: "Heavy Cannon",           cost: 4, de: null },
-    { slug: "hyper-thrusters",        en: "Hyper Thrusters",        cost: 4, de: null },
-    { slug: "reactor-core",           en: "Reactor Core",           cost: 4, de: null },
+    { slug: "heavy-cannon",           en: "Heavy Cannon",           cost: 4, de: "Schwere Kanone" },
+    { slug: "hyper-thrusters",        en: "Hyper Thrusters",        cost: 4, de: "Hyper-Triebwerke" },
+    { slug: "reactor-core",           en: "Reactor Core",           cost: 4, de: "Reaktorkern" },
 
-    { slug: "ardent-resolve",         en: "Ardent Resolve",         cost: 5, de: null },
-    { slug: "onrush",                 en: "Onrush",                 cost: 5, de: null },
-    { slug: "safeguard",              en: "Safeguard",              cost: 5, de: null },
-    { slug: "sure-gamble",            en: "Sure Gamble",            cost: 5, de: null },
+    { slug: "ardent-resolve",         en: "Ardent Resolve",         cost: 5, de: "Wilde Entschlossenheit" },
+    { slug: "onrush",                 en: "Onrush",                 cost: 5, de: "Ansturm" },
+    { slug: "safeguard",              en: "Safeguard",              cost: 5, de: "Schutzmassnahme" },
+    { slug: "sure-gamble",            en: "Sure Gamble",            cost: 5, de: "Sichere Sache" },
 
-    { slug: "cargo-hold",             en: "Cargo Hold",             cost: 6, de: null },
-    { slug: "mounted-laser",          en: "Mounted Laser",          cost: 6, de: null },
+    { slug: "cargo-hold",             en: "Cargo Hold",             cost: 6, de: "Frachtraum" },
+    { slug: "mounted-laser",          en: "Mounted Laser",          cost: 6, de: "Montierter Laser" },
     { slug: "navigation-column",      en: "Navigation Column",      cost: 6, de: "Navigationskonsole" },
-    { slug: "targeting-screen",       en: "Targeting Screen",       cost: 6, de: null },
+    { slug: "targeting-screen",       en: "Targeting Screen",       cost: 6, de: "Zielbildschirm" },
 
-    { slug: "grand-strategy",         en: "Grand Strategy",         cost: 7, de: null },
+    { slug: "grand-strategy",         en: "Grand Strategy",         cost: 7, de: "Strategiebesprechung" },
     { slug: "power-unleashed",        en: "Power Unleashed",        cost: 7, de: "Entfesselte Macht" },
-    { slug: "tried-and-true",         en: "Tried and True",         cost: 7, de: null },
-    { slug: "triple-threat",          en: "Triple Threat",          cost: 7, de: null },
+    { slug: "tried-and-true",         en: "Tried and True",         cost: 7, de: "Erprobt und Bewährt" },
+    { slug: "triple-threat",          en: "Triple Threat",          cost: 7, de: "Schlagkräftiges Trio" },
   ];
 
   /* The four GALACTIC ARTIFACTS side schemes — the `galactic_artifacts` set,
-     codes 16127 to 16130. Their German names are NOT open work: the German
-     rulebook names all four on page 14, in scenario #4's setup, where each one
-     gets its own effect. Read off that page. */
+     codes 16127 to 16130. The German rulebook names all four on page 14, in
+     scenario #4's setup, where each one gets its own effect.
+
+     THE TWO GERMAN PRINTS DISAGREE ON THE FIRST ONE and the card wins. The
+     rulebook sets "Ei des Monarchen von Hujahdrian"; the card sets
+     "Hujahdarian", which is also the spelling of the English card. So the
+     rulebook drops a syllable, and the value below is the card's. Written down
+     because the rulebook is the source the other three came from, and a later
+     reader checking this table against page 14 would otherwise "fix" it back. */
   var ARTIFACTS = [
-    { slug: "hujahdarian-monarch-egg", en: "Hujahdarian Monarch Egg", de: "Ei des Monarchen von Hujahdrian" },
+    { slug: "hujahdarian-monarch-egg", en: "Hujahdarian Monarch Egg", de: "Ei des Monarchen von Hujahdarian" },
     { slug: "magical-teapot",          en: "Magical Teapot",          de: "Magische Teekanne" },
     { slug: "philosophers-stone",      en: "Philosopher's Stone",     de: "Stein der Weisen" },
     { slug: "crystal-ball",            en: "Crystal Ball",            de: "Kristallkugel" },
@@ -633,7 +653,7 @@
     /* Last, once everything is in the document: both of these span panels, so
        neither can be decided while a single control is being built. Derived,
        never stored. */
-    paintMarket();
+    paintMarket(t, lang);
     paintPowerStone(t, state);
     paintUnits(t, state);
   }
@@ -836,7 +856,7 @@
     /* Buying a card moves a number two panels up, so both are repainted from
        one handler. */
     function repaint() {
-      paintMarket();
+      paintMarket(t, lang);
       paintUnits(t, state);
     }
 
@@ -856,6 +876,15 @@
 
       card.appendChild(W.poolList({
         listId: "gmw-market-" + i,
+        /* What the row costs, behind the card and outside the select: a closed
+           select shows only the name, so without this the price is only
+           visible while the list is open — and the balance two panels up could
+           not be reconciled against the cards that produced it. Built empty
+           and filled by paintMarket(), which already walks every select. */
+        suffix: function (at) {
+          return W.el("span", "unit-cost",
+            { "data-market-cost": i + "-" + at, role: "img" });
+        },
         getArray: function () { return player.market; },
         options: options,
         placeholder: t("marketPlaceholder"),
@@ -886,10 +915,28 @@
      old #log= link holding the same card twice stays operable and can be sorted
      out on screen. normalize() has the last word on load; it does not get to
      freeze anything afterwards. */
-  function paintMarket() {
+  function paintMarket(t, lang) {
     var selects = document.querySelectorAll("[data-market-select]");
     if (!selects.length) return;
     W.syncUnique(Array.prototype.slice.call(selects));
+
+    /* And the price behind each one. The number alone is what is shown, because
+       four player columns have no room for the words; the words are what a
+       screen reader gets, which is the MC27 rule for a glyph that carries
+       meaning. An empty row shows nothing rather than a zero — it has not
+       bought anything yet. */
+    Array.prototype.forEach.call(selects, function (select) {
+      var key = select.getAttribute("data-market-select");
+      var note = document.querySelector('[data-market-cost="' + key + '"]');
+      if (!note) return;
+      var entry = poolEntry(MARKET, select.value);
+      note.textContent = entry ? String(entry.cost) : "";
+      var label = entry ? t("unitCostGroup", String(entry.cost)) : "";
+      note.title = label;
+      if (label) note.setAttribute("aria-label", label);
+      else note.removeAttribute("aria-label");
+      note.hidden = !entry;
+    });
   }
 
   /* Free text, unlike the market: The Collection fills with whatever cards the
@@ -1226,8 +1273,8 @@
     render: render,
     renderPrint: renderPrint,
 
-    helpDe: "Der MC16-Bogen läuft über zwei gedruckte Seiten, und sein Spielerbereich ist eine Einkaufsliste. Oben stehen je Spieler Identität, verbleibende Lebenspunkte und die Units. Die Units sind die Währung der Guardians: sie werden nach jedem Szenario notiert und zwischen den Szenarien für Marktkarten ausgegeben. Deshalb stehen sie auf beiden Stufen und nicht hinter dem Expertenhaken — die Expertenregeln geben ihnen nur eine weitere Verwendung, nämlich die eigene Identität beim Spielaufbau auf ihre aufgedruckten Lebenspunkte zu heilen. Und hier weicht der Bogen bewusst vom Papier ab: gedruckt ist ein Feld „Übrige Units“, in das man mit dem Bleistift den jeweiligen Kontostand schreibt und ihn bei jedem Kauf ausradiert. Eingetragen werden hier stattdessen die „Verdienten Units“, also alles, was die Kampagne bisher ausgeschüttet hat — und „Übrige Units“ wird daraus gerechnet: verdient minus die Unit-Kosten der Marktkarten, die daneben eingetragen sind. Der Grund ist, dass dieser Bogen jede dieser Kosten ohnehin kennt; ein zweites Mal danach zu fragen hieße, den Leser rechnen zu lassen, was die Datei rechnen kann — und eine „übrige“ Zahl, die den danebenstehenden Karten still widerspricht, ist ein Fehler, den niemand sieht. Wird mehr ausgegeben als verdient, steht die Zahl rot da statt bei null zu stoppen: Überziehen ist ein Fehler, auf den man zeigen will. Eines kann die Rechnung nicht sehen: auf Expertenstufe darf jeder Spieler beim Spielaufbau der Szenarien 2 bis 5 eine Unit ausgeben, um seine Identität zu heilen, und das hält der Bogen nirgends fest. Solange der Expertenhaken gesetzt ist, sagt der Spielerbereich das auch. Darunter folgt „Marktkarten im Spielerdeck“ als eine Überschrift über allen vier Spalten, so wie der Bogen sie druckt. Auf dem Papier ist das eine leere Fläche, hier sind es Auswahlfelder aus den 28 gedruckten Marktkarten, sortiert nach Unit-Kosten von 1 bis 7. Der Grund ist eine Regel, die das Papier nur beschreiben kann: von jeder Marktkarte darf die Gruppe während einer Kampagne nur ein Exemplar verwenden. Eine Karte, die irgendein Spieler gekauft hat, ist deshalb bei allen anderen gesperrt — ein Spieler darf aber beliebig viele haben. Die Sperre ist einseitig, wie bei MC60, MC32, MC40 und MC45: eine bereits eingetragene Karte bleibt auswählbar, damit ein Bogen aus einem Import oder einem alten Link nie festfriert. „Karten in der Sammlung“ ist dagegen Freitext, denn die Sammlung füllt sich mit dem, was die Spieler gerade auf der Hand hatten, und ist keine gedruckte Liste. Einträge lassen sich zwischen den Spielerspalten ziehen, weil Szenario #3 jeden Spieler genau seine eigenen notierten Karten aus dem Spiel entfernen lässt. Die vier „Galaktische Artefakte“-Nebenpläne sind Kästchen über dem Satz und keine numerierten Zeilen: der Bogen numeriert zwar vier Zeilen, aber die Nummer trägt nichts — das Set hat genau vier Nebenpläne, und Szenario #4 liest sie als Menge zurück, ein Spielaufbau-Effekt je notiertem Nebenplan. Unten stehen drei Felder. „Kontrolle des Machtsteins“ ist ein Auswahlfeld über die oben eingetragenen Identitäten; gespeichert wird der Spielerplatz, angezeigt der aktuelle Name, damit eine später korrigierte Identität die Eintragung nicht veralten lässt. „Ausweichmarker“ ist eine Zahl, und daneben steht abgeleitet, wie viel zusätzliche Bedrohung Szenario #5 daraus auf „Zangenmanöver“ legt: 3 minus die Zahl, mindestens 0. „Kopfgeldjäger besiegt?“ sind vier Kästchen, eines je Szenario 1 bis 4. Darunter steht abgeleitet, welche Karten die aktuelle Zahl der Kreuze freischaltet — und zu jeder, ab welchem Szenario sie überhaupt geprüft wird, denn die Staffel wächst mit dem Szenario: drei Kreuze bedeuten in Szenario #3 nicht drei zusätzliche Karten. Beide abgeleiteten Zeilen werden nur gerechnet, nie gespeichert und nicht mitgedruckt. Oben im Spielerbereich sitzt der Haken „Expertenmodus“. Er blendet die verbleibenden Lebenspunkte aus, und hier kennzeichnet der gedruckte Bogen das Feld ausnahmsweise selbst, indem er „(Experte)“ darunter setzt. Ausblenden heißt nicht löschen — der Wert bleibt im Bogen, im Export und im Share-Link. Ein fünftes Szenario gibt es hier nicht: Ronan der Ankläger kommt auf dem gedruckten Bogen kein einziges Mal vor, „Kopfgeldjäger besiegt?“ trägt die Unterzeile „Sieg-Anweisung für Szenarien #1 – 4“, und im Finale gibt es nichts festzuhalten außer dem Sieg. Die Abschnittsnamen und ihre Unterzeilen stehen hier so, wie die deutsche Spielanleitung sie auf den Seiten 22 und 23 druckt. Von den 28 Marktkarten sind bislang fünf auf Deutsch eingetragen — mehr gibt keine der verfügbaren Quellen her; die übrigen erscheinen vorerst mit ihrem englischen Namen.",
-    helpEn: "The MC16 sheet runs over two printed pages, and its player area is a shopping list. At the top each player has an identity, remaining hit points and their units. Units are the Guardians' currency: they are recorded after every scenario and spent between scenarios on Market cards. That is why they sit at both levels rather than behind the expert switch — the expert rules only give them one more use, healing your identity to its printed hit points at setup. And here the sheet departs from the paper on purpose: the print has an “Unspent Units” box, a running balance you write in pencil and rub out again with every purchase. What is entered here instead is “Units earned”, everything the campaign has paid out so far — and “Unspent Units” is computed from it: earned minus the unit cost of the Market cards recorded beside it. The reason is that this sheet already knows every one of those costs, so asking a second time for their difference would be asking the reader to do arithmetic the file can do — and an “unspent” number that silently disagrees with the cards next to it is a bug nobody can see. Spend more than you earned and the figure goes red rather than stopping at zero: overspending is a mistake worth pointing at. One thing the sum cannot see: at expert level the setup of scenarios #2 to #5 lets each player spend a unit to heal their identity, and nothing on the sheet records that they did. While the expert switch is on, the player area says so. Below that comes “Market Cards in Player's Deck” as one heading over all four columns, exactly as the sheet prints it. On paper it is an empty area; here it is selects out of the 28 printed Market cards, grouped by unit cost from 1 to 7. The reason is a rule the paper can only describe: only one copy of each Market card may be used by the players as a group during a campaign. A card bought by any player is therefore closed to all the others — though one player may hold as many as they like. The lock is one-sided, as in MC60, MC32, MC40 and MC45: a card already recorded stays selectable, so a sheet arriving from an import or an old share link never freezes solid. “Cards in The Collection”, by contrast, is free text: The Collection fills up with whatever the players happened to be holding, and is not a printed list. Entries can be dragged between the player columns, because scenario #3 has each player remove exactly their own recorded cards from the game. The four Galactic Artifacts side schemes are boxes over the set rather than numbered lines: the sheet does number four lines, but the number carries nothing — the set has exactly four side schemes, and scenario #4 reads them back as a set, one setup effect per recorded scheme. Three fields sit at the bottom. “Power Stone Control” is a select over the identities entered above; what is stored is the player's seat and what is shown is their current name, so correcting an identity later does not leave the record stale. “Evasion Counters” is a number, and beside it a derived line says how much extra threat scenario #5 puts on Pincer Maneuver because of it: 3 minus the number, floored at zero. “Headhunter Defeated?” is four boxes, one per scenario 1 to 4. Under them a derived line names the cards the current number of marks unlocks — and for each one, the scenario it is first checked from, because the ladder grows with the scenario: three marks do not mean three extra cards in scenario #3. Both derived lines are computed only, never stored, and never printed. At the top of the player area sits the “Expert level” box. It hides the remaining hit points, and here the printed sheet marks the field itself for once, setting “(Expert)” under it. Hiding is not clearing — the value stays in the sheet, in the export and in a share link. There is no fifth scenario here: Ronan the Accuser does not appear on the printed sheet once, “Headhunter Defeated?” is subtitled “Victory for Scenarios #1 – 4”, and the finale has nothing to record beyond the win. Of the 28 Market cards, five carry a German name so far — no source available goes further; the rest show their English name for now.",
+    helpDe: "Der MC16-Bogen läuft über zwei gedruckte Seiten, und sein Spielerbereich ist eine Einkaufsliste. Oben stehen je Spieler Identität, verbleibende Lebenspunkte und die Units. Die Units sind die Währung der Guardians: sie werden nach jedem Szenario notiert und zwischen den Szenarien für Marktkarten ausgegeben. Deshalb stehen sie auf beiden Stufen und nicht hinter dem Expertenhaken — die Expertenregeln geben ihnen nur eine weitere Verwendung, nämlich die eigene Identität beim Spielaufbau auf ihre aufgedruckten Lebenspunkte zu heilen. Und hier weicht der Bogen bewusst vom Papier ab: gedruckt ist ein Feld „Übrige Units“, in das man mit dem Bleistift den jeweiligen Kontostand schreibt und ihn bei jedem Kauf ausradiert. Eingetragen werden hier stattdessen die „Verdienten Units“, also alles, was die Kampagne bisher ausgeschüttet hat — und „Übrige Units“ wird daraus gerechnet: verdient minus die Unit-Kosten der Marktkarten, die daneben eingetragen sind. Der Grund ist, dass dieser Bogen jede dieser Kosten ohnehin kennt; ein zweites Mal danach zu fragen hieße, den Leser rechnen zu lassen, was die Datei rechnen kann — und eine „übrige“ Zahl, die den danebenstehenden Karten still widerspricht, ist ein Fehler, den niemand sieht. Wird mehr ausgegeben als verdient, steht die Zahl rot da statt bei null zu stoppen: Überziehen ist ein Fehler, auf den man zeigen will. Eines kann die Rechnung nicht sehen: auf Expertenstufe darf jeder Spieler beim Spielaufbau der Szenarien 2 bis 5 eine Unit ausgeben, um seine Identität zu heilen, und das hält der Bogen nirgends fest. Solange der Expertenhaken gesetzt ist, sagt der Spielerbereich das auch. Darunter folgt „Marktkarten im Spielerdeck“ als eine Überschrift über allen vier Spalten, so wie der Bogen sie druckt. Auf dem Papier ist das eine leere Fläche, hier sind es Auswahlfelder aus den 28 gedruckten Marktkarten, sortiert nach Unit-Kosten von 1 bis 7. Der Grund ist eine Regel, die das Papier nur beschreiben kann: von jeder Marktkarte darf die Gruppe während einer Kampagne nur ein Exemplar verwenden. Eine Karte, die irgendein Spieler gekauft hat, ist deshalb bei allen anderen gesperrt — ein Spieler darf aber beliebig viele haben. Die Sperre ist einseitig, wie bei MC60, MC32, MC40 und MC45: eine bereits eingetragene Karte bleibt auswählbar, damit ein Bogen aus einem Import oder einem alten Link nie festfriert. „Karten in der Sammlung“ ist dagegen Freitext, denn die Sammlung füllt sich mit dem, was die Spieler gerade auf der Hand hatten, und ist keine gedruckte Liste. Einträge lassen sich zwischen den Spielerspalten ziehen, weil Szenario #3 jeden Spieler genau seine eigenen notierten Karten aus dem Spiel entfernen lässt. Die vier „Galaktische Artefakte“-Nebenpläne sind Kästchen über dem Satz und keine numerierten Zeilen: der Bogen numeriert zwar vier Zeilen, aber die Nummer trägt nichts — das Set hat genau vier Nebenpläne, und Szenario #4 liest sie als Menge zurück, ein Spielaufbau-Effekt je notiertem Nebenplan. Unten stehen drei Felder. „Kontrolle des Machtsteins“ ist ein Auswahlfeld über die oben eingetragenen Identitäten; gespeichert wird der Spielerplatz, angezeigt der aktuelle Name, damit eine später korrigierte Identität die Eintragung nicht veralten lässt. „Ausweichmarker“ ist eine Zahl, und daneben steht abgeleitet, wie viel zusätzliche Bedrohung Szenario #5 daraus auf „Zangenmanöver“ legt: 3 minus die Zahl, mindestens 0. „Kopfgeldjäger besiegt?“ sind vier Kästchen, eines je Szenario 1 bis 4. Darunter steht abgeleitet, welche Karten die aktuelle Zahl der Kreuze freischaltet — und zu jeder, ab welchem Szenario sie überhaupt geprüft wird, denn die Staffel wächst mit dem Szenario: drei Kreuze bedeuten in Szenario #3 nicht drei zusätzliche Karten. Beide abgeleiteten Zeilen werden nur gerechnet, nie gespeichert und nicht mitgedruckt. Oben im Spielerbereich sitzt der Haken „Expertenmodus“. Er blendet die verbleibenden Lebenspunkte aus, und hier kennzeichnet der gedruckte Bogen das Feld ausnahmsweise selbst, indem er „(Experte)“ darunter setzt. Ausblenden heißt nicht löschen — der Wert bleibt im Bogen, im Export und im Share-Link. Ein fünftes Szenario gibt es hier nicht: Ronan der Ankläger kommt auf dem gedruckten Bogen kein einziges Mal vor, „Kopfgeldjäger besiegt?“ trägt die Unterzeile „Sieg-Anweisung für Szenarien #1 – 4“, und im Finale gibt es nichts festzuhalten außer dem Sieg. Die Abschnittsnamen und ihre Unterzeilen stehen hier so, wie die deutsche Spielanleitung sie auf den Seiten 22 und 23 druckt. Hinter jeder gewählten Marktkarte stehen ihre Unit-Kosten, denn ein zugeklapptes Auswahlfeld zeigt nur den Namen — ohne die Zahl daneben ließe sich der Kontostand oben nicht gegen die Karten prüfen, aus denen er fällt.",
+    helpEn: "The MC16 sheet runs over two printed pages, and its player area is a shopping list. At the top each player has an identity, remaining hit points and their units. Units are the Guardians' currency: they are recorded after every scenario and spent between scenarios on Market cards. That is why they sit at both levels rather than behind the expert switch — the expert rules only give them one more use, healing your identity to its printed hit points at setup. And here the sheet departs from the paper on purpose: the print has an “Unspent Units” box, a running balance you write in pencil and rub out again with every purchase. What is entered here instead is “Units earned”, everything the campaign has paid out so far — and “Unspent Units” is computed from it: earned minus the unit cost of the Market cards recorded beside it. The reason is that this sheet already knows every one of those costs, so asking a second time for their difference would be asking the reader to do arithmetic the file can do — and an “unspent” number that silently disagrees with the cards next to it is a bug nobody can see. Spend more than you earned and the figure goes red rather than stopping at zero: overspending is a mistake worth pointing at. One thing the sum cannot see: at expert level the setup of scenarios #2 to #5 lets each player spend a unit to heal their identity, and nothing on the sheet records that they did. While the expert switch is on, the player area says so. Below that comes “Market Cards in Player's Deck” as one heading over all four columns, exactly as the sheet prints it. On paper it is an empty area; here it is selects out of the 28 printed Market cards, grouped by unit cost from 1 to 7. The reason is a rule the paper can only describe: only one copy of each Market card may be used by the players as a group during a campaign. A card bought by any player is therefore closed to all the others — though one player may hold as many as they like. The lock is one-sided, as in MC60, MC32, MC40 and MC45: a card already recorded stays selectable, so a sheet arriving from an import or an old share link never freezes solid. “Cards in The Collection”, by contrast, is free text: The Collection fills up with whatever the players happened to be holding, and is not a printed list. Entries can be dragged between the player columns, because scenario #3 has each player remove exactly their own recorded cards from the game. The four Galactic Artifacts side schemes are boxes over the set rather than numbered lines: the sheet does number four lines, but the number carries nothing — the set has exactly four side schemes, and scenario #4 reads them back as a set, one setup effect per recorded scheme. Three fields sit at the bottom. “Power Stone Control” is a select over the identities entered above; what is stored is the player's seat and what is shown is their current name, so correcting an identity later does not leave the record stale. “Evasion Counters” is a number, and beside it a derived line says how much extra threat scenario #5 puts on Pincer Maneuver because of it: 3 minus the number, floored at zero. “Headhunter Defeated?” is four boxes, one per scenario 1 to 4. Under them a derived line names the cards the current number of marks unlocks — and for each one, the scenario it is first checked from, because the ladder grows with the scenario: three marks do not mean three extra cards in scenario #3. Both derived lines are computed only, never stored, and never printed. At the top of the player area sits the “Expert level” box. It hides the remaining hit points, and here the printed sheet marks the field itself for once, setting “(Expert)” under it. Hiding is not clearing — the value stays in the sheet, in the export and in a share link. There is no fifth scenario here: Ronan the Accuser does not appear on the printed sheet once, “Headhunter Defeated?” is subtitled “Victory for Scenarios #1 – 4”, and the finale has nothing to record beyond the win. Behind every chosen Market card stands its unit cost, because a closed select shows only the name — without the figure beside it the balance above could not be checked against the cards it comes from.",
 
     /* Zwei Gruppen, und die Unterscheidung sagt, wer eine Änderung entscheidet:
 
@@ -1279,7 +1326,7 @@
            verdienten Units". */
         colUnitsEarned: "Verdiente Units",
         /* "%s" = Summe der Unit-Kosten der eingetragenen Marktkarten. */
-        unitsSpent: "%s ausgegeben",
+        unitsSpent: "(%s ausgegeben)",
         unitsOver: "Mehr ausgegeben als verdient.",
         healingSpend: "Abgezogen werden nur Marktkarten. Auf Expertenstufe kostet das Heilen beim Spielaufbau 1 Unit — die kennt der Bogen nicht, sie gehört oben von den verdienten Units abgezogen.",
 
@@ -1335,7 +1382,7 @@
         duplicateHero: "This hero is already assigned to another player.",
 
         colUnitsEarned: "Units earned",
-        unitsSpent: "%s spent",
+        unitsSpent: "(%s spent)",
         unitsOver: "More spent than earned.",
         healingSpend: "Only Market cards are subtracted. At expert level, healing at setup costs 1 unit — the sheet cannot see that one, so take it off the units earned above yourself.",
 

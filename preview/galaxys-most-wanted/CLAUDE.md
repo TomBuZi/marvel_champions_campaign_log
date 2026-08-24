@@ -227,7 +227,13 @@ Dieselbe Zweiteilung gilt für `de: null` in den Kartentabellen, und dort ist si
 am leichtesten zu verwechseln: bei MC10 und MC21 heißt `null` „bleibt im
 deutschen Druck englisch" — eine **Entscheidung**. Bei MC27 heißt es „noch nicht
 eingetragen" — **offene Arbeit**. Der Kommentar muss sagen, welches von beiden
-gemeint ist, sonst räumt ein späterer Leser das Falsche auf.
+gemeint ist, sonst räumt ein späterer Leser das Falsche auf. MC16 hat gar kein
+`de: null`: alle 28 Marktkarten sind übersetzt, und weil das der einzige solche
+Fall ist, sagt es der Dateikopf ausdrücklich — sonst sucht jemand den fehlenden
+Fall, statt ihn als erledigt zu erkennen. Und wo zwei deutsche Drucke einander
+widersprechen — beim MC16-Artefakt „Ei des Monarchen von Hujahdarian" setzt das
+Regelheft eine Silbe weniger als die Karte —, gewinnt die Karte, und der
+Kommentar hält fest, warum die Tabelle nicht zum Regelheft passt.
 
 Dann in `index.html` einhängen (`<script src="campaigns/....js">`). Die
 Reihenfolge dort ist nur noch die Registrierung — **angezeigt** wird nach

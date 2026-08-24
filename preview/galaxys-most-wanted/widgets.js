@@ -518,8 +518,17 @@
      placeholder has no blur worth the name, and a row silently vanishing under
      the pointer is worse than one that waits for its own × button.
 
+     `suffix(i)` may return one node to sit BEHIND the select, between it and
+     the remove button — the annotation a row carries about the card it holds,
+     such as its price. It is built once per row and not rebuilt when the
+     selection changes, so whatever it shows is the caller's to repaint from
+     onChange, the same way the caller repaints uniqueness. Returning nothing
+     leaves the row two columns wide, which is what a list without annotations
+     wants.
+
      cfg: { listId, getArray, options, placeholder, addLabel, removeLabel,
-            removeConfirm?, label?, selectLabel?(i), attrs?(i), onChange? } */
+            removeConfirm?, label?, selectLabel?(i), attrs?(i), suffix?(i),
+            onChange? } */
   function poolList(cfg) {
     var field = el("div", "field");
     if (cfg.label) {
@@ -542,7 +551,8 @@
     function draw() {
       list.innerHTML = "";
       cfg.getArray().forEach(function (val, i) {
-        var row = el("div", "entry-row entry-row--pool");
+        var note = cfg.suffix ? cfg.suffix(i) : null;
+        var row = el("div", "entry-row entry-row--pool" + (note ? " has-note" : ""));
 
         var select = poolSelect({
           value: val,
@@ -578,6 +588,7 @@
         });
 
         row.appendChild(select);
+        if (note) row.appendChild(note);
         row.appendChild(remove);
         list.appendChild(row);
       });
