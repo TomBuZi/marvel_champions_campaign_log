@@ -1074,7 +1074,11 @@
       removeLabel: t("removeEntry"),
       removeConfirm: t("confirmRemoveEntry"),
       dragLabel: t("dragReorder"),
-      label: t("secRemovedAllies"),
+      /* No `label`: the panel heading right above already says what this list
+         is, and repeating it inside the box is a caption the sheet does not
+         print either. MC60 does the same with its own removed-cards list; MC10
+         passes one only because its list sits inside a scenario panel, where
+         the heading names the scenario rather than the list. */
       multiline: false,
     }));
     return section;
