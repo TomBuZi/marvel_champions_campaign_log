@@ -3,9 +3,9 @@
 /* Legt einen ausgefüllten Beispielbogen an und springt in die App — für
    Screenshots und den Druckvergleich. "?c=mc10" nimmt den MC10-Bogen,
    "?c=mc21" den MC21-Bogen, "?c=mc27" den MC27-Bogen, "?c=mc32" den
-   MC32-Bogen, ohne Angabe kommt MC60. */
+   MC32-Bogen, "?c=mc40" den MC40-Bogen, ohne Angabe kommt MC60. */
 var q = new URLSearchParams(location.search);
-var which = { mc10: "mc10", mc21: "mc21", mc27: "mc27", mc32: "mc32" }[q.get("c")] || "mc60";
+var which = { mc10: "mc10", mc21: "mc21", mc27: "mc27", mc32: "mc32", mc40: "mc40" }[q.get("c")] || "mc60";
 /* "?theme=dark" (oder light) nagelt das Theme fest — sonst folgt es dem System.
    Gebraucht fuer den Druckvergleich: der Druck muss schwarz auf weiss sein,
    auch aus einer Dark-Mode-Sitzung und auch mit einem Kampagnen-Skin. */
@@ -151,6 +151,40 @@ var logs = {
       /* Ein gestrichener Eintrag, damit die Durchstreichung im Druck zu sehen
          ist. */
       removedAllies: ["Lockheed", "~Nightcrawler"]
+    }
+  },
+  mc40: {
+    schemaVersion: 1, id: "seed-6", campaignId: "next-evolution", stateVersion: 1,
+    title: "NeXt Evolution, Durchgang 1",
+    createdAt: "2026-08-19T18:00:00.000Z", updatedAt: "2026-08-24T20:40:00.000Z",
+    state: {
+      expert: true,
+      players: [
+        { hero: "Cable", hp: 9 },
+        { hero: "Domino", hp: 6 },
+        { hero: "Wolverine", hp: 11 }
+      ],
+      /* Zwei belegte Zeilen und eine leere: der Screenshot soll beides zeigen,
+         und die leere Zeile behaelt ihre Nummer. */
+      marauders: ["greycrow", "", "vertigo"],
+      morlocksSaved: 3,
+      /* Szenario 3 leer, Szenario 4 gefuellt — auf dem Papier bleiben beide
+         Zeilen sichtbar, egal was darin steht. */
+      hopeDamage: [null, 2],
+      /* Alle vier Zustaende, die das Gitter kennt, in einem Screenshot:
+         gewaehlt und verdient (Zeile 1 und 2), gewaehlt und nicht verdient
+         (Zeile 3), unberuehrt und damit zugesperrt (Zeile 5 und 6) — und in
+         Zeile 4 der Widerspruch: verdient ohne gewaehltes Szenario, dessen
+         Kaestchen trotz der Sperre bedienbar bleibt und unter der Tabelle
+         benannt wird. */
+      schemes: [
+        { scenario: 1, earned: true },
+        { scenario: 2, earned: true },
+        { scenario: 3, earned: false },
+        { scenario: null, earned: true },
+        { scenario: null, earned: false },
+        { scenario: null, earned: false }
+      ]
     }
   }
 };

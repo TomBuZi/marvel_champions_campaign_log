@@ -744,6 +744,176 @@ for (const def of campaigns) {
       eq(g1.removedAllies, ["keep", "~struck", "42"]),
       JSON.stringify(g1.removedAllies));
   }
+
+  if (def.id === "next-evolution") {
+    /* The generic fixture feeds MC60's `scenarios`, MC21's `flags` and MC10's
+       `removed`, none of which is a field on this sheet. None of it may land. */
+    check(p + "no scenarios key on this sheet", once.scenarios === undefined);
+    check(p + "no flags key on this sheet", once.flags === undefined);
+    check(p + "no removed key on this sheet", once.removed === undefined);
+    check(p + "a notes field is not part of this sheet",
+      def.normalize({ notes: "anything" }).notes === undefined);
+
+    /* The level is a real boolean, and standard is the default: a sheet that
+       says nothing is not an expert campaign. */
+    check(p + "the level defaults to standard", empty.expert === false);
+    check(p + "a tolerant truthy level reads as expert",
+      def.normalize({ expert: "true" }).expert === true);
+    /* Hiding is not clearing. This sheet does NOT print "(expert)" next to the
+       hit points the way MC32's does — the rulebook is what records them at
+       expert level only — so the gate is easy to mistake for a bug and this is
+       the assertion that says it is not. */
+    check(p + "a standard sheet keeps its hidden hit points",
+      def.normalize({ expert: false, players: [{ hero: "Cable", hp: 9 }] })
+        .players[0].hp === 9);
+
+    check(p + "player list capped at 4", once.players.length === 4, once.players.length);
+    check(p + "an empty player list still yields one player",
+      def.normalize({ players: [] }).players.length === 1);
+    check(p + "hero trimmed, hp clamped",
+      once.players[0].hero === "Daredevil" && once.players[0].hp === 99,
+      once.players[0].hero + "/" + once.players[0].hp);
+    check(p + "a blank hit point field stays null",
+      def.normalize({ players: [{ hp: "" }] }).players[0].hp === null);
+    /* Nothing else hangs off a player here: no role, no upgrades, no
+       obligations. The sheet prints an identity and a number per player. */
+    check(p + "a player carries the identity and the hit points, nothing else",
+      eq(Object.keys(once.players[0]).sort(), ["hero", "hp"]),
+      JSON.stringify(Object.keys(once.players[0])));
+
+    /* The seven Marauder villains by SLUG, not by label: the slugs are the
+       persisted keys and the labels are still to be translated. Pinning the set
+       catches a villain going missing and a slug being renamed. */
+    const NE_MARAUDERS = ["arclight", "blockbuster", "chimera", "greycrow",
+      "harpoon", "riptide", "vertigo"];
+    check(p + "the marauder row is always three slots",
+      eq(empty.marauders, ["", "", ""]) &&
+      def.normalize({ marauders: ["greycrow"] }).marauders.length === 3 &&
+      def.normalize({ marauders: NE_MARAUDERS }).marauders.length === 3,
+      JSON.stringify(def.normalize({ marauders: ["greycrow"] }).marauders));
+    /* Three, and the two readings that agree on it: the sheet prints three
+       numbered lines, and scenario #1 is won by defeating three of the seven. */
+    check(p + "out of seven printed villains", NE_MARAUDERS.length === 7);
+    /* The row is NEVER sorted — line 2 means the second villain written down —
+       which is what separates this from a set like MC32's. */
+    check(p + "and the row keeps the order it was given",
+      eq(def.normalize({ marauders: ["vertigo", "arclight", "riptide"] }).marauders,
+        ["vertigo", "arclight", "riptide"]));
+    check(p + "an unknown villain leaves the slot empty",
+      eq(def.normalize({ marauders: ["made-up", "harpoon", 7] }).marauders,
+        ["", "harpoon", ""]));
+    check(p + "the same villain twice keeps only the first slot",
+      eq(def.normalize({ marauders: ["harpoon", "harpoon", "chimera"] }).marauders,
+        ["harpoon", "", "chimera"]));
+    check(p + "every printed villain is selectable",
+      NE_MARAUDERS.every((slug) =>
+        def.normalize({ marauders: [slug] }).marauders[0] === slug),
+      NE_MARAUDERS.filter((slug) =>
+        def.normalize({ marauders: [slug] }).marauders[0] !== slug).join());
+
+    /* Two numbers, and both blank on a fresh sheet: an empty box means "nothing
+       recorded yet", which is not the same statement as nought. */
+    check(p + "morlocks saved starts blank and clamps",
+      empty.morlocksSaved === null &&
+      def.normalize({ morlocksSaved: "" }).morlocksSaved === null &&
+      def.normalize({ morlocksSaved: 500 }).morlocksSaved === 99 &&
+      def.normalize({ morlocksSaved: -3 }).morlocksSaved === 0 &&
+      def.normalize({ morlocksSaved: "2" }).morlocksSaved === 2,
+      JSON.stringify(def.normalize({ morlocksSaved: 500 }).morlocksSaved));
+    /* Exactly two slots, because the sheet prints exactly two lines — scenario
+       3 and scenario 4. Slot 0 is scenario 3, so the row is never sorted and
+       never shortened. */
+    check(p + "hope's damage is always two slots",
+      eq(empty.hopeDamage, [null, null]) &&
+      def.normalize({ hopeDamage: [1] }).hopeDamage.length === 2 &&
+      def.normalize({ hopeDamage: [1, 2, 3, 4] }).hopeDamage.length === 2,
+      JSON.stringify(def.normalize({ hopeDamage: [1] }).hopeDamage));
+    check(p + "and each slot clamps on its own",
+      eq(def.normalize({ hopeDamage: ["", 500] }).hopeDamage, [null, 99]),
+      JSON.stringify(def.normalize({ hopeDamage: ["", 500] }).hopeDamage));
+
+    /* The grid is rebuilt from the printed table every time, so it always has
+       the six printed rows in the printed order however many arrived. */
+    check(p + "the grid always has the six printed rows",
+      empty.schemes.length === 6 &&
+      def.normalize({ schemes: [{ scenario: 1 }] }).schemes.length === 6 &&
+      def.normalize({ schemes: [{}, {}, {}, {}, {}, {}, {}, {}] }).schemes.length === 6,
+      def.normalize({ schemes: [{ scenario: 1 }] }).schemes.length);
+    check(p + "and a fresh row is unchosen and unearned",
+      empty.schemes.every((row) => row.scenario === null && row.earned === false));
+    check(p + "a row carries the chosen scenario and the earned box, nothing else",
+      eq(Object.keys(empty.schemes[0]).sort(), ["earned", "scenario"]),
+      JSON.stringify(Object.keys(empty.schemes[0])));
+    /* Six printed rows against five scenarios: one row must stay empty at the
+       end, which is why the choice is a pool of five rather than a tick. */
+    check(p + "six rows for five scenarios",
+      def.normalize({ schemes: [{ scenario: 5 }] }).schemes[0].scenario === 5 &&
+      def.normalize({ schemes: [{ scenario: 6 }] }).schemes[0].scenario === 5 &&
+      def.normalize({ schemes: [{ scenario: 0 }] }).schemes[0].scenario === 1 &&
+      def.normalize({ schemes: [{ scenario: "" }] }).schemes[0].scenario === null);
+    check(p + "an invented row key is dropped",
+      def.normalize({ schemes: [{ scenario: 1, invented: true }] })
+        .schemes[0].invented === undefined);
+    check(p + "a tolerant truthy earned box reads as ticked, and \"yes\" does not",
+      def.normalize({ schemes: [{ earned: "true" }] }).schemes[0].earned === true &&
+      def.normalize({ schemes: [{ earned: "yes" }] }).schemes[0].earned === false);
+
+    /* THE regression test for this sheet. Each scenario picks one scheme, so a
+       scenario in two rows cannot stand — the later row loses it, first in row
+       order wins. And the row that loses KEEPS ITS TICK: otherwise the mere
+       order two rows arrived in an import would decide whose record survives.
+       What is left is a contradiction, and paintSchemes() names it and leaves
+       the box operable instead of resolving it. */
+    const neDup = def.normalize({ schemes: [
+      { scenario: 3, earned: true }, { scenario: 3, earned: true }] });
+    check(p + "a scenario chosen twice is cleared on the later row",
+      neDup.schemes[0].scenario === 3 && neDup.schemes[1].scenario === null,
+      JSON.stringify([neDup.schemes[0].scenario, neDup.schemes[1].scenario]));
+    check(p + "but that row keeps its earned box",
+      neDup.schemes[1].earned === true);
+
+    const dirtyNe = {
+      players: [
+        { hero: "  Cable  ", hp: "500" },
+        { hero: "x".repeat(500), hp: "" },
+        "not even an object",
+        { hero: "Domino", hp: 11 },
+        { hero: "one too many", hp: 3 },
+      ],
+      expert: 1,
+      marauders: ["riptide", "riptide", "made-up", "vertigo"],
+      morlocksSaved: "  4  ",
+      hopeDamage: ["2", null, 9],
+      schemes: [
+        { scenario: "2", earned: "true" },
+        "not an object",
+        { scenario: 2, earned: 1 },
+        { scenario: 99, earned: "yes" },
+        {},
+        { scenario: null, earned: true },
+        { scenario: 1 },
+      ],
+      scenarios: [{ slug: "does-not-exist" }],
+      flags: { invented: true },
+      somethingUnknown: { nested: [1, 2, 3] },
+    };
+    const n1 = def.normalize(dirtyNe);
+    check(p + "MC40 fixture is idempotent", eq(n1, def.normalize(n1)), JSON.stringify(n1));
+    check(p + "the fixture keeps four players and clamps them",
+      n1.players.length === 4 && n1.players[0].hero === "Cable" &&
+      n1.players[0].hp === 99 && n1.players[1].hp === null,
+      JSON.stringify(n1.players));
+    check(p + "the fixture's marauder row drops the repeat and the unknown",
+      eq(n1.marauders, ["riptide", "", ""]), JSON.stringify(n1.marauders));
+    check(p + "the fixture's numbers are parsed and the row cut to two",
+      n1.morlocksSaved === 4 && eq(n1.hopeDamage, [2, null]),
+      JSON.stringify([n1.morlocksSaved, n1.hopeDamage]));
+    check(p + "the fixture's grid is six rows, the repeat cleared, the tick kept",
+      n1.schemes.length === 6 &&
+      eq(n1.schemes.map((r) => r.scenario), [2, null, null, 5, null, null]) &&
+      eq(n1.schemes.map((r) => r.earned), [true, false, true, false, false, true]),
+      JSON.stringify(n1.schemes));
+  }
 }
 
 // ------------------------------------------------------------------- roster

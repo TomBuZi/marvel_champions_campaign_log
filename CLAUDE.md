@@ -94,6 +94,17 @@ Vektormessung übersieht die auffälligste Farbe des Bogens vollständig. Wo die
 Kunst Raster ist, wird dort gemessen — aus dem gerenderten Pixmap, flächen­weise
 gemittelt — und der Kommentar in `styles.css` sagt, welcher Wert woher kommt.
 
+MC40 ist derselbe Herausgeber-Bogen, und dort ist die Falle noch bösartiger: die
+**Schraffurlinien** des Randes sind Vektor und stehen mit 25,9 % gleich an
+dritter Stelle der Flächenmessung — nur eben schwarz. Der orange **Grund**
+darunter ist Raster. Die Vektorzahlen sehen also einen Teil des Randes und
+melden ihn als schwarz, was danach aussieht, als wäre der Rand gemessen. Ein
+Blick auf das gerenderte Bild gehört deshalb immer dazu, auch wenn die Zahlen
+plausibel aussehen. Und weil beide Bögen aus derselben Vorlage stammen, sind
+Randkunst und gelbes Abzeichen bei MC32 und MC40 dieselbe Farbe: die
+Unterscheidung zweier Kampagnen kann dann nicht am Akzent hängen, sondern muss
+in `--page`, `--bar` und den Panels liegen.
+
 ```python
 import fitz, collections
 pg = fitz.open("mcXX_....pdf")[0]
@@ -142,6 +153,7 @@ Vorlagen, bewusst verschieden:
 | `campaigns/mad-titans-shadow.js` | das schlankeste: Spieler plus benannte Kästchen |
 | `campaigns/sinister-motives.js` | eine Zahl, aus der zwei abgeleitete Zustände fallen: erreichte Stufen und freigeschaltete Felder; dazu eine Liste, in der die Position Teil der Eintragung ist |
 | `campaigns/mutant-genesis.js` | Beschriftungen, die aus einer Wahl abgeleitet werden, ohne dass die Wahl entscheidet, was gespeichert bleibt; ein Gitter aus Kartensatz × Szenario; und die Grenze zwischen einer Sperre und einem Hinweis |
+| `campaigns/next-evolution.js` | eine Tabelle, deren Zeile eine gedruckte Karte ist und deren gedruckte Spalten nur gelesen werden; eine Auswahl mit Eindeutigkeit über die Zeilen hinweg; und ein Feld, das erst mit dieser Auswahl aufgeht |
 
 Harte Punkte:
 
