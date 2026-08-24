@@ -555,8 +555,15 @@
       }
 
       die.classList.add("villain-die");
-      villainCell.appendChild(select);
-      villainCell.appendChild(die);
+      /* The field and its die go in a .with-die wrapper INSIDE the cell, never
+         on the cell itself: a <td> set to display:flex stops being a table-cell
+         box, so border-collapse can no longer merge its border with the
+         neighbouring cells' and this one column ends up drawing two borders
+         where every other column draws one. Same shape MC27 uses. */
+      var withDie = W.el("div", "with-die");
+      withDie.appendChild(select);
+      withDie.appendChild(die);
+      villainCell.appendChild(withDie);
       tr.appendChild(villainCell);
 
       var progressCell = W.el("td", null, { "data-label": t("colProgress") });
