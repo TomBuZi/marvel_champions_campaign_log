@@ -7,8 +7,8 @@ Eintippen statt ausdrucken: automatisch gespeichert, zweisprachig, teilbar, druc
 
 Umgesetzt sind die Kampagnen **Fear No Evil (MC60)**,
 **The Rise of Red Skull (MC10)**, **The Mad Titan's Shadow (MC21)**,
-**Sinister Motives (MC27)**, **Mutant Genesis (MC32)** und
-**NeXt Evolution (MC40)**.
+**Sinister Motives (MC27)**, **Mutant Genesis (MC32)**,
+**NeXt Evolution (MC40)** und **Age of Apocalypse (MC45)**.
 Die Kampagne wird beim Anlegen eines Bogens gewählt
 und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
 [Eine Kampagne hinzufügen](#eine-kampagne-hinzufügen).
@@ -76,6 +76,22 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     —, eingetragen werden nur *Szenarionummer* und *Verdient?*. Sechs Zeilen
     stehen fünf Szenarien gegenüber, eine Zeile bleibt am Ende also
     zwangsläufig leer.
+  * *Age of Apocalypse (MC45)* — der schlankeste von allen: je Spieler Identität
+    und Lebenspunkte, darunter die Tabelle der vier **Mission-Nebenpläne** und
+    darunter fünf benannte Kästchen. Drei der vier Spalten sind gedruckter
+    Regeltext — *Spielaufbau*, *Besiegt* und *Nicht besiegt* —, und in den
+    beiden Ergebnisspalten sitzt je ein Kästchen: sie schließen einander aus,
+    und beide streichen den Missionsnamen durch, denn die Regel streicht ihn
+    unabhängig vom Ergebnis. Das Papier druckt dort kein Kästchen, sondern
+    verlangt einen Stift; dass hier zusätzlich festgehalten wird, *welcher* der
+    beiden Zweige gilt, ist Absicht — alles in diesen Spalten gilt „für den Rest
+    der Kampagne“. Die fünf Kästchen darunter sind die **Aufseher-Schergen**,
+    und Achtung auf die Leserichtung: die Überschrift heißt „Verfügbare
+    Aufseher-Schergen“, das Häkchen bedeutet „durchgestrichen“, also besiegt und
+    nicht mehr verfügbar. Es gibt keine Szenario-Tabelle: die fünf Szenarien von
+    Unus bis En Sabah Nur kommen auf dem gedruckten Bogen nicht ein einziges Mal
+    vor, und der fünfte Mission-Nebenplan *Den Professor beschützen* fehlt auch
+    dort, weil er für Szenario 5 reserviert und nie zur Wahl ist.
 * **Standard- oder Expertenstufe** — der Haken „Expertenmodus“ oben im
   Spielerbereich, in jeder Kampagne an derselben Stelle. Auf Standardstufe
   blendet der Bogen aus, was es dort nicht gibt, statt danach zu fragen:
@@ -97,6 +113,12 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     muss jeder Spieler seine verbleibenden Lebenspunkte im Kampagnenlogbuch
     notieren, nachdem ihr ein Szenario gewonnen habt.“ Alles andere bleibt auf
     beiden Stufen stehen.
+  * *Age of Apocalypse (MC45)* — die verbleibenden Lebenspunkte, und wie bei MC40
+    kennzeichnet der gedruckte Bogen sie **nicht**, das Regelheft aber schon,
+    unter „Bleibender Schaden“: „Während einer Experten-Kampagne von Age of
+    Apocalypse muss jeder Spieler seine verbleibenden Lebenspunkte im
+    Kampagnenlogbuch notieren, nachdem ihr ein Szenario gewonnen habt.“ Die
+    Missionstabelle und die Schergen-Kästchen bleiben auf beiden Stufen stehen.
 
   **Ausblenden ist nicht Löschen**: wer versehentlich umschaltet, findet nach dem
   Zurückschalten alles wieder vor. Gedruckt wird der Haken mit, weil er
@@ -200,6 +222,17 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     *nachdem* das Szenario gewonnen ist, und dieser Bogen hält keinen
     Fortschritt fest — er kann „noch nicht“ und „endgültig“ nicht
     auseinanderhalten und behauptet es deshalb auch nicht.
+  * *Mission-Nebenpläne* (MC45) — eine Mission ist entweder besiegt oder nicht,
+    also schließt ein gesetztes Häkchen das andere; beide streichen den
+    Missionsnamen durch, weil die Regel ihn unabhängig vom Ergebnis streicht.
+    Auch das einseitig: kommt ein Bogen aus einem Import, einer von Hand
+    bearbeiteten Datei oder einem alten `#log=`-Link mit **beiden** Häkchen an,
+    kürt `normalize()` keinen Sieger — beide bleiben bedienbar, und der
+    Widerspruch wird unter der Tabelle benannt. Durchgestrichen und abgeblendet
+    wird dabei nur der **Name**, nicht die Zeile: anders als bei MC32s entfernter
+    Karte bleibt der Text der Ergebnisspalten gerade deshalb in Kraft, *weil* die
+    Mission gespielt wurde, und ihn zu verblassen würde das Einzige verdecken,
+    wofür die Zeile noch da ist.
 * **Wo es nur um eine Anzahl geht, passiert nichts** (MC32) — wie viele
   Rollenverbesserungen die Kampagne vergeben hat, hängt an den
   Nebenplan-Kästchen, begrenzt aber nur eine **Anzahl** und keine bestimmte
@@ -418,6 +451,7 @@ auch über `file://` und direkt aus dem Repo-Root über GitHub Pages.
 | `campaigns/sinister-motives.js` | die Kampagne MC27: die vier Kartensätze der Kampagne, drei Belohnungsfelder in der Spielerkarte und die Reputationsleiste, die Stufen *und* Felder freischaltet |
 | `campaigns/mutant-genesis.js` | die Kampagne MC32: benannte Kästchen über fünf gedruckten Kartensätzen, ein Gitter aus Kartensatz × Szenario, und Beschriftungen, die aus der gewählten Rolle eines Spielers fallen |
 | `campaigns/next-evolution.js` | die Kampagne MC40: drei numerierte Auswahlfelder aus einem gedruckten Schurkensatz, zwei freie Zahlen, und ein Gitter, dessen drei gedruckte Spalten nur gelesen werden |
+| `campaigns/age-of-apocalypse.js` | die Kampagne MC45: eine Tabelle, deren zwei gedruckte Ergebnisspalten je ein Kästchen tragen, das das andere ausschließt und den Zeilennamen durchstreicht, dazu eine Überschrift über fünf benannten Kästchen; das schlankeste Datenmodell aller Module |
 | `test/lint.js` | Prüfungen ohne Browser: Wörterbücher, Kampagnendefinition, Datenmodell, Paketierung |
 | `test/selftest.html`, `test/run-browser.js` | Selbsttest, der die echte Seite in einem iframe fernsteuert |
 | `fonts/` | Exo 2 (OFL, selbst gehostet), `OFL.txt` daneben |
@@ -483,7 +517,11 @@ Wahl abgeleitet werden, ein Gitter aus Kartensatz × Szenario, und die Grenze zw
 einer Sperre und einem Hinweis; `campaigns/next-evolution.js` ist das
 tabellenförmigste — eine Tabelle, deren Zeile durch eine gedruckte Karte bestimmt
 ist und deren gedruckte Spalten nur gelesen werden, mit einer Auswahl über die
-Zeilen hinweg und einem Feld, das erst mit dieser Auswahl aufgeht.
+Zeilen hinweg und einem Feld, das erst mit dieser Auswahl aufgeht;
+`campaigns/age-of-apocalypse.js` hat das schlankeste Datenmodell — zwei
+Wahrheitswerte je gedruckter Zeile, die sich gegenseitig ausschließen und
+gemeinsam die Zeile durchstreichen, und eine Wahrheitswert-Karte über einem
+gedruckten Kartensatz.
 
 `ctx` liefert `{ state, lang, t(key, …args), save(), rerender(), toast(msg), w }`;
 `w` ist die Widget-Sammlung aus `widgets.js`.
@@ -517,8 +555,8 @@ BROWSER_LANG=de-DE node test/run-browser.js   # unter einer anderen Browser-Spra
 
 `test/seed.html` legt einen ausgefüllten Beispielbogen an und springt in die App —
 praktisch für Screenshots und für den Druckvergleich. `?c=mc10` nimmt den MC10-Bogen,
-`?c=mc21` den MC21-Bogen, `?c=mc27` den MC27-Bogen, `?c=mc32` den MC32-Bogen und
-`?c=mc40` den MC40-Bogen statt MC60, `?expert=0` stellt
+`?c=mc21` den MC21-Bogen, `?c=mc27` den MC27-Bogen, `?c=mc32` den MC32-Bogen,
+`?c=mc40` den MC40-Bogen und `?c=mc45` den MC45-Bogen statt MC60, `?expert=0` stellt
 den Bogen auf
 Standardstufe, und `?theme=dark` nagelt das
 Theme fest; letzteres braucht man, um zu prüfen, dass der Druck auch aus einer
@@ -657,8 +695,8 @@ im Footer der Seite. Der Ko-fi-Link öffnet in einem neuen Tab und trägt
   Konvention der deutschen Ausgabe: dort behalten Figuren ihre Namen (Rhino, Klaw,
   Ultron), übersetzt werden nur Szenario- und Hauptplan-Namen.
 * **Ein englisch angezeigter Kartenname heißt zwei verschiedene Dinge**, und die
-  Kartentabelle des Moduls sagt jeweils, welches. Bei MC10, MC21, MC32 und MC40
-  ist er eine **Entscheidung**: der Name bleibt im deutschen Druck englisch,
+  Kartentabelle des Moduls sagt jeweils, welches. Bei MC10, MC21, MC32, MC40 und
+  MC45 ist er eine **Entscheidung**: der Name bleibt im deutschen Druck englisch,
   siehe den ersten Punkt. Bei MC27 ist er **offene Arbeit**: der deutsche
   Wortlaut ist noch nicht eingetragen, und der englische steht als Platzhalter.
   Ohne diesen Kommentar räumt ein späterer Leser das Falsche auf. Es migriert in
@@ -671,6 +709,18 @@ im Footer der Seite. Der Ko-fi-Link öffnet in einem neuen Tab und trägt
   Nebenplan und daher übersetzt. Der Selbsttest prüft die Sprachauszeichnung
   hier als Äquivalenz über diese gemischte Tabelle, was eine handgepflegte
   Liste nicht überlebt hätte.
+* **Bei MC45 ist gar nichts offen**, und das ist der Unterschied zu MC40: das
+  deutsche Regelheft dieser Erweiterung druckt auf Seite 24 den vollständigen
+  deutschen Bogen, also stehen alle Abschnittsnamen, Spaltentitel und Regeltexte
+  von Anfang an wörtlich so da, wie sie gedruckt sind. Englisch bleiben nur die
+  fünf Aufseher-Schergen — Figuren, siehe den ersten Punkt. Einer von ihnen ist
+  dabei die Ausnahme, die die Regel sichtbar macht: der deutsche Bogen lässt beim
+  **Shadow King** den Artikel weg, wo der englische „The Shadow King“ druckt.
+  Das ist eine andere Zeichenkette, sie steht deshalb in `de` — und damit trägt
+  dieser eine Name **kein** `lang="en"`, obwohl seine Wörter englisch sind. Die
+  Auszeichnung sagt, ob der deutsche Druck eine eigene Zeichenkette gesetzt hat;
+  mehr kann die Tabelle nicht wissen, und ein zweiter Mechanismus für eine
+  einzige Karte wäre der schlechtere Tausch.
 * **Die deutschen Szenarionamen sind vorläufig.** Von MC60 gibt es noch keine
   offizielle deutsche Ausgabe; sie stehen als eine Zeile je Szenario in
   `campaigns/fear-no-evil.js` und sind dort zu korrigieren, sobald es eine gibt.

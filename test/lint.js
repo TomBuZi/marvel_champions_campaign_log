@@ -914,6 +914,140 @@ for (const def of campaigns) {
       eq(n1.schemes.map((r) => r.earned), [true, false, true, false, false, true]),
       JSON.stringify(n1.schemes));
   }
+
+  if (def.id === "age-of-apocalypse") {
+    /* The generic fixture feeds MC60's `scenarios`, MC21's `flags` and MC10's
+       `removed`, none of which is a field on this sheet. None of it may land. */
+    check(p + "no scenarios key on this sheet", once.scenarios === undefined);
+    check(p + "no flags key on this sheet", once.flags === undefined);
+    check(p + "no removed key on this sheet", once.removed === undefined);
+    check(p + "a notes field is not part of this sheet",
+      def.normalize({ notes: "anything" }).notes === undefined);
+    /* And not MC40's grid either. That one is close enough in shape to this
+       table — printed rows, printed read-only columns, a box at the end — that
+       a field copied across would be easy to miss. */
+    check(p + "no schemes key on this sheet",
+      def.normalize({ schemes: [{ scenario: 1, earned: true }] }).schemes === undefined);
+
+    /* The level is a real boolean, and standard is the default: a sheet that
+       says nothing is not an expert campaign. */
+    check(p + "the level defaults to standard", empty.expert === false);
+    check(p + "a tolerant truthy level reads as expert",
+      def.normalize({ expert: 1 }).expert === true &&
+      def.normalize({ expert: "true" }).expert === true);
+    check(p + "and anything else reads as standard",
+      def.normalize({ expert: "no" }).expert === false &&
+      def.normalize({ expert: null }).expert === false);
+    /* The whole point of the gate: standard level HIDES the hit points, so a
+       standard sheet must still be able to carry them. */
+    check(p + "a standard sheet still carries hit points",
+      def.normalize({ expert: false, players: [{ hero: "Bishop", hp: 7 }] })
+        .players[0].hp === 7);
+
+    check(p + "a fresh sheet has exactly one player", empty.players.length === 1);
+    check(p + "a player carries the identity and the hit points, nothing else",
+      eq(Object.keys(empty.players[0]).sort(), ["hero", "hp"]),
+      JSON.stringify(Object.keys(empty.players[0])));
+
+    /* The table is rebuilt from the printed rows every time, so it always has
+       the four the sheet prints — the fifth mission, Protect the Professor, is
+       reserved for scenario #5 and is not printed. */
+    check(p + "the table always has the four printed rows",
+      empty.missions.length === 4 &&
+      def.normalize({ missions: [{ defeated: true }] }).missions.length === 4 &&
+      def.normalize({ missions: [{}, {}, {}, {}, {}, {}] }).missions.length === 4,
+      def.normalize({ missions: [{}, {}, {}, {}, {}, {}] }).missions.length);
+    check(p + "and a fresh row is undecided, i.e. the mission is available",
+      empty.missions.every((row) => row.defeated === false && row.notDefeated === false));
+    check(p + "a row carries the two outcomes and nothing else",
+      eq(Object.keys(empty.missions[0]).sort(), ["defeated", "notDefeated"]),
+      JSON.stringify(Object.keys(empty.missions[0])));
+    check(p + "an invented row key is dropped",
+      def.normalize({ missions: [{ defeated: true, invented: true }] })
+        .missions[0].invented === undefined);
+    check(p + "a tolerant truthy outcome reads as ticked, and \"yes\" does not",
+      def.normalize({ missions: [{ defeated: "true" }] }).missions[0].defeated === true &&
+      def.normalize({ missions: [{ defeated: "yes" }] }).missions[0].defeated === false);
+    /* Rows are positional and never sorted: the row order is the printed one,
+       so an outcome has to stay on the row it arrived on. */
+    const aoaOrder = def.normalize({ missions: [
+      { defeated: true }, {}, { notDefeated: true }, {}] });
+    check(p + "an outcome stays on the row it arrived on",
+      eq(aoaOrder.missions.map((r) => r.defeated), [true, false, false, false]) &&
+      eq(aoaOrder.missions.map((r) => r.notDefeated), [false, false, true, false]),
+      JSON.stringify(aoaOrder.missions));
+
+    /* THE regression test for this sheet. A mission is either defeated or not,
+       so both at once is a contradiction — and normalize() deliberately KEEPS
+       it rather than picking a winner: which of the two was meant is not ours
+       to guess, and dropping one would overwrite a record instead of flagging
+       it. paintMissions() names it and leaves both boxes operable. */
+    const aoaBoth = def.normalize({ missions: [{ defeated: true, notDefeated: true }] });
+    check(p + "both outcomes on one row survive normalize",
+      aoaBoth.missions[0].defeated === true && aoaBoth.missions[0].notDefeated === true,
+      JSON.stringify(aoaBoth.missions[0]));
+    check(p + "and the contradiction does not spread to the other rows",
+      aoaBoth.missions.slice(1).every((r) => !r.defeated && !r.notDefeated),
+      JSON.stringify(aoaBoth.missions));
+
+    /* The five printed minions, pinned BY SLUG rather than by name: the slug is
+       what is persisted, the name is what a retranslation may change. */
+    const AOA_OVERSEERS = ["mister-sinister", "the-shadow-king", "abyss",
+      "sugar-man", "mikhail-rasputin"];
+    check(p + "the five printed minions are the five keys, in printed order",
+      eq(Object.keys(empty.overseers), AOA_OVERSEERS),
+      Object.keys(empty.overseers).join());
+    check(p + "and every one of them starts available",
+      AOA_OVERSEERS.every((slug) => empty.overseers[slug] === false));
+    check(p + "an invented minion is dropped",
+      def.normalize({ overseers: { "made-up": true } }).overseers["made-up"] === undefined);
+    check(p + "a minion the file does not mention reads as available",
+      def.normalize({ overseers: { abyss: true } }).overseers["sugar-man"] === false);
+    check(p + "a tolerant truthy strike reads as struck, and \"yes\" does not",
+      def.normalize({ overseers: { abyss: 1 } }).overseers.abyss === true &&
+      def.normalize({ overseers: { abyss: "yes" } }).overseers.abyss === false);
+    check(p + "a list where the map belongs leaves every minion available",
+      eq(def.normalize({ overseers: ["abyss"] }).overseers, empty.overseers),
+      JSON.stringify(def.normalize({ overseers: ["abyss"] }).overseers));
+
+    const dirtyAoa = {
+      players: [
+        { hero: "  Bishop  ", hp: "500" },
+        { hero: "x".repeat(500), hp: "" },
+        "not even an object",
+        { hero: "Magik", hp: 11 },
+        { hero: "one too many", hp: 3 },
+      ],
+      expert: 1,
+      missions: [
+        { defeated: "true", notDefeated: 0 },
+        "not an object",
+        { defeated: 1, notDefeated: "yes" },
+        { notDefeated: true, invented: "dropped" },
+        { defeated: true },
+      ],
+      overseers: { abyss: "true", "sugar-man": 0, "made-up": true },
+      scenarios: [{ slug: "does-not-exist" }],
+      flags: { invented: true },
+      schemes: [{ scenario: 1, earned: true }],
+      somethingUnknown: { nested: [1, 2, 3] },
+    };
+    const a1 = def.normalize(dirtyAoa);
+    check(p + "MC45 fixture is idempotent", eq(a1, def.normalize(a1)), JSON.stringify(a1));
+    check(p + "the fixture keeps four players and clamps them",
+      a1.players.length === 4 && a1.players[0].hero === "Bishop" &&
+      a1.players[0].hp === 99 && a1.players[1].hp === null,
+      JSON.stringify(a1.players));
+    check(p + "the fixture's table is four rows and the fifth is gone",
+      a1.missions.length === 4 &&
+      eq(a1.missions.map((r) => r.defeated), [true, false, true, false]) &&
+      eq(a1.missions.map((r) => r.notDefeated), [false, false, false, true]),
+      JSON.stringify(a1.missions));
+    check(p + "the fixture's minions keep the five printed keys only",
+      eq(Object.keys(a1.overseers), AOA_OVERSEERS) &&
+      a1.overseers.abyss === true && a1.overseers["sugar-man"] === false,
+      JSON.stringify(a1.overseers));
+  }
 }
 
 // ------------------------------------------------------------------- roster

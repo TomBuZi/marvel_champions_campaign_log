@@ -3720,6 +3720,426 @@
         });
       }
 
+      // ----------------------------------------------------------- MC45
+      /* The MC45 sheet is a player block, one table of four printed missions,
+         and a footer of five named minions. Its signature is the mission row:
+         two mutually exclusive boxes sitting in the two printed outcome
+         columns, either of which strikes the mission's name. */
+      function aoaLog() {
+        return {
+          schemaVersion: 1, id: "aoa1", campaignId: "age-of-apocalypse", stateVersion: 1,
+          title: "Age of Apocalypse",
+          createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-02T00:00:00.000Z",
+          state: {
+            /* Expert, because the hit points only exist there. caseAoaExpert is
+               the one that starts at standard. */
+            expert: true,
+            players: [{ hero: "", hp: null }],
+            /* Everything else deliberately absent: normalize() has to build all
+               four table rows and all five minion flags out of a state that
+               mentions neither. */
+          },
+        };
+      }
+      /* The sections the printed sheet has, by their stable data-section keys —
+         not by their labels, which the German print may word differently. */
+      var AOA_SECTIONS = ["players", "missions", "overseers"];
+      /* The row headers of the table and the names in the footer strip, as one
+         list: the language-tag rule has to hold across both, and between them
+         they carry both cases — the missions are translated in the German
+         printing, the minions are not. */
+      var AOA_NAMES = '[data-section="missions"] th[scope="row"], ' +
+        '[data-section="overseers"] .flag > span';
+
+      function caseAoa() {
+        seed({ aoa1: aoaLog() }, "aoa1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var app = d.getElementById("campaign");
+          var at = function (sel) { return app.querySelectorAll(sel); };
+
+          var found = AOA_SECTIONS.filter(function (id) {
+            return !!app.querySelector('[data-section="' + id + '"]');
+          });
+          log("every printed section has a panel",
+            found.length === AOA_SECTIONS.length, found.join());
+          log("and no panel beyond them",
+            at("[data-section]").length === AOA_SECTIONS.length,
+            at("[data-section]").length);
+          /* In the printed order, top to bottom. Read off the document rather
+             than written out, so it keeps checking the order and not the
+             words. */
+          var order = function () {
+            return Array.prototype.map.call(at("[data-section]"), function (n) {
+              return n.getAttribute("data-section");
+            }).join();
+          };
+          log("in the order the sheet prints them",
+            order() === AOA_SECTIONS.join(), order());
+
+          /* Four columns and four rows, both counted at the divider lines of
+             the content stream rather than by eye. The fifth mission, Protect
+             the Professor, is reserved for scenario #5 and is not printed. */
+          log("the table has the four printed columns",
+            at('[data-section="missions"] th[scope="col"]').length === 4,
+            at('[data-section="missions"] th[scope="col"]').length);
+          var rows = at('[data-section="missions"] tbody tr');
+          log("and the four printed rows", rows.length === 4, rows.length);
+          log("each row is one mission, one printed setup and two outcome boxes",
+            Array.prototype.every.call(rows, function (tr) {
+              return tr.querySelectorAll('th[scope="row"]').length === 1 &&
+                tr.querySelectorAll("td.rule-cell").length === 1 &&
+                tr.querySelectorAll("td.outcome-cell").length === 2 &&
+                tr.querySelectorAll(".sheet-check").length === 2;
+            }));
+          /* An outcome cell carries its printed rule as well as its box:
+             without the text the tick would not say what it commits you to,
+             which is the whole reason the box sits in that column. */
+          log("and every outcome cell prints its rule beside the box",
+            Array.prototype.every.call(at('[data-section="missions"] td.outcome-cell'),
+              function (td) {
+                var p = td.querySelector(".rule-text");
+                return !!p && p.textContent.trim().length > 0;
+              }));
+
+          /* A bare checkbox in a grid is unnameable, so every box carries its
+             row AND its column. Checked against the words on screen rather than
+             a string in here, so it survives a retranslation. */
+          log("every box in the table is named by its own row",
+            Array.prototype.every.call(rows, function (tr) {
+              var name = tr.querySelector('th[scope="row"]').textContent.trim();
+              return Array.prototype.every.call(tr.querySelectorAll(".sheet-check"),
+                function (box) {
+                  var label = box.getAttribute("aria-label") || "";
+                  return label.indexOf(name) === 0 && label.length > name.length;
+                });
+            }),
+            rows[0].querySelector(".sheet-check").getAttribute("aria-label"));
+          /* And the two boxes of one row must NOT share a name, or the two
+             columns would be indistinguishable to a screen reader. */
+          log("and its two boxes are named differently from each other",
+            Array.prototype.every.call(rows, function (tr) {
+              var b = tr.querySelectorAll(".sheet-check");
+              return b[0].getAttribute("aria-label") !== b[1].getAttribute("aria-label");
+            }));
+
+          /* The footer is a set of named boxes rather than a table: no position
+             in it means anything, which is why there are no columns. */
+          var flags = at('[data-section="overseers"] .flag');
+          log("the footer is five named minions", flags.length === 5, flags.length);
+          log("and every one of them is named",
+            Array.prototype.every.call(flags, function (f) {
+              return f.querySelector("span").textContent.trim().length > 0;
+            }));
+
+          /* A fresh sheet records nothing, and records it nowhere: every
+             mission still available, every minion still available. */
+          log("a fresh sheet has nothing ticked",
+            Array.prototype.every.call(
+              at('[data-section="missions"] .sheet-check, [data-section="overseers"] .sheet-check'),
+              function (b) { return b.checked === false; }));
+          log("and no name struck",
+            at('[data-section="missions"] tbody tr.is-struck').length === 0 &&
+            at('[data-section="overseers"] .flag.is-struck').length === 0);
+
+          /* The rule itself, derived instead of written out: a name is tagged as
+             English exactly when it is the SAME string in both languages. Read
+             in German, then in English, then switched back — so this keeps
+             checking the rule however many names get retranslated later,
+             instead of decaying into a list somebody has to maintain. */
+          var names = function () {
+            return Array.prototype.map.call(at(AOA_NAMES), function (n) {
+              return n.textContent.trim();
+            });
+          };
+          var tagged = Array.prototype.map.call(at(AOA_NAMES), function (n) {
+            return n.getAttribute("lang") === "en";
+          });
+          d.getElementById("btn-lang").click();
+          var english = names();
+          d.getElementById("btn-lang").click();
+          var german = names();
+          log("the language tag follows the name actually shown",
+            german.length === english.length && german.length > 0 &&
+            german.every(function (n, i) { return tagged[i] === (n === english[i]); }),
+            german.join() + " / " + english.join() + " / " + tagged.join());
+          /* And it really is a mixture rather than all-or-nothing, or the
+             assertion above would hold with the rule wired backwards. */
+          log("and the sheet holds tagged and untagged names side by side",
+            tagged.indexOf(true) !== -1 && tagged.indexOf(false) !== -1, tagged.join());
+
+          /* Switching twice rebuilt the sheet twice, so everything below has to
+             be looked up again. */
+          var row0 = app.querySelectorAll('[data-section="missions"] tbody tr')[0];
+          tick(row0.querySelectorAll(".sheet-check")[0]);
+          tick(app.querySelectorAll('[data-section="overseers"] .sheet-check')[2]);
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).aoa1.state;
+            log("the outcome was stored on its own row and in its own column",
+              st.missions[0].defeated === true && st.missions[0].notDefeated === false &&
+              st.missions[1].defeated === false && st.missions[1].notDefeated === false,
+              JSON.stringify(st.missions));
+            /* The slug is read off the stored map rather than written out here,
+               so the assertion survives a renamed minion. */
+            var keys = Object.keys(st.overseers);
+            log("the minion was stored under its own slug, the others untouched",
+              st.overseers[keys[2]] === true &&
+              keys.filter(function (k) { return st.overseers[k]; }).length === 1,
+              JSON.stringify(st.overseers));
+            finish();
+          }, 500);
+        });
+      }
+
+      /* The signature mechanic: two boxes per row that exclude each other,
+         either of which strikes the name, and a lock that lets go of a box that
+         is already ticked. */
+      function caseAoaMissions() {
+        var seeded = aoaLog();
+        /* Row 3 arrives with BOTH outcomes set — the contradiction an import, a
+           hand-edited file or an old #log= link can bring in. Both boxes have to
+           stay operable, and it has to be named. */
+        seeded.state.missions = [{}, {}, { defeated: true, notDefeated: true }, {}];
+        seed({ aoa1: seeded }, "aoa1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var app = d.getElementById("campaign");
+          var rows = function () {
+            return app.querySelectorAll('[data-section="missions"] tbody tr');
+          };
+          var box = function (i, j) {
+            return rows()[i].querySelectorAll(".sheet-check")[j];
+          };
+          var struck = function (i) { return rows()[i].classList.contains("is-struck"); };
+          var note = function () {
+            return app.querySelector('[data-section="missions"] > .lock-note');
+          };
+
+          log("an undecided row has both boxes open",
+            box(0, 0).disabled === false && box(0, 1).disabled === false);
+          log("and its name is not struck", struck(0) === false);
+          /* One-sided, and this row is the whole reason for it: normalize() picks
+             no winner, so closing a ticked box would call a record an error and
+             leave no way back. */
+          log("the contradicting row keeps both boxes operable",
+            box(2, 0).checked === true && box(2, 1).checked === true &&
+            box(2, 0).disabled === false && box(2, 1).disabled === false);
+          log("its name is struck all the same", struck(2) === true);
+          log("and the contradiction is named", (note().textContent || "").length > 0,
+            note().textContent);
+
+          tick(box(0, 0));
+          log("recording one outcome closes the other column",
+            box(0, 1).disabled === true);
+          log("and says why", (box(0, 1).title || "").length > 0, box(0, 1).title);
+          log("and strikes the mission's name", struck(0) === true);
+          log("while the box just ticked stays operable", box(0, 0).disabled === false);
+
+          /* Live rather than decided once at render time: taking the tick back
+             opens the other column again and un-strikes the name. */
+          box(0, 0).checked = false;
+          fire(box(0, 0), "change");
+          log("taking it back opens the other column again",
+            box(0, 1).disabled === false);
+          log("and un-strikes the name", struck(0) === false);
+
+          /* The other direction too, or the lock could be wired one way only. */
+          tick(box(1, 1));
+          log("the same holds from the other column",
+            box(1, 0).disabled === true && struck(1) === true);
+
+          /* Clearing the seeded contradiction clears the note — the note follows
+             the sheet rather than the moment it was loaded. */
+          box(2, 1).checked = false;
+          fire(box(2, 1), "change");
+          log("clearing the contradiction clears the note",
+            note().textContent === "", note().textContent);
+          log("the row stays struck by the outcome that is left",
+            struck(2) === true && box(2, 0).checked === true);
+          log("and the column just cleared is now closed by it",
+            box(2, 1).disabled === true);
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).aoa1.state;
+            log("every outcome was stored on its own row and column",
+              st.missions[0].defeated === false && st.missions[0].notDefeated === false &&
+              st.missions[1].defeated === false && st.missions[1].notDefeated === true &&
+              st.missions[2].defeated === true && st.missions[2].notDefeated === false &&
+              st.missions[3].defeated === false && st.missions[3].notDefeated === false,
+              JSON.stringify(st.missions));
+            finish();
+          }, 500);
+        });
+      }
+
+      function caseAoaExpert() {
+        var seeded = aoaLog();
+        seeded.state.expert = false;
+        /* Filled in, but not visible at standard level — exactly the state that
+           would lose data if hiding were clearing. This sheet does not print
+           "(expert)" beside the field at all; the rulebook is what records it at
+           expert level only, so the gate is worth a case of its own. */
+        seeded.state.players = [{ hero: "Bishop", hp: 6 }];
+        seeded.state.missions = [{ defeated: true }, {}, {}, {}];
+        seed({ aoa1: seeded }, "aoa1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var card = function () { return d.querySelector(".player-card"); };
+          var toggle = function () {
+            return d.querySelector("[data-section=players] .panel-head .flag .sheet-check");
+          };
+
+          log("the switch is in the player panel head", !!toggle());
+          log("it starts unticked", toggle().checked === false);
+          log("standard hides the hit points", !card().querySelector(".num-input"));
+          log("the identity field is not hidden with them",
+            !!card().querySelector(".text-input"));
+          /* The level governs the hit points and nothing else: the table and the
+             footer are recorded at every campaign level. */
+          log("and nothing else on the sheet goes with them",
+            d.querySelectorAll('[data-section="missions"] tbody tr').length === 4 &&
+            d.querySelectorAll('[data-section="overseers"] .flag').length === 5);
+          log("and every printed section is still there",
+            d.querySelectorAll("[data-section]").length === AOA_SECTIONS.length,
+            d.querySelectorAll("[data-section]").length);
+
+          toggle().checked = true;
+          fire(toggle(), "change");
+          log("expert reveals the hit points",
+            !!card().querySelector(".num-input"));
+          log("and the value was still there",
+            card().querySelector(".num-input").value === "6",
+            card().querySelector(".num-input").value);
+
+          toggle().checked = false;
+          fire(toggle(), "change");
+          log("switching back hides them again", !card().querySelector(".num-input"));
+          /* Two re-renders have rebuilt the whole sheet by now, so what the
+             switch does not govern has to have come back as it was — the derived
+             lock included, since that is painted after every render rather than
+             stored. */
+          var row0 = d.querySelectorAll('[data-section="missions"] tbody tr')[0];
+          log("and the table came back with its record, its strike and its lock",
+            row0.querySelectorAll(".sheet-check")[0].checked === true &&
+            row0.querySelectorAll(".sheet-check")[1].disabled === true &&
+            row0.classList.contains("is-struck"));
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).aoa1.state;
+            log("the sheet is back at standard", st.expert === false);
+            log("but the hidden hit points survived", st.players[0].hp === 6,
+              st.players[0].hp);
+            finish();
+          }, 500);
+        });
+      }
+
+      function caseAoaPrint() {
+        var seeded = aoaLog();
+        seeded.state.players = [{ hero: "Bishop", hp: 9 }, { hero: "Magik", hp: 6 }];
+        /* All four states a row can be in, in one printout: defeated, not
+           defeated, the contradiction, and untouched. */
+        seeded.state.missions = [
+          { defeated: true, notDefeated: false },
+          { defeated: false, notDefeated: true },
+          { defeated: true, notDefeated: true },
+          { defeated: false, notDefeated: false },
+        ];
+        /* Two struck and three still available, so the printout has to show
+           both. The other three keys are left out on purpose — normalize() fills
+           them in as available. */
+        seeded.state.overseers = { abyss: true, "sugar-man": true };
+        seed({ aoa1: seeded }, "aoa1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          w.dispatchEvent(new w.Event("beforeprint"));
+          var pv = d.getElementById("print-view");
+          var text = pv.textContent;
+          var app = d.getElementById("campaign");
+          log("print view built", pv.children.length > 0, pv.children.length);
+          log("print names the campaign", /Age of Apocalypse \(MC45\)/.test(text));
+          log("print says which level was played",
+            /\[x\] Expertenmodus/.test(text), text.slice(0, 120));
+          /* Named, not just the bare number: textContent runs the lines
+             together, so a digit on its own proves nothing about where it sat. */
+          log("print carries the hit points",
+            /Lebenspunkte: 9/.test(text) && /Lebenspunkte: 6/.test(text));
+
+          /* The section headings are read off the screen, so a section can be
+             found in the printout without this file knowing its words. */
+          var heading = function (id) {
+            return app.querySelector('[data-section="' + id + '"] h2').textContent.trim();
+          };
+          var printed = function (id) {
+            var want = heading(id);
+            var out = null;
+            Array.prototype.forEach.call(pv.querySelectorAll(".print-section"), function (s) {
+              if (s.querySelector("h2").textContent.trim() === want) out = s;
+            });
+            return out;
+          };
+          log("every printed section has a block in the printout",
+            AOA_SECTIONS.every(function (id) { return !!printed(id); }),
+            AOA_SECTIONS.filter(function (id) { return !printed(id); }).join());
+
+          /* Every printed row, the undecided one included: a mission with
+             neither box set is still available, which is information about the
+             campaign rather than a gap in the record. */
+          var msLines = printed("missions").querySelectorAll(".print-line");
+          log("every mission prints, decided or not", msLines.length === 4, msLines.length);
+          log("and carries the name the screen shows",
+            Array.prototype.map.call(
+              app.querySelectorAll('[data-section="missions"] th[scope="row"]'),
+              function (n) { return n.textContent.trim(); })
+              .every(function (n) {
+                return printed("missions").textContent.indexOf(n) !== -1;
+              }));
+          /* The strike is the sheet's own record, so the printout makes the same
+             mark the pen would — on the name, and on nothing else. */
+          log("a decided mission prints its name struck through",
+            !!msLines[0].querySelector(".struck") &&
+            !!msLines[1].querySelector(".struck") &&
+            !!msLines[2].querySelector(".struck"));
+          log("and an undecided one does not",
+            msLines[3].querySelector(".struck") === null, msLines[3].textContent);
+          /* Both columns on every line, so a reader can tell "defeated" from
+             "not defeated" without the screen — and the contradiction prints as
+             the two ticks it is rather than being quietly resolved. */
+          log("the boxes match what the screen says",
+            Array.prototype.filter.call(msLines, function (l) {
+              return /\[x\]/.test(l.textContent);
+            }).length === 3 &&
+            (msLines[2].textContent.match(/\[x\]/g) || []).length === 2,
+            msLines[2].textContent);
+
+          /* Every minion, struck or not: which ones are still available matters
+             as much as which are gone, because every later setup draws from
+             exactly what is left. */
+          var ovLines = printed("overseers").querySelectorAll(".print-line");
+          log("every minion prints, struck or not", ovLines.length === 5, ovLines.length);
+          log("and the struck ones are the ticked ones",
+            Array.prototype.filter.call(ovLines, function (l) {
+              return !!l.querySelector(".struck");
+            }).length ===
+            Array.prototype.filter.call(
+              app.querySelectorAll('[data-section="overseers"] .sheet-check'),
+              function (b) { return b.checked; }).length,
+            ovLines.length);
+
+          /* Never printed: that a box is closed, and the wording of any lock. */
+          var closed = app.querySelector(
+            '[data-section="missions"] tbody tr:nth-child(2) .sheet-check');
+          log("the printout does not say what the screen closed",
+            closed.disabled === true && text.indexOf(closed.title) === -1,
+            closed.title);
+          finish();
+        });
+      }
+
       /* The share button is the one action that sits in the bar rather than in
          the menu, and it takes two different routes: a phone gets the system
          share sheet, a desktop gets the clipboard. Both routes are stubbed here
@@ -3818,7 +4238,7 @@
         });
       }
 
-      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint, mg: caseMg, mgrole: caseMgRole, mgexpert: caseMgExpert, mgprint: caseMgPrint, ne: caseNe, neschemes: caseNeSchemes, neexpert: caseNeExpert, neprint: caseNePrint, sharebtn: caseShareButton };
+      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint, mg: caseMg, mgrole: caseMgRole, mgexpert: caseMgExpert, mgprint: caseMgPrint, ne: caseNe, neschemes: caseNeSchemes, neexpert: caseNeExpert, neprint: caseNePrint, aoa: caseAoa, aoamissions: caseAoaMissions, aoaexpert: caseAoaExpert, aoaprint: caseAoaPrint, sharebtn: caseShareButton };
       (cases[CASE] || caseBasic)();
     </script>
   </body>
