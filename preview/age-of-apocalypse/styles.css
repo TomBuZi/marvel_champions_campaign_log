@@ -835,181 +835,197 @@
 }
 
 /* ---------- Campaign skin: Age of Apocalypse (MC45) ----------
-   Sampled from mc45_age_of_apocalypse_campaign_log.pdf, and this sheet needed
-   BOTH methods again — it is the third page the publisher printed from the MC32
-   template, so it carries the same trap and, unavoidably, some of the same
-   swatches.
+   Sampled from mc45_age_of_apocalypse_campaign_log.pdf, and unlike MC32 and
+   MC40 this palette comes from the VECTORISED INTERIOR ALONE. That is a
+   decision about what the sheet is, so it is worth stating plainly: everything
+   raster on this page is scenery and none of it is in the palette.
 
-   The vector fills of the content stream, weighted by area, give: #ffffff 41.6%
-   (the panel highlights and frames), #c7aaaa 25.6%, #231f20 12.7% (the frame,
-   the lettering and the big watermark X), #a9cad3 10.5% and #d2ebe2 9.4% (the
-   two alternating panel tints), #cec411 0.14% (the "Player Information" badge)
-   and #c4e9fb 0.04% (the five printed checkboxes). Strokes: #1e86a6 over 99% of
-   the stroked length — every cell outline on the sheet — plus #1f2e40 on the
-   checkbox borders and #400426 on the title rules.
+   The page is half raster, the same trap MC32 and MC40 carry — one image over
+   the whole page plus one over every panel strip. Two colours only exist there:
+   the orange comic border with its black hatching (#d84b28 averaged out of the
+   rendered pixmap) and the warm cream ground that the overlay lays over the
+   interior (#f4e8e0). NEITHER is used below. The border is a frame around the
+   sheet rather than part of it, and the cream is an overlay tint over a field
+   whose real colour is in the content stream. Reading either into the palette
+   turns a cool blue sheet into a warm brown one, which is what the first cut of
+   this block did.
 
-   The #c7aaaa in second place is a TRAP and is used nowhere below: it is a
-   540x540 fill lying UNDERNEATH the full-page raster, so it is never visible.
-   get_images() reports that raster plus one over every panel strip, which is
-   also why the orange comic border appears in no fill at all. Averaged out of
-   the rendered pixmap at 150 dpi: border #d84b28, title band #3d1027, and the
-   page ground actually visible inside the frame #f4e8e0, a warm cream.
+   So: the vector fills of the content stream, weighted by area, give #ffffff
+   41.6% (the panels and their highlights), #c7aaaa 25.6%, #231f20 12.7% (the
+   frame, the lettering and the big watermark X), #a9cad3 10.5% and #d2ebe2 9.4%
+   (the two tints the cells alternate between), #cec411 0.14% (the "Player
+   Information" badge) and #c4e9fb 0.04% (the five printed checkboxes). Strokes:
+   #1e86a6 over 99% of the stroked length -- every cell outline on the sheet --
+   plus #1f2e40 on the checkbox borders and #400426 on the title rules.
 
-   THREE OF THESE VALUES ARE THE SAME AS MC32'S, AND THAT IS A MEASUREMENT
-   RATHER THAN A COPY. --bar #1e86a6, --pill #a9cad3 and --panel-2 #d2ebe2 are
-   literally the swatches "mg" measured, because the publisher printed both
-   sheets from one template — just as the badge yellow is shared by MC32, MC40
-   and this sheet. Do not "clean up" the duplication: it is a fact about the
-   paper. What separates the two campaigns is where they differ on the paper:
-   --page, which is this sheet's warm cream against MC32's teal, and --check,
-   which MC32 had to derive because its sheet prints no box while this one does.
-   Against MC40 the separation is --bar, teal here against that sheet's wine —
-   and the wine is on this sheet too, as the title band, which is exactly the
-   role --ink-shadow plays behind the display title.
+   #c7aaaa in second place is a TRAP and is used nowhere below: it is a 540x540
+   fill lying UNDERNEATH the full-page raster, so it is never visible. It is also
+   the swatch MC40's --page was darkened from, which is the other reason not to
+   reach for it here.
 
-   Roles. --page is the cream, darkened the way MC21's rust, MC32's teal and
-   MC40's rose were darkened, because the printed tint carries no text at all
-   (#f4e8e0 against the ink would be a background, not a pairing); --bar is the
-   outline teal, which is exactly its job on the paper; --brick is derived
-   between the two. The panels keep the printed white-to-mint gradient, --pill
-   the table's own header row, --check the printed empty box, --zap the badge.
-   The orange lives in --halftone and --hatch, because on the sheet it IS
-   hatching rather than a field.
+   What is left is an entirely cool sheet: white and two pale tints inside teal
+   outlines, with a near-black ink, a navy box outline, a gold badge and a wine
+   rule under the title. Every value below is one of those.
+
+   THREE OF THEM ARE THE SAME AS MC32'S, AND THAT IS A MEASUREMENT RATHER THAN A
+   COPY. --bar #1e86a6, --pill #a9cad3 and --panel-2 #d2ebe2 are literally the
+   swatches "mg" measured, because the publisher printed both sheets from one
+   template -- just as the badge yellow is shared by MC32, MC40 and this sheet.
+   Do not "clean up" the duplication: it is a fact about the paper. What
+   separates the two campaigns is where the paper separates them. MC32 had to
+   derive both its --page and its --check, because its sheet prints no dark cool
+   field and no checkbox at all; this sheet prints both, so --page comes off the
+   navy of the printed box outline and --check is the printed box itself. MC32 is
+   the teal one, MC40 the rose one, and this is the navy one.
+
+   Roles. --page is the box-outline navy #1f2e40, lifted just far enough that the
+   panels still read as panels on it; --bar is the outline teal, which is exactly
+   its job on the paper; --brick is derived between the two, the way MC32 derived
+   its own. The panels keep the printed white-to-mint gradient, --pill the
+   table's own header row, --check the printed empty box, --zap the badge, and
+   --ink-shadow the wine of the title rules, which is the one warm accent the
+   content stream actually contains.
+
+   AND THERE IS NO ORANGE IN --halftone AND --hatch, which is where MC32 and
+   MC40 both put theirs. Their sheets hatch in orange inside the frame; this one
+   does not -- the orange is entirely outside it. So the comic devices this
+   project draws itself take the sheet's own teal and navy instead, and MC45 is
+   the campaign without orange hatching.
 
    The mark is derived from the two colours of the control itself rather than
-   borrowed from a neighbour: the printed box is pale blue inside a navy
-   outline, so a ticked one is that navy filled in with the pale blue as the
-   tick. Hence --check-on and --tick are both set here, in all four blocks.
+   borrowed from a neighbour: the printed box is pale blue inside a navy outline,
+   so a ticked one is that navy filled in with the pale blue as the tick. Hence
+   --check-on and --tick are both set here, in all four blocks.
 
-   Contrasts, computed rather than eyeballed. Light: --on-page on --page 8.3,
-   --on-brick on the derived mid brown 5.7, ink on --panel-1 16.3, on --panel-2
-   13.0, on --pill 9.4, on --check 12.7, --on-zap on the badge yellow 9.0,
+   Contrasts, computed rather than eyeballed. Light: --on-page on --page 10.8,
+   --on-brick on the derived mid navy-teal 7.9, ink on --panel-1 16.3, on
+   --panel-2 13.0, on --pill 9.4, on --check 12.7, --on-zap on the badge 9.0,
    --text-dim on --panel-1 7.3 and on --panel-2 5.8, and the pale-blue tick on
-   the navy box 10.8. Dark: --on-page on --page 15.6, --on-brick 11.3, ink on
-   the panels 11.0 and 11.4, on --pill 7.5, on --check 11.6, --on-zap 10.0,
-   --text-dim 7.1, and the dark tick on the light teal box 6.8.
+   the navy box 10.8. Dark: --on-page on --page 16.2, --on-brick 10.1, ink on the
+   panels 11.8 and 12.2, on --pill 8.0, on --check 12.5, --on-zap 10.0,
+   --text-dim 6.7, and the dark tick on the light teal box 6.8.
 
-   The dark mode carries the whole colour mood and not just the dominant hue:
-   the page stays warm — cream turned to night, not to neutral grey — while the
-   panels stay cool teal-to-mint the way the printed cells alternate, the pill
-   stays steel, and the accent stays the badge gold. A page that went cool in
-   the dark would read as MC32 rather than as this campaign's own night.
+   The dark mode carries the whole colour mood and not just the dominant hue: the
+   page stays navy rather than going neutral, the panel gradient still runs teal
+   to mint-green so the green side of the sheet survives, the pill stays a muted
+   steel, and the accent stays the badge gold.
 
    Four blocks, mirroring the four base blocks. A single [data-campaign] block
    would be more specific than the bare :root inside the dark media query and
    would therefore paint the light palette in dark mode; and [data-campaign]
    alone cannot beat an explicit [data-theme], so the two combinations are
-   spelled out. The repetition is deliberate: a delta-only block drifts apart
-   the next time a theme changes. */
+   spelled out. The repetition is deliberate: a delta-only block drifts apart the
+   next time a theme changes. */
 :root[data-campaign="aoa"] {
-  --page:      #623c23;   /* warm cream page field -- darkened from the
-                             sampled #f4e8e0, which cannot carry text     */
-  --bar:       #1e86a6;   /* teal: bars, borders, ink outlines -- the
-                             colour of every cell outline on the sheet    */
-  --brick:     #885330;   /* mid warm brown, table body -- derived and
-                             kept dark enough that the text on it holds
-                             5.7                                         */
-  --panel-1:   #ffffff;   /* panel gradient, top -- as printed            */
-  --panel-2:   #d2ebe2;   /* ... bottom, the sheet's mint                 */
-  --pill:      #a9cad3;   /* heading pill, table header row: the steel
-                             blue of the table's own header row           */
+  --page:      #25364c;   /* navy page field -- the printed checkbox outline
+                             #1f2e40, lifted so the panels read as panels  */
+  --bar:       #1e86a6;   /* teal: bars, borders, ink outlines -- the colour
+                             of every cell outline on the sheet            */
+  --brick:     #234e67;   /* mid navy-teal, table body -- derived between
+                             --page and --bar and kept dark enough that the
+                             text on it holds 7.9                          */
+  --panel-1:   #ffffff;   /* panel gradient, top -- as printed             */
+  --panel-2:   #d2ebe2;   /* ... bottom, the sheet's mint                  */
+  --pill:      #a9cad3;   /* heading pill, table header row: the steel blue
+                             of the table's own header row                 */
   --check:     #c4e9fb;   /* empty checkbox -- printed, not derived        */
   --zap:       #cec411;   /* accent gold, off the "Player Information"
-                             badge -- the sheet's only yellow             */
-  --ink:       #231f20;   /* near-black text                              */
+                             badge -- the sheet's only yellow              */
+  --ink:       #231f20;   /* near-black text                               */
 
   --bg-input: #fbfeff;
   --text-dim: #46586b;    /* dimmed from the navy of the printed box       */
-  --accent-strong: #10556b;
+  --accent-strong: #103f52;
   --accent-2: #2a9ec0;
   /* Stays red: here the colour carries meaning, not identity. */
   --danger: #a11208;
   --glow: 0 0 0 3px rgba(206, 196, 17, 0.55);
-  /* The border's orange, as the halftone and the hatching it is on paper. */
-  --halftone: rgba(216, 75, 40, 0.20);
-  --hatch: rgba(216, 75, 40, 0.12);
-  --on-brick: #fbf2ea;
-  --on-page: #f7ece4;
+  /* The sheet's own teal and navy, because this border hatches OUTSIDE the
+     frame and its orange is therefore not part of the sheet. */
+  --halftone: rgba(30, 134, 166, 0.18);
+  --hatch: rgba(31, 46, 64, 0.10);
+  --on-brick: #e9f3f8;
+  --on-page: #e8f2f7;
   --on-zap: #231f20;
   --on-danger: #fff4ef;
   /* The printed box filled in: its own navy outline as the ground, its own
      pale blue as the mark. */
   --check-on: #1f2e40;
   --tick: #c4e9fb;
-  /* The wine of the title band, which is what the display title sits on. */
-  --ink-shadow: 4px 4px 0 0 #3d1027;
-  --title-shadow: #f7ece4;
+  /* The wine of the title rules -- the one warm colour in the content stream. */
+  --ink-shadow: 4px 4px 0 0 #400426;
+  --title-shadow: #e8f2f7;
   --zap-strong: #e4da2a;
   --input-settled: #c2d5da;
-  --backdrop: rgba(24, 14, 8, 0.55);
+  --backdrop: rgba(6, 14, 22, 0.55);
 }
 /* --accent and --panel-border are left alone on purpose: they are already
    defined as var(--bar) and follow it by themselves. */
 @media (prefers-color-scheme: dark) {
   :root[data-campaign="aoa"] {
-    --page: #1a1109; --bar: #6cc0da; --brick: #3d2b1c;
+    --page: #0d151d; --bar: #6cc0da; --brick: #1d3d4c;
     --panel-1: #14343e; --panel-2: #10332e; --pill: #234e63;
-    --check: #10303c; --zap: #d9cf2c; --ink: #f2e9e2;
+    --check: #10303c; --zap: #d9cf2c; --ink: #eaf4f8;
     --check-on: #6cc0da; --tick: #10303c;
-    --bg-input: #241809; --panel-border: #2f6b7e; --text-dim: #a9c2cd;
+    --bg-input: #101b24; --panel-border: #2f6b7e; --text-dim: #a3bcc8;
     --accent: #6cc0da; --accent-strong: #a9e2f2; --accent-2: #86cfe4;
     --danger: #ff6b5c;
     --glow: 0 0 0 3px rgba(217, 207, 44, 0.40);
-    --halftone: rgba(216, 110, 70, 0.14);
-    --hatch: rgba(216, 110, 70, 0.10);
-    --ink-shadow: 4px 4px 0 0 #0f0805;
-    --on-brick: #f6e9dd;
-    --on-page: #f6e9dd;
+    --halftone: rgba(108, 192, 218, 0.12);
+    --hatch: rgba(108, 192, 218, 0.08);
+    --ink-shadow: 4px 4px 0 0 #050a0f;
+    --on-brick: #e8f2f7;
+    --on-page: #e8f2f7;
     --on-zap: #231f20;
     --on-danger: #2b0a07;
-    --title-shadow: #0f0805;
+    --title-shadow: #050a0f;
     --zap-strong: #ede34a;
-    --input-settled: #1c1207;
-    --backdrop: rgba(14, 8, 4, 0.6);
+    --input-settled: #0b1218;
+    --backdrop: rgba(4, 9, 14, 0.6);
   }
 }
 :root[data-campaign="aoa"][data-theme="light"] {
-  --page: #623c23; --bar: #1e86a6; --brick: #885330;
+  --page: #25364c; --bar: #1e86a6; --brick: #234e67;
   --panel-1: #ffffff; --panel-2: #d2ebe2; --pill: #a9cad3;
   --check: #c4e9fb; --zap: #cec411; --ink: #231f20;
   --check-on: #1f2e40; --tick: #c4e9fb;
   --bg-input: #fbfeff; --panel-border: var(--bar); --text-dim: #46586b;
-  --accent: var(--bar); --accent-strong: #10556b; --accent-2: #2a9ec0;
+  --accent: var(--bar); --accent-strong: #103f52; --accent-2: #2a9ec0;
   --danger: #a11208;
   --glow: 0 0 0 3px rgba(206, 196, 17, 0.55);
-  --halftone: rgba(216, 75, 40, 0.20);
-  --hatch: rgba(216, 75, 40, 0.12);
-  --ink-shadow: 4px 4px 0 0 #3d1027;
-  --on-brick: #fbf2ea;
-  --on-page: #f7ece4;
+  --halftone: rgba(30, 134, 166, 0.18);
+  --hatch: rgba(31, 46, 64, 0.10);
+  --ink-shadow: 4px 4px 0 0 #400426;
+  --on-brick: #e9f3f8;
+  --on-page: #e8f2f7;
   --on-zap: #231f20;
   --on-danger: #fff4ef;
-  --title-shadow: #f7ece4;
+  --title-shadow: #e8f2f7;
   --zap-strong: #e4da2a;
   --input-settled: #c2d5da;
-  --backdrop: rgba(24, 14, 8, 0.55);
+  --backdrop: rgba(6, 14, 22, 0.55);
   color-scheme: light;
 }
 :root[data-campaign="aoa"][data-theme="dark"] {
-  --page: #1a1109; --bar: #6cc0da; --brick: #3d2b1c;
+  --page: #0d151d; --bar: #6cc0da; --brick: #1d3d4c;
   --panel-1: #14343e; --panel-2: #10332e; --pill: #234e63;
-  --check: #10303c; --zap: #d9cf2c; --ink: #f2e9e2;
+  --check: #10303c; --zap: #d9cf2c; --ink: #eaf4f8;
   --check-on: #6cc0da; --tick: #10303c;
-  --bg-input: #241809; --panel-border: #2f6b7e; --text-dim: #a9c2cd;
+  --bg-input: #101b24; --panel-border: #2f6b7e; --text-dim: #a3bcc8;
   --accent: #6cc0da; --accent-strong: #a9e2f2; --accent-2: #86cfe4;
   --danger: #ff6b5c;
   --glow: 0 0 0 3px rgba(217, 207, 44, 0.40);
-  --halftone: rgba(216, 110, 70, 0.14);
-  --hatch: rgba(216, 110, 70, 0.10);
-  --ink-shadow: 4px 4px 0 0 #0f0805;
-  --on-brick: #f6e9dd;
-  --on-page: #f6e9dd;
+  --halftone: rgba(108, 192, 218, 0.12);
+  --hatch: rgba(108, 192, 218, 0.08);
+  --ink-shadow: 4px 4px 0 0 #050a0f;
+  --on-brick: #e8f2f7;
+  --on-page: #e8f2f7;
   --on-zap: #231f20;
   --on-danger: #2b0a07;
-  --title-shadow: #0f0805;
+  --title-shadow: #050a0f;
   --zap-strong: #ede34a;
-  --input-settled: #1c1207;
-  --backdrop: rgba(14, 8, 4, 0.6);
+  --input-settled: #0b1218;
+  --backdrop: rgba(4, 9, 14, 0.6);
   color-scheme: dark;
 }
 

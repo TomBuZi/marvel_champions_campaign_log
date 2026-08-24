@@ -105,6 +105,20 @@ Randkunst und gelbes Abzeichen bei MC32 und MC40 dieselbe Farbe: die
 Unterscheidung zweier Kampagnen kann dann nicht am Akzent hängen, sondern muss
 in `--page`, `--bar` und den Panels liegen.
 
+**MC45 hat die Falle dann zu Ende geführt, und die Lehre ist grundsätzlicher:
+das Raster liegt nicht nur auf dem Rand, es tönt den Innenbereich mit.** Der
+sichtbare Grund innerhalb des Rahmens liest sich dort als warme Creme
+(`#F4E8E0`), während der Innenbereich im Content-Stream vollständig kühl ist —
+Weiß, Stahlblau, Mint, Teal-Konturen. Wer die Creme abtastet und abdunkelt,
+macht aus einem kühlen Bogen einen braunen; genau das war der erste Anlauf, und
+es fiel erst auf, als jemand Bogen und Bildschirm nebeneinander hielt. Also:
+**erst entscheiden, welche Fläche überhaupt der Bogen ist**, und dann messen.
+Der orange Rand ist ein Rahmen *um* den Bogen, nicht ein Teil davon — bei MC45
+steht deshalb kein Orange in `--halftone`/`--hatch`, anders als bei MC32 und
+MC40, deren Bögen *innerhalb* des Rahmens orange schraffieren. Und die
+gemessenen Zahlen allein sagen das nicht: sie melden brav eine Cremefläche, die
+nur eine Überlagerung ist.
+
 ```python
 import fitz, collections
 pg = fitz.open("mcXX_....pdf")[0]
