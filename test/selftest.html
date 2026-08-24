@@ -4772,8 +4772,36 @@
           log("though their cards are counted all the same",
             /5/.test(spent(1)), spent(1));
 
+          /* What the player cannot pay for is closed as well, on top of the
+             group rule. The budget of a ROW includes the card it already
+             holds: player #1 has 4 left and row 0 holds Grapple (2), so this
+             row can afford 6 but not 7. */
+          var option = function (player, at, slug) {
+            var sel = gmwMarketSelect(d, player, at);
+            return Array.prototype.filter.call(sel.options, function (o) {
+              return o.value === slug;
+            })[0];
+          };
+          log("a card dearer than the row can pay for is closed and marked",
+            option(0, 0, "triple-threat").disabled === true &&
+            option(0, 0, "triple-threat").classList.contains("too-dear"));
+          log("and one it can pay for is neither",
+            option(0, 0, "cargo-hold").disabled === false &&
+            !option(0, 0, "cargo-hold").classList.contains("too-dear"));
+          /* Two different reasons to be closed, and only one of them is about
+             money: Onrush (5) is well within budget but player #2 holds it. */
+          log("a card somebody else holds is closed but not marked as dear",
+            option(0, 0, "onrush").disabled === true &&
+            !option(0, 0, "onrush").classList.contains("too-dear"));
+          /* No budget recorded is not the same statement as no budget. */
+          log("a player who recorded no balance has nothing locked for price",
+            !option(1, 0, "triple-threat").classList.contains("too-dear"));
+
           setEarned(0, "12");
           log("raising what was earned raises what is left", left(0) === "7", left(0));
+          log("and unlocks what it can now pay for",
+            option(0, 0, "triple-threat").disabled === false,
+            option(0, 0, "triple-threat").disabled);
           gmwAddMarketRow(d, 0);
           gmwPick(d, 0, 2, "cargo-hold");
           log("buying a card two panels down lowers it again",
@@ -4786,6 +4814,30 @@
           log("overspending shows a negative rather than stopping at zero",
             left(0) === "-8", left(0));
           log("and the row is marked", line(0).classList.contains("is-over"));
+          /* THE way out. An overspent sheet can arrive from an import or an old
+             share link, and a select whose own value is disabled would be a
+             sheet frozen solid — the MC60/MC32/MC40/MC45 rule, applied to a
+             select. The placeholder is the other way out. */
+          log("a row keeps its own card selectable even when overspent",
+            option(0, 0, "grapple").disabled === false &&
+            !option(0, 0, "grapple").classList.contains("too-dear"));
+          log("and the empty choice is never taken away",
+            gmwMarketSelect(d, 0, 0).options[0].disabled === false);
+          log("while everything it cannot pay for is shut",
+            option(0, 0, "brainstorm").disabled === true,
+            option(0, 0, "brainstorm").disabled);
+          /* Whether a native popup honours any of this is the platform's call,
+             and no screenshot can show it — but the computed style can say that
+             the rule matches and out-ranks the UA's own :disabled greying,
+             which is the part this file can be responsible for. Compared
+             against an unmarked option rather than against a hex, so a repaint
+             of the palette does not turn this into a colour test. */
+          var dearStyle = w.getComputedStyle(option(0, 0, "brainstorm"));
+          var plainStyle = w.getComputedStyle(option(0, 0, "grapple"));
+          log("and it is painted, not merely classed",
+            dearStyle.color !== plainStyle.color &&
+            dearStyle.fontStyle === "italic" && plainStyle.fontStyle !== "italic",
+            dearStyle.color + " vs " + plainStyle.color + " / " + dearStyle.fontStyle);
           /* Colour alone says nothing to a screen reader. */
           log("with the reason in words and not only in colour",
             line(0).title.trim().length > 0, line(0).title);

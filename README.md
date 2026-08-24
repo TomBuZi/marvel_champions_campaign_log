@@ -203,7 +203,15 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   den 28 gedruckten Marktkarten, gruppiert nach ihren Unit-Kosten von 1 bis 7 —
   und weil der Bogen diese Kosten kennt, rechnet er mit ihnen (siehe unten).
   Eine Karte, die irgendein Spieler gekauft hat, ist bei allen anderen
-  abgeblendet; ein Spieler selbst darf beliebig viele halten. Die vier
+  abgeblendet; ein Spieler selbst darf beliebig viele halten. Dazu kommt eine
+  zweite Sperre, die es sonst nirgends gibt: eine Karte, die **mehr kostet als
+  die übrigen Units** des Spielers, steht rot und kursiv in seiner Liste und ist
+  nicht wählbar. Gerechnet wird je **Zeile**, nicht je Spieler — eine Zeile, die
+  schon eine Karte hält, bekommt deren Kosten hinzugerechnet, denn eine 4 gegen
+  eine 6 zu tauschen kostet 2. Beide Sperren sind einseitig: die eigene Karte
+  einer Zeile bleibt wählbar, der Leereintrag auch, und die verdienten Units
+  sind nie gesperrt — ein überzogener Bogen aus einem Import friert also nicht
+  fest. Ohne eingetragene Units wird gar nichts wegen des Preises gesperrt. Die vier
   **Galaktische-Artefakte-Nebenpläne** dagegen sind Kästchen über dem Satz,
   obwohl der Bogen vier **numerierte** Zeilen druckt: anders als bei MC27s
   Osborn Tech und MC40s Marauders trägt die Nummer hier nichts — das Set hat

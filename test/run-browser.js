@@ -40,7 +40,7 @@ const CASES = {
   mg: 26, mgrole: 38, mgexpert: 12, mgprint: 16,
   ne: 23, neschemes: 14, neexpert: 12, neprint: 14,
   aoa: 18, aoamissions: 16, aoaexpert: 12, aoaprint: 13,
-  gmw: 26, gmwmarket: 30, gmwunits: 14, gmwexpert: 15, gmwprint: 16,
+  gmw: 26, gmwmarket: 30, gmwunits: 23, gmwexpert: 15, gmwprint: 16,
 };
 const cases = process.argv.slice(2).length ? process.argv.slice(2) : Object.keys(CASES);
 const PORT = Number(process.env.PORT || 8139);

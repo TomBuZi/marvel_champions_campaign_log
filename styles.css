@@ -2170,6 +2170,18 @@ body[class*="dnd-"] .entry-list { min-height: 2.2rem; outline: 1px dashed var(--
    the gap that comes with it. */
 .entry-row--pool.has-note { grid-template-columns: 1fr auto auto; }
 
+/* A Market card dearer than the player has left. It is disabled as well, so
+   the lock holds even where a browser refuses to paint inside a native popup —
+   how much of the colour and the slant actually survive there is the platform's
+   call, and the greying the UA does to a disabled option is the floor. Hence
+   the weight of the selector: it has to out-rank the UA's own :disabled rule
+   rather than merely differ from it. */
+.pool-select option.too-dear,
+.pool-select option.too-dear:disabled {
+  color: var(--danger);
+  font-style: italic;
+}
+
 /* The price of the card a row holds. Only the number is shown, because four
    player columns have no room for the words; the words ride along as the
    accessible name, which is the same bargain .icon-pp strikes. */

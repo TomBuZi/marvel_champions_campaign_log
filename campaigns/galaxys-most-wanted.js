@@ -16,6 +16,23 @@
    is a bug nobody can see. A negative balance is shown rather than clamped:
    overspending is a mistake worth pointing at, not one worth hiding.
 
+   THE BALANCE ALSO CLOSES THE CARDS IT CANNOT PAY FOR. A Market card costing
+   more than the player has left is disabled in their list and drawn red and
+   italic, on top of the group rule that already closes what somebody else
+   bought. The budget is per ROW rather than per player: a row that already
+   holds a card gets that card's cost added back, because swapping a 4 for a 6
+   costs 2 and not 6. Without that, a player who spent everything could not even
+   re-pick what they are already holding.
+
+   THIS LOCK CANNOT CORNER ANYONE, which is the MC60/MC32/MC40/MC45 rule applied
+   to a select instead of a checkbox. A row's OWN card is never disabled, so an
+   overspent sheet arriving from an import or an old #log= link stays operable;
+   the placeholder is never disabled, so a row can always be emptied; and the
+   earned figure above is never restricted, so the way out is always on screen.
+   And where the budget is unknown — nothing entered under "units earned" —
+   nothing is locked at all, because "not recorded" is not the same statement as
+   "nothing left".
+
    THE COMPUTED BALANCE HAS ONE BLIND SPOT, and it is stated on screen rather
    than buried here. Market cards are not the only thing units buy: at expert
    level the setup of scenarios #2 to #5 lets each player "subtract 1 unit from
@@ -653,7 +670,7 @@
     /* Last, once everything is in the document: both of these span panels, so
        neither can be decided while a single control is being built. Derived,
        never stored. */
-    paintMarket(t, lang);
+    paintMarket(t, state);
     paintPowerStone(t, state);
     paintUnits(t, state);
   }
@@ -792,6 +809,8 @@
           player.unitsEarned = next;
           ctx.save();
           paintUnits(t, state);
+          /* The budget moved, so what this player can afford moved with it. */
+          paintMarket(t, state);
         },
       })));
 
@@ -856,7 +875,7 @@
     /* Buying a card moves a number two panels up, so both are repainted from
        one handler. */
     function repaint() {
-      paintMarket(t, lang);
+      paintMarket(t, state);
       paintUnits(t, state);
     }
 
@@ -903,6 +922,12 @@
     });
 
     section.appendChild(grid);
+    /* A greyed-out option says "no" without saying why, and there are two
+       different reasons here. One line naming both beats leaving the reader to
+       work out which applies. */
+    var rule = W.el("p", "hint");
+    rule.textContent = t("marketLocks");
+    section.appendChild(rule);
     return section;
   }
 
@@ -915,9 +940,12 @@
      old #log= link holding the same card twice stays operable and can be sorted
      out on screen. normalize() has the last word on load; it does not get to
      freeze anything afterwards. */
-  function paintMarket(t, lang) {
+  function paintMarket(t, state) {
     var selects = document.querySelectorAll("[data-market-select]");
     if (!selects.length) return;
+    /* First, because syncUnique() ASSIGNS `disabled` rather than adding to it:
+       it re-enables everything nobody has taken. Anything else that wants a
+       card closed has to come after it and may only ever close, never open. */
     W.syncUnique(Array.prototype.slice.call(selects));
 
     /* And the price behind each one. The number alone is what is shown, because
@@ -936,6 +964,31 @@
       if (label) note.setAttribute("aria-label", label);
       else note.removeAttribute("aria-label");
       note.hidden = !entry;
+    });
+
+    /* And what the player cannot pay for. Runs per select rather than per
+       player, because the budget of a row includes the card the row is already
+       holding — swapping a 4 for a 6 costs 2. See the file header for why this
+       can never corner anybody. */
+    Array.prototype.forEach.call(selects, function (select) {
+      var at = String(select.getAttribute("data-market-select")).split("-");
+      var player = state.players[Number(at[0])];
+      var held = player ? poolEntry(MARKET, select.value) : null;
+      /* No budget recorded means no budget known, so nothing is locked. */
+      var budget = (player && player.unitsEarned != null)
+        ? unitsLeft(player) + (held ? held.cost : 0)
+        : null;
+
+      Array.prototype.forEach.call(select.options, function (option) {
+        var entry = option.value ? poolEntry(MARKET, option.value) : null;
+        /* Never the placeholder, and never the row's own card: those two are
+           the whole of the way back out. */
+        var dear = !!entry && budget != null && entry.cost > budget &&
+          option.value !== select.value;
+        option.classList.toggle("too-dear", dear);
+        /* Only ever closes. Uniqueness had its say above and keeps it. */
+        if (dear) option.disabled = true;
+      });
     });
   }
 
@@ -1273,8 +1326,8 @@
     render: render,
     renderPrint: renderPrint,
 
-    helpDe: "Der MC16-Bogen läuft über zwei gedruckte Seiten, und sein Spielerbereich ist eine Einkaufsliste. Oben stehen je Spieler Identität, verbleibende Lebenspunkte und die Units. Die Units sind die Währung der Guardians: sie werden nach jedem Szenario notiert und zwischen den Szenarien für Marktkarten ausgegeben. Deshalb stehen sie auf beiden Stufen und nicht hinter dem Expertenhaken — die Expertenregeln geben ihnen nur eine weitere Verwendung, nämlich die eigene Identität beim Spielaufbau auf ihre aufgedruckten Lebenspunkte zu heilen. Und hier weicht der Bogen bewusst vom Papier ab: gedruckt ist ein Feld „Übrige Units“, in das man mit dem Bleistift den jeweiligen Kontostand schreibt und ihn bei jedem Kauf ausradiert. Eingetragen werden hier stattdessen die „Verdienten Units“, also alles, was die Kampagne bisher ausgeschüttet hat — und „Übrige Units“ wird daraus gerechnet: verdient minus die Unit-Kosten der Marktkarten, die daneben eingetragen sind. Der Grund ist, dass dieser Bogen jede dieser Kosten ohnehin kennt; ein zweites Mal danach zu fragen hieße, den Leser rechnen zu lassen, was die Datei rechnen kann — und eine „übrige“ Zahl, die den danebenstehenden Karten still widerspricht, ist ein Fehler, den niemand sieht. Wird mehr ausgegeben als verdient, steht die Zahl rot da statt bei null zu stoppen: Überziehen ist ein Fehler, auf den man zeigen will. Eines kann die Rechnung nicht sehen: auf Expertenstufe darf jeder Spieler beim Spielaufbau der Szenarien 2 bis 5 eine Unit ausgeben, um seine Identität zu heilen, und das hält der Bogen nirgends fest. Solange der Expertenhaken gesetzt ist, sagt der Spielerbereich das auch. Darunter folgt „Marktkarten im Spielerdeck“ als eine Überschrift über allen vier Spalten, so wie der Bogen sie druckt. Auf dem Papier ist das eine leere Fläche, hier sind es Auswahlfelder aus den 28 gedruckten Marktkarten, sortiert nach Unit-Kosten von 1 bis 7. Der Grund ist eine Regel, die das Papier nur beschreiben kann: von jeder Marktkarte darf die Gruppe während einer Kampagne nur ein Exemplar verwenden. Eine Karte, die irgendein Spieler gekauft hat, ist deshalb bei allen anderen gesperrt — ein Spieler darf aber beliebig viele haben. Die Sperre ist einseitig, wie bei MC60, MC32, MC40 und MC45: eine bereits eingetragene Karte bleibt auswählbar, damit ein Bogen aus einem Import oder einem alten Link nie festfriert. „Karten in der Sammlung“ ist dagegen Freitext, denn die Sammlung füllt sich mit dem, was die Spieler gerade auf der Hand hatten, und ist keine gedruckte Liste. Einträge lassen sich zwischen den Spielerspalten ziehen, weil Szenario #3 jeden Spieler genau seine eigenen notierten Karten aus dem Spiel entfernen lässt. Die vier „Galaktische Artefakte“-Nebenpläne sind Kästchen über dem Satz und keine numerierten Zeilen: der Bogen numeriert zwar vier Zeilen, aber die Nummer trägt nichts — das Set hat genau vier Nebenpläne, und Szenario #4 liest sie als Menge zurück, ein Spielaufbau-Effekt je notiertem Nebenplan. Unten stehen drei Felder. „Kontrolle des Machtsteins“ ist ein Auswahlfeld über die oben eingetragenen Identitäten; gespeichert wird der Spielerplatz, angezeigt der aktuelle Name, damit eine später korrigierte Identität die Eintragung nicht veralten lässt. „Ausweichmarker“ ist eine Zahl, und daneben steht abgeleitet, wie viel zusätzliche Bedrohung Szenario #5 daraus auf „Zangenmanöver“ legt: 3 minus die Zahl, mindestens 0. „Kopfgeldjäger besiegt?“ sind vier Kästchen, eines je Szenario 1 bis 4. Darunter steht abgeleitet, welche Karten die aktuelle Zahl der Kreuze freischaltet — und zu jeder, ab welchem Szenario sie überhaupt geprüft wird, denn die Staffel wächst mit dem Szenario: drei Kreuze bedeuten in Szenario #3 nicht drei zusätzliche Karten. Beide abgeleiteten Zeilen werden nur gerechnet, nie gespeichert und nicht mitgedruckt. Oben im Spielerbereich sitzt der Haken „Expertenmodus“. Er blendet die verbleibenden Lebenspunkte aus, und hier kennzeichnet der gedruckte Bogen das Feld ausnahmsweise selbst, indem er „(Experte)“ darunter setzt. Ausblenden heißt nicht löschen — der Wert bleibt im Bogen, im Export und im Share-Link. Ein fünftes Szenario gibt es hier nicht: Ronan der Ankläger kommt auf dem gedruckten Bogen kein einziges Mal vor, „Kopfgeldjäger besiegt?“ trägt die Unterzeile „Sieg-Anweisung für Szenarien #1 – 4“, und im Finale gibt es nichts festzuhalten außer dem Sieg. Die Abschnittsnamen und ihre Unterzeilen stehen hier so, wie die deutsche Spielanleitung sie auf den Seiten 22 und 23 druckt. Hinter jeder gewählten Marktkarte stehen ihre Unit-Kosten, denn ein zugeklapptes Auswahlfeld zeigt nur den Namen — ohne die Zahl daneben ließe sich der Kontostand oben nicht gegen die Karten prüfen, aus denen er fällt.",
-    helpEn: "The MC16 sheet runs over two printed pages, and its player area is a shopping list. At the top each player has an identity, remaining hit points and their units. Units are the Guardians' currency: they are recorded after every scenario and spent between scenarios on Market cards. That is why they sit at both levels rather than behind the expert switch — the expert rules only give them one more use, healing your identity to its printed hit points at setup. And here the sheet departs from the paper on purpose: the print has an “Unspent Units” box, a running balance you write in pencil and rub out again with every purchase. What is entered here instead is “Units earned”, everything the campaign has paid out so far — and “Unspent Units” is computed from it: earned minus the unit cost of the Market cards recorded beside it. The reason is that this sheet already knows every one of those costs, so asking a second time for their difference would be asking the reader to do arithmetic the file can do — and an “unspent” number that silently disagrees with the cards next to it is a bug nobody can see. Spend more than you earned and the figure goes red rather than stopping at zero: overspending is a mistake worth pointing at. One thing the sum cannot see: at expert level the setup of scenarios #2 to #5 lets each player spend a unit to heal their identity, and nothing on the sheet records that they did. While the expert switch is on, the player area says so. Below that comes “Market Cards in Player's Deck” as one heading over all four columns, exactly as the sheet prints it. On paper it is an empty area; here it is selects out of the 28 printed Market cards, grouped by unit cost from 1 to 7. The reason is a rule the paper can only describe: only one copy of each Market card may be used by the players as a group during a campaign. A card bought by any player is therefore closed to all the others — though one player may hold as many as they like. The lock is one-sided, as in MC60, MC32, MC40 and MC45: a card already recorded stays selectable, so a sheet arriving from an import or an old share link never freezes solid. “Cards in The Collection”, by contrast, is free text: The Collection fills up with whatever the players happened to be holding, and is not a printed list. Entries can be dragged between the player columns, because scenario #3 has each player remove exactly their own recorded cards from the game. The four Galactic Artifacts side schemes are boxes over the set rather than numbered lines: the sheet does number four lines, but the number carries nothing — the set has exactly four side schemes, and scenario #4 reads them back as a set, one setup effect per recorded scheme. Three fields sit at the bottom. “Power Stone Control” is a select over the identities entered above; what is stored is the player's seat and what is shown is their current name, so correcting an identity later does not leave the record stale. “Evasion Counters” is a number, and beside it a derived line says how much extra threat scenario #5 puts on Pincer Maneuver because of it: 3 minus the number, floored at zero. “Headhunter Defeated?” is four boxes, one per scenario 1 to 4. Under them a derived line names the cards the current number of marks unlocks — and for each one, the scenario it is first checked from, because the ladder grows with the scenario: three marks do not mean three extra cards in scenario #3. Both derived lines are computed only, never stored, and never printed. At the top of the player area sits the “Expert level” box. It hides the remaining hit points, and here the printed sheet marks the field itself for once, setting “(Expert)” under it. Hiding is not clearing — the value stays in the sheet, in the export and in a share link. There is no fifth scenario here: Ronan the Accuser does not appear on the printed sheet once, “Headhunter Defeated?” is subtitled “Victory for Scenarios #1 – 4”, and the finale has nothing to record beyond the win. Behind every chosen Market card stands its unit cost, because a closed select shows only the name — without the figure beside it the balance above could not be checked against the cards it comes from.",
+    helpDe: "Der MC16-Bogen läuft über zwei gedruckte Seiten, und sein Spielerbereich ist eine Einkaufsliste. Oben stehen je Spieler Identität, verbleibende Lebenspunkte und die Units. Die Units sind die Währung der Guardians: sie werden nach jedem Szenario notiert und zwischen den Szenarien für Marktkarten ausgegeben. Deshalb stehen sie auf beiden Stufen und nicht hinter dem Expertenhaken — die Expertenregeln geben ihnen nur eine weitere Verwendung, nämlich die eigene Identität beim Spielaufbau auf ihre aufgedruckten Lebenspunkte zu heilen. Und hier weicht der Bogen bewusst vom Papier ab: gedruckt ist ein Feld „Übrige Units“, in das man mit dem Bleistift den jeweiligen Kontostand schreibt und ihn bei jedem Kauf ausradiert. Eingetragen werden hier stattdessen die „Verdienten Units“, also alles, was die Kampagne bisher ausgeschüttet hat — und „Übrige Units“ wird daraus gerechnet: verdient minus die Unit-Kosten der Marktkarten, die daneben eingetragen sind. Der Grund ist, dass dieser Bogen jede dieser Kosten ohnehin kennt; ein zweites Mal danach zu fragen hieße, den Leser rechnen zu lassen, was die Datei rechnen kann — und eine „übrige“ Zahl, die den danebenstehenden Karten still widerspricht, ist ein Fehler, den niemand sieht. Wird mehr ausgegeben als verdient, steht die Zahl rot da statt bei null zu stoppen: Überziehen ist ein Fehler, auf den man zeigen will. Eines kann die Rechnung nicht sehen: auf Expertenstufe darf jeder Spieler beim Spielaufbau der Szenarien 2 bis 5 eine Unit ausgeben, um seine Identität zu heilen, und das hält der Bogen nirgends fest. Solange der Expertenhaken gesetzt ist, sagt der Spielerbereich das auch. Darunter folgt „Marktkarten im Spielerdeck“ als eine Überschrift über allen vier Spalten, so wie der Bogen sie druckt. Auf dem Papier ist das eine leere Fläche, hier sind es Auswahlfelder aus den 28 gedruckten Marktkarten, sortiert nach Unit-Kosten von 1 bis 7. Der Grund ist eine Regel, die das Papier nur beschreiben kann: von jeder Marktkarte darf die Gruppe während einer Kampagne nur ein Exemplar verwenden. Eine Karte, die irgendein Spieler gekauft hat, ist deshalb bei allen anderen gesperrt — ein Spieler darf aber beliebig viele haben. Und weil der Bogen die Unit-Kosten kennt, sperrt er auch, was der Spieler nicht bezahlen kann: eine Karte, die mehr kostet als seine übrigen Units, steht rot und kursiv in der Liste und ist nicht wählbar. Gerechnet wird dabei je Zeile und nicht je Spieler — eine Zeile, die schon eine Karte hält, bekommt deren Kosten hinzugerechnet, denn eine 4 gegen eine 6 zu tauschen kostet 2 und nicht 6. Beide Sperren sind einseitig, wie bei MC60, MC32, MC40 und MC45: die eigene Karte einer Zeile bleibt immer wählbar, der Leereintrag ebenso, und die verdienten Units oben sind nie gesperrt. Ein Bogen aus einem Import oder einem alten Link friert deshalb nie fest, auch wenn er überzogen ankommt. Wo gar nichts unter „Verdiente Units“ steht, wird auch nichts wegen des Preises gesperrt: nicht notiert ist nicht dasselbe wie nichts übrig. „Karten in der Sammlung“ ist dagegen Freitext, denn die Sammlung füllt sich mit dem, was die Spieler gerade auf der Hand hatten, und ist keine gedruckte Liste. Einträge lassen sich zwischen den Spielerspalten ziehen, weil Szenario #3 jeden Spieler genau seine eigenen notierten Karten aus dem Spiel entfernen lässt. Die vier „Galaktische Artefakte“-Nebenpläne sind Kästchen über dem Satz und keine numerierten Zeilen: der Bogen numeriert zwar vier Zeilen, aber die Nummer trägt nichts — das Set hat genau vier Nebenpläne, und Szenario #4 liest sie als Menge zurück, ein Spielaufbau-Effekt je notiertem Nebenplan. Unten stehen drei Felder. „Kontrolle des Machtsteins“ ist ein Auswahlfeld über die oben eingetragenen Identitäten; gespeichert wird der Spielerplatz, angezeigt der aktuelle Name, damit eine später korrigierte Identität die Eintragung nicht veralten lässt. „Ausweichmarker“ ist eine Zahl, und daneben steht abgeleitet, wie viel zusätzliche Bedrohung Szenario #5 daraus auf „Zangenmanöver“ legt: 3 minus die Zahl, mindestens 0. „Kopfgeldjäger besiegt?“ sind vier Kästchen, eines je Szenario 1 bis 4. Darunter steht abgeleitet, welche Karten die aktuelle Zahl der Kreuze freischaltet — und zu jeder, ab welchem Szenario sie überhaupt geprüft wird, denn die Staffel wächst mit dem Szenario: drei Kreuze bedeuten in Szenario #3 nicht drei zusätzliche Karten. Beide abgeleiteten Zeilen werden nur gerechnet, nie gespeichert und nicht mitgedruckt. Oben im Spielerbereich sitzt der Haken „Expertenmodus“. Er blendet die verbleibenden Lebenspunkte aus, und hier kennzeichnet der gedruckte Bogen das Feld ausnahmsweise selbst, indem er „(Experte)“ darunter setzt. Ausblenden heißt nicht löschen — der Wert bleibt im Bogen, im Export und im Share-Link. Ein fünftes Szenario gibt es hier nicht: Ronan der Ankläger kommt auf dem gedruckten Bogen kein einziges Mal vor, „Kopfgeldjäger besiegt?“ trägt die Unterzeile „Sieg-Anweisung für Szenarien #1 – 4“, und im Finale gibt es nichts festzuhalten außer dem Sieg. Die Abschnittsnamen und ihre Unterzeilen stehen hier so, wie die deutsche Spielanleitung sie auf den Seiten 22 und 23 druckt. Hinter jeder gewählten Marktkarte stehen ihre Unit-Kosten, denn ein zugeklapptes Auswahlfeld zeigt nur den Namen — ohne die Zahl daneben ließe sich der Kontostand oben nicht gegen die Karten prüfen, aus denen er fällt.",
+    helpEn: "The MC16 sheet runs over two printed pages, and its player area is a shopping list. At the top each player has an identity, remaining hit points and their units. Units are the Guardians' currency: they are recorded after every scenario and spent between scenarios on Market cards. That is why they sit at both levels rather than behind the expert switch — the expert rules only give them one more use, healing your identity to its printed hit points at setup. And here the sheet departs from the paper on purpose: the print has an “Unspent Units” box, a running balance you write in pencil and rub out again with every purchase. What is entered here instead is “Units earned”, everything the campaign has paid out so far — and “Unspent Units” is computed from it: earned minus the unit cost of the Market cards recorded beside it. The reason is that this sheet already knows every one of those costs, so asking a second time for their difference would be asking the reader to do arithmetic the file can do — and an “unspent” number that silently disagrees with the cards next to it is a bug nobody can see. Spend more than you earned and the figure goes red rather than stopping at zero: overspending is a mistake worth pointing at. One thing the sum cannot see: at expert level the setup of scenarios #2 to #5 lets each player spend a unit to heal their identity, and nothing on the sheet records that they did. While the expert switch is on, the player area says so. Below that comes “Market Cards in Player's Deck” as one heading over all four columns, exactly as the sheet prints it. On paper it is an empty area; here it is selects out of the 28 printed Market cards, grouped by unit cost from 1 to 7. The reason is a rule the paper can only describe: only one copy of each Market card may be used by the players as a group during a campaign. A card bought by any player is therefore closed to all the others — though one player may hold as many as they like. And because the sheet knows the unit costs, it also closes what the player cannot pay for: a card dearer than their unspent units is drawn red and italic in the list and cannot be picked. The budget is worked out per ROW rather than per player — a row already holding a card gets that card's cost added back, because swapping a 4 for a 6 costs 2 and not 6. Both locks are one-sided, as in MC60, MC32, MC40 and MC45: a row's own card always stays selectable, so does the empty choice, and the units earned above are never restricted. A sheet arriving from an import or an old share link therefore never freezes solid, even when it arrives overspent. Where nothing is entered under “Units earned”, nothing is locked for price either: not recorded is not the same as nothing left. “Cards in The Collection”, by contrast, is free text: The Collection fills up with whatever the players happened to be holding, and is not a printed list. Entries can be dragged between the player columns, because scenario #3 has each player remove exactly their own recorded cards from the game. The four Galactic Artifacts side schemes are boxes over the set rather than numbered lines: the sheet does number four lines, but the number carries nothing — the set has exactly four side schemes, and scenario #4 reads them back as a set, one setup effect per recorded scheme. Three fields sit at the bottom. “Power Stone Control” is a select over the identities entered above; what is stored is the player's seat and what is shown is their current name, so correcting an identity later does not leave the record stale. “Evasion Counters” is a number, and beside it a derived line says how much extra threat scenario #5 puts on Pincer Maneuver because of it: 3 minus the number, floored at zero. “Headhunter Defeated?” is four boxes, one per scenario 1 to 4. Under them a derived line names the cards the current number of marks unlocks — and for each one, the scenario it is first checked from, because the ladder grows with the scenario: three marks do not mean three extra cards in scenario #3. Both derived lines are computed only, never stored, and never printed. At the top of the player area sits the “Expert level” box. It hides the remaining hit points, and here the printed sheet marks the field itself for once, setting “(Expert)” under it. Hiding is not clearing — the value stays in the sheet, in the export and in a share link. There is no fifth scenario here: Ronan the Accuser does not appear on the printed sheet once, “Headhunter Defeated?” is subtitled “Victory for Scenarios #1 – 4”, and the finale has nothing to record beyond the win. Behind every chosen Market card stands its unit cost, because a closed select shows only the name — without the figure beside it the balance above could not be checked against the cards it comes from.",
 
     /* Zwei Gruppen, und die Unterscheidung sagt, wer eine Änderung entscheidet:
 
@@ -1335,6 +1388,7 @@
         addMarketCard: "+ Marktkarte",
         /* "%s" = Unit-Kosten. Überschrift einer Gruppe im Auswahlfeld. */
         unitCostGroup: "Unit-Kosten %s",
+        marketLocks: "Gesperrt ist, was ein anderer Spieler schon gekauft hat — und rot, was mehr kostet als die übrigen Units des Spielers. Die eigene Karte einer Zeile bleibt immer wählbar.",
         powerStoneNobody: "– niemand –",
         /* "%s" = Identität, "%s" = Spielernummer. */
         powerStoneOption: "%s (Spieler #%s)",
@@ -1390,6 +1444,7 @@
         marketPlaceholder: "Market card …",
         addMarketCard: "+ Market card",
         unitCostGroup: "Unit Cost %s",
+        marketLocks: "Cards another player has already bought are closed — and cards dearer than this player's unspent units are red. A row's own card always stays selectable.",
         powerStoneNobody: "– nobody –",
         powerStoneOption: "%s (Player #%s)",
         powerStoneNoIdentity: "No identity entered yet — they go in the player area above.",
