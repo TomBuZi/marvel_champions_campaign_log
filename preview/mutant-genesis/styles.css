@@ -1048,37 +1048,27 @@ button:focus-visible {
   border-radius: 46% 46% 14% 14% / 68% 68% 22% 22%;
 }
 
-/* The share mark: three dots joined by two lines, drawn rather than typed,
-   because Unicode has no code point for it and this project draws its devices
-   anyway. Geometry from the usual 24-unit grid, scaled by em so it follows the
-   button's font size: dots of radius 3 at (18,5), (6,12) and (18,19), and two
-   bars of 2 units joining them. The dots are three radial gradients on the box
-   itself — the same trick as the halftone — which leaves ::before and ::after
-   for the two bars, so the whole icon is one element. */
+/* The share mark in the topbar — the only SVG in this project, and the reason
+   is that it is the only device here that has to be a precise figure rather
+   than a texture. Halftone, hatching and the per-player mark are approximations
+   by nature; three dots and two bars are not, and CSS gradients gave soft edges
+   and a rotated-rectangle angle that never quite met the dots. The geometry
+   lives in index.html so it can be read as numbers; this only sizes it and
+   hands it the current text colour, so it follows the theme and the button's
+   font size by itself. */
 .icon-share {
   display: inline-block;
-  position: relative;
   width: 1em;
   height: 1em;
   vertical-align: -0.14em;
-  background:
-    radial-gradient(circle 0.125em at 0.75em 0.208em, currentColor 96%, transparent 98%),
-    radial-gradient(circle 0.125em at 0.25em 0.5em,   currentColor 96%, transparent 98%),
-    radial-gradient(circle 0.125em at 0.75em 0.792em, currentColor 96%, transparent 98%);
 }
-.icon-share::before,
-.icon-share::after {
-  content: "";
-  position: absolute;
-  left: 0.5em;
-  width: 0.34em;
-  height: 0.084em;
-  margin-left: -0.17em;
-  margin-top: -0.042em;
-  background: currentColor;
+.icon-share circle { fill: currentColor; }
+.icon-share path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
 }
-.icon-share::before { top: 0.354em; transform: rotate(-33deg); }
-.icon-share::after { top: 0.646em; transform: rotate(33deg); }
 
 /* Why a field is closed, said in the open rather than only in a tooltip — the
    rung that opens it is information the player wants before they get there.

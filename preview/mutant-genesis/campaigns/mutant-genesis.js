@@ -124,14 +124,17 @@
      Every card carries an English and a German name, as in MC10, MC21 and
      MC27. `de: null` shows the English name and tags it lang="en".
 
-     Here `de: null` means the German name is STILL TO BE ENTERED from the
-     German printing — open work, the MC27 case, not the MC10/MC21 case where a
-     name stays English on purpose. marvelsdb carries no German data for this
-     product at all: its German pack file is an English copy. Resist marking
-     any of these as "stays English on purpose" — that would be a claim about a
-     printing nobody here has read, and mistaking open work for a decision is
-     how a later reader tidies up the wrong thing. Filling one in migrates
-     nothing, because only the slug is ever persisted. */
+     The German names are entered, taken from the German printing rather than
+     from marvelsdb, which carries no German data for this product at all — its
+     German pack file is an English copy.
+
+     What `de: null` is left means the MC10/MC21 thing: the name STAYS ENGLISH
+     in the German printing, and that is a decision rather than open work. All
+     six are characters — Nimrod and Bastion below, and the four CAPTIVE allies
+     — which is the convention of the German edition throughout: figures keep
+     their names, scenarios and schemes get translated. See "Hinweise zu den
+     Namen" in the README. Filling one in anyway migrates nothing, because only
+     the slug is ever persisted. */
 
   /* The four campaign side schemes, one per scenario, in scenario order. Their
      box on the sheet reads "<name> Defeated".
@@ -140,10 +143,10 @@
      itself is titled "Enemy of My Enemy". The log is a copy of the sheet, so
      the sheet's wording stands — this is not a typo to correct. */
   var SIDE_SCHEMES = [
-    { slug: "frightened-police",  en: "Frightened Police",  de: null },
-    { slug: "enemy-of-my-enemy",  en: "Enemy of my Enemy",  de: null },
-    { slug: "find-the-prisoners", en: "Find the Prisoners", de: null },
-    { slug: "surprise-attack",    en: "Surprise Attack",    de: null },
+    { slug: "frightened-police",  en: "Frightened Police",  de: "Verängstigte Polizei" },
+    { slug: "enemy-of-my-enemy",  en: "Enemy of my Enemy",  de: "Der Feind meines Feindes" },
+    { slug: "find-the-prisoners", en: "Find the Prisoners", de: "Findet die Gefangenen" },
+    { slug: "surprise-attack",    en: "Surprise Attack",    de: "Überraschender Angriff" },
   ];
 
   /* The whole Future Past modular set: five cards, each at quantity 1. Both
@@ -151,9 +154,9 @@
   var FUTURE_PAST = [
     { slug: "nimrod",                en: "Nimrod",                 de: null },
     { slug: "bastion",               en: "Bastion",                de: null },
-    { slug: "nimrods-portal",        en: "Nimrod's Portal",        de: null },
-    { slug: "bastions-machinations", en: "Bastion's Machinations", de: null },
-    { slug: "nano-sentinel-tech",    en: "Nano-Sentinel Tech",     de: null },
+    { slug: "nimrods-portal",        en: "Nimrod's Portal",        de: "Nimrods Portal" },
+    { slug: "bastions-machinations", en: "Bastion's Machinations", de: "Bastions Machenschaften" },
+    { slug: "nano-sentinel-tech",    en: "Nano-Sentinel Tech",     de: "Nano-Sentinel-Technologie" },
   ];
 
   /* The CAPTIVE allies that Abduction Protocols can bring into play in
@@ -174,33 +177,33 @@
      Peacekeeper). A slug of "swagger" would silently merge two different cards
      the first time one group played Brawler and another Defender. */
   var ROLES = [
-    { slug: "brawler", en: "Brawler", de: null, upgrades: [
-      { slug: "brawler-coup-de-grace",    en: "Coup de Grâce",    de: null },
-      { slug: "brawler-swagger",          en: "Swagger",          de: null },
-      { slug: "brawler-brazen-defense",   en: "Brazen Defense",   de: null },
-      { slug: "brawler-ferocious-attack", en: "Ferocious Attack", de: null },
-      { slug: "brawler-war-cry",          en: "War Cry",          de: null },
+    { slug: "brawler", en: "Brawler", de: "Kämpfer", upgrades: [
+      { slug: "brawler-coup-de-grace",    en: "Coup de Grâce",    de: "Gnadenstoss" },
+      { slug: "brawler-swagger",          en: "Swagger",          de: "Lässigkeit" },
+      { slug: "brawler-brazen-defense",   en: "Brazen Defense",   de: "Eherne Verteidigung" },
+      { slug: "brawler-ferocious-attack", en: "Ferocious Attack", de: "Heftiger Angriff" },
+      { slug: "brawler-war-cry",          en: "War Cry",          de: "Schlachtruf" },
     ] },
-    { slug: "commander", en: "Commander", de: null, upgrades: [
-      { slug: "commander-coup-de-grace", en: "Coup de Grâce", de: null },
-      { slug: "commander-compassion",    en: "Compassion",    de: null },
-      { slug: "commander-group-assault", en: "Group Assault", de: null },
-      { slug: "commander-shock-and-awe", en: "Shock and Awe", de: null },
-      { slug: "commander-improvisation", en: "Improvisation", de: null },
+    { slug: "commander", en: "Commander", de: "Anführer", upgrades: [
+      { slug: "commander-coup-de-grace", en: "Coup de Grâce", de: "Gnadenstoss" },
+      { slug: "commander-compassion",    en: "Compassion",    de: "Mitgefühl" },
+      { slug: "commander-group-assault", en: "Group Assault", de: "Gruppenangriff" },
+      { slug: "commander-shock-and-awe", en: "Shock and Awe", de: "Angst und Schrecken" },
+      { slug: "commander-improvisation", en: "Improvisation", de: "Improvisation" },
     ] },
-    { slug: "defender", en: "Defender", de: null, upgrades: [
-      { slug: "defender-swagger",             en: "Swagger",             de: null },
-      { slug: "defender-surprise",            en: "Surprise!",           de: null },
-      { slug: "defender-heroic-intervention", en: "Heroic Intervention", de: null },
-      { slug: "defender-determined-defense",  en: "Determined Defense",  de: null },
-      { slug: "defender-bodyguard",           en: "Bodyguard",           de: null },
+    { slug: "defender", en: "Defender", de: "Verteidiger", upgrades: [
+      { slug: "defender-swagger",             en: "Swagger",             de: "Lässigkeit" },
+      { slug: "defender-surprise",            en: "Surprise!",           de: "Überraschung!" },
+      { slug: "defender-heroic-intervention", en: "Heroic Intervention", de: "Heldenhafte Intervention" },
+      { slug: "defender-determined-defense",  en: "Determined Defense",  de: "Entschlossene Verteidigung" },
+      { slug: "defender-bodyguard",           en: "Bodyguard",           de: "Leibwächter" },
     ] },
-    { slug: "peacekeeper", en: "Peacekeeper", de: null, upgrades: [
-      { slug: "peacekeeper-surprise",         en: "Surprise!",        de: null },
-      { slug: "peacekeeper-compassion",       en: "Compassion",       de: null },
-      { slug: "peacekeeper-rescue-operation", en: "Rescue Operation", de: null },
-      { slug: "peacekeeper-mentorship",       en: "Mentorship",       de: null },
-      { slug: "peacekeeper-fortitude",        en: "Fortitude",        de: null },
+    { slug: "peacekeeper", en: "Peacekeeper", de: "Friedenswächter", upgrades: [
+      { slug: "peacekeeper-surprise",         en: "Surprise!",        de: "Überraschung!" },
+      { slug: "peacekeeper-compassion",       en: "Compassion",       de: "Mitgefühl" },
+      { slug: "peacekeeper-rescue-operation", en: "Rescue Operation", de: "Rettungsoperation" },
+      { slug: "peacekeeper-mentorship",       en: "Mentorship",       de: "Mentoring" },
+      { slug: "peacekeeper-fortitude",        en: "Fortitude",        de: "Standhaftigkeit" },
     ] },
   ];
 
@@ -1209,24 +1212,27 @@
     render: render,
     renderPrint: renderPrint,
 
-    helpDe: "Der MC32-Bogen ist der kästchenreichste von allen, und keine seiner Schreibflächen hat gedruckte Zeilen. Trotzdem musste hier keine Zellenzahl erfunden werden: jede dieser Flächen meint einen endlichen gedruckten Kartensatz, deshalb steht überall der Satz selbst als benannte Kästchen. Die vier Kampagnen-Nebenpläne behalten je eine Szenariospalte, weil der Bogen über jedes Kästchen eine SCENARIO-Pille druckt. „Future Past Cards in the Victory Display“ druckt keine Spalten und „… in the Encounter Deck“ vier — genau das ist der Unterschied: Entfernen ist endgültig und gilt für die ganze Kampagne, deshalb eine Menge; das Encounter-Deck wird im nächsten Setup wieder eingemischt, deshalb vier Spalten, und dieselbe Karte darf in mehreren stehen. Das Deck-Gitter steht hier als Tabelle, Karten links und Szenarien oben — gegenüber dem Druck gedreht, weil aus zwanzig wiederholten Kartennamen so fünf plus vier Spaltenköpfe werden und eine Zelle ohne Karte und Szenario keinen Namen hätte. „Role Upgrades in Play“ druckt der Bogen als eigenen Bereich mit einer Spalte Player #1 bis #4; diese Spalte ist nur die Spielerliste noch einmal, deshalb stehen die Kästchen hier in der Spielerkarte — und dort auch direkt unter der Rolle, denn die Rolle entscheidet, welche fünf Verbesserungen überhaupt angezeigt werden. Ohne gewählte Rolle steht dort keine Kästchenreihe, sondern der Hinweis, erst eine Rolle zu wählen. Jeder Spieler muss eine andere Rolle nehmen, deshalb ist eine bereits vergebene Rolle bei den anderen abgeblendet. Wer die Rolle wechselt, verliert nichts: Eintragungen der alten Rolle bleiben gespeichert und werden nur nicht mehr als Kästchen gezeigt — ausblenden heißt nicht löschen, und beim Rollentausch zweier Spieler geht zwangsläufig einer kurz ohne Rolle durch. Der Bogen sagt darüber nichts; es ist Buchführung, kein Hinweis, den jemand braucht, und im JSON-Export und im Share-Link stehen die Eintragungen ohnehin. Wie viele Verbesserungen die Kampagne vergeben hat — eine im Setup von Szenario 1 und je eine weitere, wenn der Nebenplan des Vorszenarios angehakt ist —, zählt der Bogen ebenfalls nicht mit: die Regel begrenzt eine Anzahl und keine bestimmte Karte, das Papier prüft es auch nicht, und ein frischer Bogen wäre sonst sofort fast ganz zu. Gesperrt wird dagegen, wo eine Karte oder eine Figur aus der Kampagne heraus ist. Bei Jubilee sperren sich „in play“ und „removed from campaign“ innerhalb eines Szenarios gegenseitig, weil der Sieg-Schritt genau das sagt: im Spiel eintragen, sonst aus dem Logbuch entfernen. Die Szenarien hängen außerdem aneinander: Szenario 3 fragt nur nach ihr, weil der Sieg-Schritt von Szenario 2 sie ins Logbuch geschrieben hat, deshalb sind die Kästchen eines Szenarios erst offen, wenn das vorige „in play“ trägt — Szenario 2 hat nichts davor und ist immer offen. Und sobald sie entfernt ist, sind die Kästchen aller späteren Szenarien zu: sie kommt nicht zurück. Ebenso im Future-Past-Gitter: eine Karte im Victory Display ist aus der Kampagne entfernt, ihre ganze Zeile im Begegnungsdeck ist deshalb durchgestrichen und zu. Jede dieser Sperren ist einseitig, wie bei MC60: ein bereits gesetztes Kästchen bleibt bedienbar. Das ist wichtiger, als es klingt — eine Karte kann in einem frühen Szenario im Begegnungsdeck gestanden haben und zwei Szenarien später im Victory Display landen, und der Bogen druckt dort keine Spalten, kann also nicht sagen, wann sie entfernt wurde. Die leeren Zellen zu schließen verhindert den nächsten falschen Eintrag; die gesetzten zu schließen würde eine richtige Eintragung für einen Fehler erklären. Aus demselben Grund bleibt ein Bogen, der einen Widerspruch mitbringt, immer korrigierbar, und der Widerspruch wird zusätzlich benannt. Die Verbündeten aus „Abduction Protocols“ sind die vier CAPTIVE-Verbündeten als Kästchen; die Verbündeten unter „Rescue Captives“ oder „Find the Prisoners“ bleiben Freitext, weil sie aus den eigenen Decks der Spieler kommen und keine gedruckte Liste sind. Oben im Spielerbereich steht der Haken „Expertenmodus“: die verbleibenden Lebenspunkte sind das einzige Feld, das der gedruckte Bogen mit „(expert)“ kennzeichnet, und auf Standardstufe blendet der Bogen es aus, statt danach zu fragen. Ausblenden heißt nicht löschen — der Wert bleibt im Bogen, im Export und im Share-Link. Es gibt hier bewusst keine Szenario-Tabelle, kein „Abgeschlossen“, keinen Fortschrittszähler und kein Notizfeld: der gedruckte Bogen hat sie nicht. Und das fünfte Szenario gegen Magneto fehlt nicht — es steht auch auf dem gedruckten Bogen nicht, weil im Finale nichts mehr festzuhalten ist.",
+    helpDe: "Der MC32-Bogen ist der kästchenreichste von allen, und keine seiner Schreibflächen hat gedruckte Zeilen. Trotzdem musste hier keine Zellenzahl erfunden werden: jede dieser Flächen meint einen endlichen gedruckten Kartensatz, deshalb steht überall der Satz selbst als benannte Kästchen. Die vier Kampagnen-Nebenpläne behalten je eine Szenariospalte, weil der Bogen über jedes Kästchen eine SCENARIO-Pille druckt. Der Abschnitt für den Siegpunktestapel druckt keine Spalten und der für das Begegnungsdeck vier — genau das ist der Unterschied: Entfernen ist endgültig und gilt für die ganze Kampagne, deshalb eine Menge; das Encounter-Deck wird im nächsten Setup wieder eingemischt, deshalb vier Spalten, und dieselbe Karte darf in mehreren stehen. Das Deck-Gitter steht hier als Tabelle, Karten links und Szenarien oben — gegenüber dem Druck gedreht, weil aus zwanzig wiederholten Kartennamen so fünf plus vier Spaltenköpfe werden und eine Zelle ohne Karte und Szenario keinen Namen hätte. „Rollen-Upgrades im Spiel“ druckt der Bogen als eigenen Bereich mit einer Spalte Player #1 bis #4; diese Spalte ist nur die Spielerliste noch einmal, deshalb stehen die Kästchen hier in der Spielerkarte — und dort auch direkt unter der Rolle, denn die Rolle entscheidet, welche fünf Verbesserungen überhaupt angezeigt werden. Ohne gewählte Rolle steht dort keine Kästchenreihe, sondern der Hinweis, erst eine Rolle zu wählen. Jeder Spieler muss eine andere Rolle nehmen, deshalb ist eine bereits vergebene Rolle bei den anderen abgeblendet. Wer die Rolle wechselt, verliert nichts: Eintragungen der alten Rolle bleiben gespeichert und werden nur nicht mehr als Kästchen gezeigt — ausblenden heißt nicht löschen, und beim Rollentausch zweier Spieler geht zwangsläufig einer kurz ohne Rolle durch. Der Bogen sagt darüber nichts; es ist Buchführung, kein Hinweis, den jemand braucht, und im JSON-Export und im Share-Link stehen die Eintragungen ohnehin. Wie viele Verbesserungen die Kampagne vergeben hat — eine im Setup von Szenario 1 und je eine weitere, wenn der Nebenplan des Vorszenarios angehakt ist —, zählt der Bogen ebenfalls nicht mit: die Regel begrenzt eine Anzahl und keine bestimmte Karte, das Papier prüft es auch nicht, und ein frischer Bogen wäre sonst sofort fast ganz zu. Gesperrt wird dagegen, wo eine Karte oder eine Figur aus der Kampagne heraus ist. Bei Jubilee sperren sich „Jubilee im Spiel“ und „Jubilee aus Kampagne entfernt“ innerhalb eines Szenarios gegenseitig, weil der Sieg-Schritt genau das sagt: im Spiel eintragen, sonst aus dem Logbuch entfernen. Die Szenarien hängen außerdem aneinander: Szenario 3 fragt nur nach ihr, weil der Sieg-Schritt von Szenario 2 sie ins Logbuch geschrieben hat, deshalb sind die Kästchen eines Szenarios erst offen, wenn das vorige „im Spiel“ trägt — Szenario 2 hat nichts davor und ist immer offen. Und sobald sie entfernt ist, sind die Kästchen aller späteren Szenarien zu: sie kommt nicht zurück. Ebenso im Gitter für das Begegnungsdeck: eine Karte im Siegpunktestapel ist aus der Kampagne entfernt, ihre ganze Zeile im Begegnungsdeck ist deshalb durchgestrichen und zu. Jede dieser Sperren ist einseitig, wie bei MC60: ein bereits gesetztes Kästchen bleibt bedienbar. Das ist wichtiger, als es klingt — eine Karte kann in einem frühen Szenario im Begegnungsdeck gestanden haben und zwei Szenarien später im Siegpunktestapel landen, und der Bogen druckt dort keine Spalten, kann also nicht sagen, wann sie entfernt wurde. Die leeren Zellen zu schließen verhindert den nächsten falschen Eintrag; die gesetzten zu schließen würde eine richtige Eintragung für einen Fehler erklären. Aus demselben Grund bleibt ein Bogen, der einen Widerspruch mitbringt, immer korrigierbar, und der Widerspruch wird zusätzlich benannt. Die Verbündeten durch „Entführungsprotokolle“ sind die vier CAPTIVE-Verbündeten als Kästchen; die Verbündeten unter „Befreit die Gefangenen“ oder „Findet die Gefangenen“ bleiben Freitext, weil sie aus den eigenen Decks der Spieler kommen und keine gedruckte Liste sind. Oben im Spielerbereich steht der Haken „Expertenmodus“: die verbleibenden Lebenspunkte sind das einzige Feld, das der gedruckte Bogen mit „(expert)“ kennzeichnet, und auf Standardstufe blendet der Bogen es aus, statt danach zu fragen. Ausblenden heißt nicht löschen — der Wert bleibt im Bogen, im Export und im Share-Link. Es gibt hier bewusst keine Szenario-Tabelle, kein „Abgeschlossen“, keinen Fortschrittszähler und kein Notizfeld: der gedruckte Bogen hat sie nicht. Und das fünfte Szenario gegen Magneto fehlt nicht — es steht auch auf dem gedruckten Bogen nicht, weil im Finale nichts mehr festzuhalten ist.",
     helpEn: "The MC32 sheet is the most checkbox-heavy of them all, and not one of its write-in areas prints a row line. No cell count had to be invented all the same: every one of those areas means a finite printed card set, so the set itself is here as named boxes. The four campaign side schemes each keep a scenario column, because the sheet prints a SCENARIO pill over every box. “Future Past Cards in the Victory Display” prints no columns and “… in the Encounter Deck” prints four — and that difference is the point: removal is permanent and holds for the whole campaign, so it is one set; the encounter deck is shuffled back in at the next setup, so it keeps four columns and the same card may stand in several of them. The deck grid is a table here, cards down the side and scenarios across the top — transposed against the print, because that turns twenty repeated card names into five plus four column labels, and a cell would have no name without both its card and its scenario. “Role Upgrades in Play” is printed as its own area with a Player #1 to #4 column; that column is just the player list again, so the boxes sit in the player cards — and directly under the role, because the role decides which five upgrades are shown at all. With no role chosen there is no row of boxes but a line saying to pick a role first. Each player must take a different role, so a role already taken is greyed out for the others. Changing role costs nothing: what was entered under the old one stays stored and is only no longer shown as boxes — hiding is not clearing, and swapping two players' roles necessarily takes one of them through a moment with no role at all. The sheet says nothing about it; that is bookkeeping rather than something anyone needs telling, and those marks are in the JSON export and in a share link anyway. Nor does the sheet count how many upgrades the campaign has granted — one at scenario 1's setup and one more for each previous scenario's side scheme that is checked: the rule caps a NUMBER rather than naming a card, the paper does not check it either, and a fresh sheet would otherwise arrive almost entirely shut. What does close is anything the rulebook has put out of the campaign. For Jubilee, “in play” and “removed from campaign” close each other within one scenario, because the victory step says exactly that: record her if she is in play, otherwise remove her from the log. The scenarios also hang together: scenario 3 only asks about her because scenario 2's victory step wrote her into the log, so a scenario's boxes are closed until the one before it carries “in play” — scenario 2 has nothing before it and is always open. And once she is removed, the boxes of every later scenario close too: she does not come back. The same in the Future Past grid: a card in the victory display is removed from the campaign, so its whole encounter-deck row is struck through and closed. Every one of these locks is one-sided, as in MC60: a box that is already ticked stays operable. That matters more than it sounds — a card can have sat in an early scenario's encounter deck and land in the victory display two scenarios later, and the sheet prints no columns there, so the log cannot say when it was removed. Closing the empty cells prevents the next wrong entry; closing the ticked ones would call a correct record an error. For the same reason a sheet that arrives with a contradiction stays correctable, and the contradiction is named on top of that. The allies from “Abduction Protocols” are the four CAPTIVE allies as boxes; the allies under “Rescue Captives” or “Find the Prisoners” stay free text, because they come out of the players' own decks and are not a printed list. At the top of the player area sits the “Expert level” box: the remaining hit points are the only field the printed sheet marks “(expert)”, and at standard level the sheet hides it rather than asking for it. Hiding is not clearing — the value stays in the sheet, in the export and in a share link. There is deliberately no scenario table, no “completed”, no progress counter and no notes field: the printed sheet has none. And the fifth scenario against Magneto is not missing; it is not on the printed sheet either, because the finale has nothing left to record.",
 
-    /* Zweisprachig angelegt, aber noch nicht zweisprachig befüllt. Zwei
-       Gruppen, und die Unterscheidung ist der ganze Punkt:
+    /* Beide Wörterbücher sind gefüllt. Die Unterscheidung, nach der sie
+       entstanden sind, bleibt trotzdem wichtig, weil sie sagt, wer eine
+       Änderung entscheidet:
 
        1. Wörter, die diese App selbst wählt — Spaltentitel, Platzhalter,
           Hinweise und das gemeinsame Vokabular aller Kampagnen („Verbleibende
-          Lebenspunkte“) — stehen unten auf Deutsch und sind fertig. Das
-          gemeinsame Vokabular ist wörtlich aus den Nachbarmodulen übernommen,
-          nicht neu formuliert. Dazu gehören auch die Überschrift des
-          Nebenplan-Abschnitts, den der Bogen nicht benennt, und alles, was die
-          App über abgeleitete Zustände sagt.
+          Lebenspunkte“) — sind wörtlich aus den Nachbarmodulen übernommen und
+          gehören dorthin abgeglichen, nicht hier neu formuliert. Dazu gehören
+          auch die Überschrift des Nebenplan-Abschnitts, den der Bogen nicht
+          benennt, und alles, was die App über abgeleitete Zustände sagt.
        2. Wörter, die vom gedruckten Bogen kommen — die Abschnittsnamen, ihre
           Unterzeilen und die Beschriftungen der gedruckten Kästchen — stehen
-          unten NOCH ENGLISCH. Sie sind aus dem deutschen Druck nachzutragen,
-          und zwar wörtlich. Das ist offene Arbeit, keine Entscheidung; ebenso
-          die Kartennamen oben in den Tabellen, die alle de: null tragen.
+          wörtlich so da, wie der deutsche Druck sie setzt. Wer eine davon
+          ändert, ändert eine Aussage über das Papier und braucht das Papier
+          dafür.
+
+       Und wer eine ändert, liest helpDe/helpEn mit: die beiden zitieren die
+       Abschnittsnamen, also werden sie zur Lüge, sobald ein Name wandert.
 
        Es migriert nichts, wenn sich eine Beschriftung ändert — persistiert
        werden nur Feldschlüssel und Slugs, nie Beschriftungen. */
@@ -1260,24 +1266,23 @@
         jubileeGone: "Ein früheres Szenario hat Jubilee aus der Kampagne entfernt. Danach kann sie nicht mehr ins Spiel kommen.",
         jubileeNotYet: "Im vorigen Szenario ist Jubilee nicht als im Spiel eingetragen. Erst dort anhaken.",
         jubileeConflict: "Widerspruch: ein früheres Szenario hat Jubilee aus der Kampagne entfernt.",
-        fpRemoved: "Diese Karte steht im Victory Display und ist damit aus der Kampagne entfernt. Sie kann in keinem Begegnungsdeck mehr stehen.",
+        fpRemoved: "Diese Karte steht im Siegpunktestapel und ist damit aus der Kampagne entfernt. Sie kann in keinem Begegnungsdeck mehr stehen.",
 
-        /* --- Ab hier: Wortlaute des gedruckten Bogens, noch englisch. --- */
-        secFuturePastVictory: "Future Past Cards in the Victory Display",
-        subFuturePastVictory: "Scenarios #1-4 (remove these from the campaign)",
-        secFuturePastDeck: "Future Past Cards in the Encounter Deck",
-        subFuturePastDeck: "Scenarios #1-4",
+        secFuturePastVictory: "„Zukunft ist Vergangenheit“-Karten im Siegpunktestapel",
+        subFuturePastVictory: "Szenarien #1–4 (Entfernt diese aus der Kampagne.)",
+        secFuturePastDeck: "„Zukunft ist Vergangenheit“-Karten im Begegnungsdeck",
+        subFuturePastDeck: "Szenarien #1-4",
         secJubilee: "Jubilee",
-        subJubilee: "Scenarios #2-4",
-        secAbductionProtocols: "Allies from Abduction Protocols",
-        subAbductionProtocols: "Scenario #2",
-        secRemovedAllies: "Allies under Rescue Captives or Find the Prisoners",
-        subRemovedAllies: "Scenario #3 (remove these from the campaign)",
-        lblRoleUpgrades: "Role Upgrades in Play",
-        subRoleUpgrades: "Scenarios #1-4 (remove these from the campaign)",
-        lblJubileeInPlay: "Jubilee in play",
-        lblJubileeRemoved: "Jubilee removed from campaign",
-        lblDefeated: "Defeated",
+        subJubilee: "Szenarien #2-4",
+        secAbductionProtocols: "Verbündete durch Entführungsprotokolle",
+        subAbductionProtocols: "Szenario #2",
+        secRemovedAllies: "Verbündete unter Befreit die Gefangenen oder Findet die Gefangenen",
+        subRemovedAllies: "Szenario #3 (Entfernt diese aus der Kampagne.)",
+        lblRoleUpgrades: "Rollen-Upgrades im Spiel",
+        subRoleUpgrades: "Szenarien #1–4 (Entfernt diese aus der Kampagne.)",
+        lblJubileeInPlay: "Jubilee im Spiel",
+        lblJubileeRemoved: "Jubilee aus Kampagne entfernt",
+        lblDefeated: "besiegt",
       },
       en: {
         secPlayers: "Player Information",
