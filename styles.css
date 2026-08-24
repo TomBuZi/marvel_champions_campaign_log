@@ -2165,6 +2165,27 @@ body[class*="dnd-"] .entry-list { min-height: 2.2rem; outline: 1px dashed var(--
    spacing, radius, drop cues it will never use — is the same. */
 .entry-row--pool { grid-template-columns: 1fr auto; }
 .entry-row--pool .pool-select { width: 100%; }
+/* With an annotation behind the select, a third track for it. Kept off the
+   plain row so a list without annotations does not carry an empty track and
+   the gap that comes with it. */
+.entry-row--pool.has-note { grid-template-columns: 1fr auto auto; }
+
+/* The price of the card a row holds. Only the number is shown, because four
+   player columns have no room for the words; the words ride along as the
+   accessible name, which is the same bargain .icon-pp strikes. */
+.unit-cost {
+  min-width: 1.6rem;
+  padding: 0.05rem 0.35rem;
+  border: var(--rule) solid var(--bar);
+  border-radius: var(--radius-pill);
+  background: var(--pill);
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
+}
 
 .entry-drag {
   cursor: grab;

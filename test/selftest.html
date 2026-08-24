@@ -4341,12 +4341,13 @@
          not by their labels, which the two printings word differently. */
       var GMW_SECTIONS = ["players", "market", "collection", "artifacts",
         "power-stone", "evasion", "headhunter"];
-      /* Names that come off a printed card, as one list: the language-tag rule
-         has to hold across both, and between them they carry both cases — the
-         artifacts are translated in the German printing, 23 of the 28 market
-         cards are not. The scenario tiles are deliberately NOT in here: their
-         German name for Nebula is the same string as the English one, so the
-         "tagged exactly when the string is unchanged" rule cannot see them. */
+      /* Names that come off a printed card, as one list. Every one of them is
+         translated in the German printing, so this campaign offers no mixture
+         of tagged and untagged names — which is why the case below pins BOTH
+         branches of the rule instead of relying on one sheet to show both. The
+         scenario tiles are deliberately NOT in here: their German name for
+         Nebula is the same string as the English one, so the "tagged exactly
+         when the string is unchanged" rule cannot see them. */
       var GMW_NAMES = '[data-section="market"] optgroup option, ' +
         '[data-section="artifacts"] .flag > span';
 
@@ -4497,21 +4498,30 @@
               return n.textContent.trim();
             });
           };
-          var tagged = Array.prototype.map.call(at(GMW_NAMES), function (n) {
-            return n.getAttribute("lang") === "en";
-          });
+          var tags = function () {
+            return Array.prototype.map.call(at(GMW_NAMES), function (n) {
+              return n.getAttribute("lang") === "en";
+            });
+          };
+          var germanTags = tags();
           d.getElementById("btn-lang").click();
-          var english = names();
+          var english = names(), englishTags = tags();
           d.getElementById("btn-lang").click();
           var german = names();
           log("the language tag follows the name actually shown",
             german.length === english.length && german.length > 0 &&
-            german.every(function (n, i) { return tagged[i] === (n === english[i]); }),
+            german.every(function (n, i) { return germanTags[i] === (n === english[i]); }),
             german.length + "/" + english.length);
-          /* And it really is a mixture rather than all-or-nothing, or the
-             assertion above would hold with the rule wired backwards. */
-          log("and the sheet holds tagged and untagged names side by side",
-            tagged.indexOf(true) !== -1 && tagged.indexOf(false) !== -1);
+          /* Both directions, because this campaign has no untranslated name
+             left to make a mixture out of: with every string different, the
+             assertion above would also hold if the tag were never set at all.
+             Pinning the English pass as well puts teeth back on it. */
+          log("nothing is tagged as English while German is shown",
+            germanTags.length > 0 && germanTags.indexOf(true) === -1,
+            germanTags.join());
+          log("and everything is while English is",
+            englishTags.length === germanTags.length &&
+            englishTags.indexOf(false) === -1, englishTags.join());
 
           /* Switching twice rebuilt the sheet twice, so everything below has to
              be looked up again. */
@@ -4565,13 +4575,32 @@
              from until one is added. */
           log("a player who has bought nothing has no row",
             !gmwMarketSelect(d, 0, 0));
+          var cost = function (player, at) {
+            return d.querySelector('[data-market-cost="' + player + "-" + at + '"]');
+          };
+
           gmwAddMarketRow(d, 0);
           log("adding a row adds a select", !!gmwMarketSelect(d, 0, 0));
+          /* A row that holds nothing owes nothing. */
+          log("and an empty row is priced at nothing rather than at zero",
+            cost(0, 0).hidden === true && cost(0, 0).textContent === "",
+            cost(0, 0).textContent);
           log("and a second row cannot be added while the first is empty",
             d.querySelector('[data-list-id="gmw-market-0"]')
               .parentNode.querySelector(".entry-add").disabled === true);
 
           gmwPick(d, 0, 0, "grapple");
+          /* The price sits behind the card and outside the select, because a
+             closed select shows only the name. */
+          log("a chosen card shows what it costs",
+            cost(0, 0).hidden === false && cost(0, 0).textContent === "2",
+            cost(0, 0).textContent);
+          /* The number is all there is room for, so the words go to the
+             screen reader — the bargain .icon-pp strikes in MC27. */
+          log("and carries its meaning in words, not only as a digit",
+            /2/.test(cost(0, 0).getAttribute("aria-label") || "") &&
+            (cost(0, 0).getAttribute("aria-label") || "").length > 3,
+            cost(0, 0).getAttribute("aria-label"));
           log("picking a card enables the add button again",
             d.querySelector('[data-list-id="gmw-market-0"]')
               .parentNode.querySelector(".entry-add").disabled === false);
@@ -4594,6 +4623,9 @@
           log("and what the other one holds is closed here too",
             gmwOptionState(d, 0, 1, "onrush").disabled === true);
           gmwPick(d, 0, 1, "safeguard");
+          log("every row prices its own card",
+            cost(0, 0).textContent === "2" && cost(0, 1).textContent === "5",
+            cost(0, 0).textContent + "/" + cost(0, 1).textContent);
 
           /* Removing the row gives the card back to everybody — and the way to
              show that is to buy it again, not just to look at the option. */

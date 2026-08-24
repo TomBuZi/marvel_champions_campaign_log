@@ -214,10 +214,19 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   lassen sich zwischen den Spielerspalten ziehen, weil Szenario 3 jeden Spieler
   genau seine eigenen notierten Karten aus dem Spiel entfernen lässt.
 
-  Von den 28 Marktkarten tragen bislang fünf einen deutschen Namen — mehr gibt
-  keine verfügbare Quelle her, und die übrigen erscheinen so lange mit ihrem
-  englischen. Das ist offene Arbeit, keine Entscheidung: die deutsche Ausgabe
-  übersetzt diese Karten sehr wohl.
+  Hinter jeder gewählten Marktkarte stehen ihre **Unit-Kosten** — außerhalb des
+  Auswahlfelds, denn zugeklappt zeigt das nur den Namen, und ohne die Zahl
+  daneben ließe sich der Kontostand oben nicht gegen die Karten prüfen, aus
+  denen er fällt. Sichtbar ist nur die Ziffer, weil vier Spielerspalten für die
+  Worte keinen Platz haben; die Worte bekommt der Screenreader.
+
+  Alle 28 Marktkarten tragen einen deutschen Namen, und keiner davon kam aus
+  einer maschinenlesbaren Quelle: marvelsdb führt für dieses Pack nur englische
+  Kopien. Fünf sind auf den Kartenabbildungen des deutschen Regelhefts lesbar,
+  die übrigen 23 stammen von den Karten selbst. MC16 ist deshalb das erste
+  Modul **ohne ein einziges `de: null`** — wer die Konvention aus MC10 oder MC27
+  kennt, findet hier weder die eine noch die andere Lesart, weil keine
+  zutrifft.
 * **Ein gedrucktes Feld, das gerechnet statt gefragt wird** (MC16) — und das
   einzige im ganzen Projekt. Der Bogen druckt „Übrige Units“, ein Feld für den
   Bleistift: man schreibt den Kontostand hinein und radiert ihn bei jedem Kauf
