@@ -23,6 +23,34 @@
           <span class="sr-only" data-i18n="logLabel">Bogen</span>
           <select id="log-select" data-i18n-aria="logLabel"></select>
         </label>
+        <!-- The one action that is not administration, so the one action that
+             is not in the menu: sharing the sheet is what people reach for
+             mid-game, and it belongs one tap away rather than two. It stays a
+             single control — there is deliberately no second "Link teilen" in
+             the menu. -->
+        <button
+          id="btn-share"
+          type="button"
+          class="btn btn-icon"
+          data-i18n-title="shareLink"
+          data-i18n-aria="shareLink">
+          <!-- The classic share mark: three dots joined by two lines. Drawn
+               here rather than taken from an icon set, because the figure IS
+               its geometry — circles of r=3 at (18,5), (6,12) and (18,19) on
+               the usual 24 grid, and two 2-wide bars between their edges — so
+               a licensed copy would add an attribution obligation and a
+               third-party asset for four lines of arithmetic. SVG rather than
+               CSS, unlike the other devices in this project: gradients give
+               soft dots and an approximated angle, and an icon has to be crisp
+               at any size. Decoration only — the button's own label names the
+               action. -->
+          <svg class="icon-share" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M8.59 10.49 15.41 6.51M8.59 13.51 15.41 17.49" />
+            <circle cx="18" cy="5" r="3" />
+            <circle cx="6" cy="12" r="3" />
+            <circle cx="18" cy="19" r="3" />
+          </svg>
+        </button>
         <button
           id="btn-menu"
           type="button"
@@ -37,7 +65,8 @@
       </div>
     </header>
 
-    <!-- All actions live here. Deliberately not role="menu": that would imply
+    <!-- Every administrative action lives here — sharing is the exception and
+         sits in the bar above. Deliberately not role="menu": that would imply
          arrow-key navigation; as a group of buttons, Tab works correctly.
          Native popover gives light-dismiss, Esc and top-layer stacking. -->
     <div id="main-menu" popover class="menu" data-i18n-aria="menu">
@@ -51,7 +80,6 @@
       <p class="menu-heading" data-i18n="menuData">Daten</p>
       <button id="btn-export" type="button" class="menu-item" data-i18n="export">Exportieren (.json)</button>
       <button id="btn-import" type="button" class="menu-item" data-i18n="import">Importieren …</button>
-      <button id="btn-share" type="button" class="menu-item" data-i18n="shareLink">Link teilen</button>
       <button
         id="btn-print"
         type="button"
@@ -203,5 +231,6 @@
     <script src="campaigns/rise-of-red-skull.js"></script>
     <script src="campaigns/mad-titans-shadow.js"></script>
     <script src="campaigns/sinister-motives.js"></script>
+    <script src="campaigns/mutant-genesis.js"></script>
   </body>
 </html>

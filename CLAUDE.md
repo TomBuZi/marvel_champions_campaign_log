@@ -86,6 +86,14 @@ Nicht das Rasterbild abtasten — die **Vektor-Füllflächen** des Content-Strea
 gewichtet nach Fläche. Das ist die Methode, die die Kommentare in `styles.css`
 für alle Paletten behaupten, und sie muss stimmen.
 
+**Erst nachsehen, ob der Bogen überhaupt Vektorgrafik ist.** `pg.get_images()`
+und `pg.get_image_info()` sagen es. MC32 legt ein Rasterbild über die ganze
+Seite und je eins über jeden Panelstreifen; die orange Comic-Schraffur seines
+Randes kommt deshalb in **keiner** Vektorfläche vor, und die reine
+Vektormessung übersieht die auffälligste Farbe des Bogens vollständig. Wo die
+Kunst Raster ist, wird dort gemessen — aus dem gerenderten Pixmap, flächen­weise
+gemittelt — und der Kommentar in `styles.css` sagt, welcher Wert woher kommt.
+
 ```python
 import fitz, collections
 pg = fitz.open("mcXX_....pdf")[0]
@@ -133,6 +141,7 @@ Vorlagen, bewusst verschieden:
 | `campaigns/rise-of-red-skull.js` | feste Kartenpools mit Eindeutigkeitsregeln |
 | `campaigns/mad-titans-shadow.js` | das schlankeste: Spieler plus benannte Kästchen |
 | `campaigns/sinister-motives.js` | eine Zahl, aus der zwei abgeleitete Zustände fallen: erreichte Stufen und freigeschaltete Felder; dazu eine Liste, in der die Position Teil der Eintragung ist |
+| `campaigns/mutant-genesis.js` | Beschriftungen, die aus einer Wahl abgeleitet werden, ohne dass die Wahl entscheidet, was gespeichert bleibt; ein Gitter aus Kartensatz × Szenario; und die Grenze zwischen einer Sperre und einem Hinweis |
 
 Harte Punkte:
 
@@ -271,7 +280,10 @@ nichts übrig ist.
   schreiben, damit sie den nächsten gefüllten Namen überlebt.
 * **i18n-Texte, die etwas über den Bildschirm behaupten.** `helpDe`/`helpEn`
   beschreiben die Oberfläche. Wird die Oberfläche geändert, werden sie sonst zur
-  Lüge — bei jeder Änderung mitlesen.
+  Lüge — bei jeder Änderung mitlesen. Dazu gehört jede **Zahl, die die
+  Kampagnen zählt** („der schlankeste der drei“, „der einzige der vier“): sie
+  ist beim nächsten Modul falsch, und niemand denkt daran. Ohne Zahl
+  formulieren — „der schlankeste von allen“.
 * **Terminologie über alle Kampagnen hinweg.** Dasselbe Feld heißt überall
   gleich („Verbleibende Lebenspunkte"). Eine Umbenennung in einer Kampagne ist
   keine halbe Arbeit: README, Hilfetexte und Tests gehören dazu.
@@ -282,5 +294,12 @@ nichts übrig ist.
   Zeitbudget greift bei einem festhängenden Renderer nicht. Der laufende Fall
   steht im Prozessnamen des Browsers (`…/mcclog-test-XXXX/p_<fall>`). Stille ist
   kein Fortschritt — Prozesse ansehen, nicht warten.
+* **Der erfundene Kampagnenname in `test/selftest.html`.** Die
+  Quarantäne-Fälle brauchen einen Bogen einer Kampagne, die es *nicht* gibt.
+  Zweimal war das der Name einer Kampagne, die es noch nicht gab — MC24, dann
+  MC32 als `mutant-genesis` —, und beide Male hörten am Tag der Umsetzung
+  mehrere Zusicherungen still auf zu prüfen. Der Wächter heißt jetzt
+  `no-such-campaign`, und `test/lint.js` prüft, dass keine Kampagne ihn belegt.
+  Merksatz: der Wächter darf kein plausibler Kampagnenname sein.
 * **Die Suite dauert.** Im Hintergrund starten, nicht in ein Timeout laufen
   lassen, und die **Zahl** der Zusicherungen lesen, nicht nur die Fehlerzahl.

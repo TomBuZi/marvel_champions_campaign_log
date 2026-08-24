@@ -529,6 +529,148 @@
   color-scheme: dark;
 }
 
+/* ---------- Campaign skin: MC32, Mutant Genesis ----------
+   Sampled from mc32_mutant_genesis_campaign_log.pdf, and this is the first of
+   the five sheets where the method from CLAUDE.md is not enough on its own.
+   The page is not pure vector art: a 1085x1085 raster (xref 1129) is laid over
+   the whole page and carries the orange comic hatching of the border, with a
+   second raster over every panel strip. So the area-weighted vector fills say
+   white 31.8%, steel blue #a9cad3 26.0%, frame teal #6ac6c9 17.2%, ink #231f20
+   17.0%, mint #d2ebe2 8.0% and the badge yellow #cec411 0.1%, with #1e86a6 on
+   every outline and #192533 on the dark bar and the checkboxes -- and say
+   nothing whatsoever about the orange, which exists nowhere as a filled path.
+   Averaged out of the rendered page instead: border #c35430, frame #6ac5c8.
+
+   The orange is therefore NOT --page here. On the sheet it is hatching, and
+   hatching is a thing this project draws itself, so it lives in --halftone and
+   --hatch; --page comes from the vector colour field, darkened from #1e86a6,
+   which cannot carry text (3.9 against the ink). That also keeps MC32 clear of
+   MC21, whose --page #b4541c is very nearly the same orange -- two campaigns
+   reading as "the orange one" in the picker would be worse than either.
+
+   Contrasts computed, not guessed. Light: --on-page on --page 7.0, --on-brick
+   on the derived mid teal 5.5, ink on the mint panel 13.0 and on the steel pill
+   9.4. The accent lives in the tick here, the way the sheet puts its one yellow
+   on the "Player Information" badge -- so --check-on carries the gold rather
+   than --bar, with the dark bar colour as the tick: 8.5 either way round.
+
+   Dark mode keeps the light palette's whole colour mood rather than only its
+   dominant: the page stays teal instead of going neutral, the panel gradient
+   still runs teal to mint-green so the green side of the sheet survives, the
+   pill stays a muted steel, and the accent stays gold. An all-teal-grey dark
+   mode would read as a different campaign than its own light mode.
+
+   Four blocks, mirroring the four above, and for the reason spelled out there:
+   a single [data-campaign] block outranks the bare :root inside the dark media
+   query and would paint the light palette in dark mode. */
+:root[data-campaign="mg"] {
+  --page:      #125a6b;   /* deep teal page field -- darkened from the
+                             sampled #1e86a6, which cannot carry text     */
+  --bar:       #1e86a6;   /* teal: bars, borders, ink outlines            */
+  --brick:     #276b7c;   /* mid teal, table body -- derived and kept dark
+                             enough that the text on it holds 5.5         */
+  --panel-1:   #ffffff;   /* panel gradient, top -- as printed            */
+  --panel-2:   #d2ebe2;   /* ... bottom, the sheet's mint                 */
+  --pill:      #a9cad3;   /* heading pill, table header row: the steel
+                             blue of the sheet's alternating panels       */
+  --check:     #e7eef0;   /* empty checkbox                               */
+  --zap:       #cec411;   /* accent gold, off the "Player Information"
+                             badge -- the sheet's only yellow             */
+  --ink:       #231f20;   /* near-black text                              */
+
+  --bg-input: #fbfefd;
+  --text-dim: #3c6a72;
+  --accent-strong: #0e4653;
+  --accent-2: #16697f;
+  /* Stays red: here the colour carries meaning, not identity. */
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(206, 196, 17, 0.55);
+  /* The border's orange, as the halftone and the hatching it is on paper. */
+  --halftone: rgba(195, 84, 48, 0.20);
+  --hatch: rgba(195, 84, 48, 0.12);
+  --on-brick: #eaf6f5;
+  --on-page: #eaf6f5;
+  --on-zap: #192533;
+  --on-danger: #fff4ef;
+  /* The gold box with the dark tick on it, as the sheet sets its badge. */
+  --check-on: #cec411;
+  --tick: #192533;
+  --title-shadow: #eaf6f5;
+  --zap-strong: #e4da2a;
+  --input-settled: #cfdde0;
+  --backdrop: rgba(4, 20, 25, 0.55);
+}
+/* --accent, --panel-border and --ink-shadow are left alone on purpose: they
+   are already defined as var(--bar) and follow it by themselves. */
+@media (prefers-color-scheme: dark) {
+  :root[data-campaign="mg"] {
+    --page: #06222a; --bar: #6ac6c9; --brick: #123a44;
+    --panel-1: #0e2f38; --panel-2: #0b3029; --pill: #1e4a55;
+    --check: #0c2a31; --zap: #d8ce2b; --ink: #e8f4f1; --check-on: #d8ce2b;
+    --bg-input: #0a2229; --panel-border: #2e6b78; --text-dim: #9bc0be;
+    --accent: #6ac6c9; --accent-strong: #a8e3e2; --accent-2: #7fd3d0;
+    --danger: #ff6b5c;
+    --glow: 0 0 0 3px rgba(216, 206, 43, 0.40);
+    --halftone: rgba(216, 110, 70, 0.14);
+    --hatch: rgba(216, 110, 70, 0.10);
+    --ink-shadow: 4px 4px 0 0 #041318;
+    --on-brick: #e8f4f1;
+    --on-page: #e8f4f1;
+    --on-zap: #192533;
+    --on-danger: #2b0a07;
+    --tick: #0b1a20;
+    --title-shadow: #041318;
+    --zap-strong: #ede354;
+    --input-settled: #071b21;
+    --backdrop: rgba(2, 12, 16, 0.6);
+  }
+}
+:root[data-campaign="mg"][data-theme="light"] {
+  --page: #125a6b; --bar: #1e86a6; --brick: #276b7c;
+  --panel-1: #ffffff; --panel-2: #d2ebe2; --pill: #a9cad3;
+  --check: #e7eef0; --zap: #cec411; --ink: #231f20;
+  --bg-input: #fbfefd; --panel-border: var(--bar); --text-dim: #3c6a72;
+  --accent: var(--bar); --accent-strong: #0e4653; --accent-2: #16697f;
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(206, 196, 17, 0.55);
+  --halftone: rgba(195, 84, 48, 0.20);
+  --hatch: rgba(195, 84, 48, 0.12);
+  --ink-shadow: 4px 4px 0 0 var(--bar);
+  --on-brick: #eaf6f5;
+  --on-page: #eaf6f5;
+  --on-zap: #192533;
+  --on-danger: #fff4ef;
+  --check-on: #cec411;
+  --tick: #192533;
+  --title-shadow: #eaf6f5;
+  --zap-strong: #e4da2a;
+  --input-settled: #cfdde0;
+  --backdrop: rgba(4, 20, 25, 0.55);
+  color-scheme: light;
+}
+:root[data-campaign="mg"][data-theme="dark"] {
+  --page: #06222a; --bar: #6ac6c9; --brick: #123a44;
+  --panel-1: #0e2f38; --panel-2: #0b3029; --pill: #1e4a55;
+  --check: #0c2a31; --zap: #d8ce2b; --ink: #e8f4f1; --check-on: #d8ce2b;
+  --bg-input: #0a2229; --panel-border: #2e6b78; --text-dim: #9bc0be;
+  --accent: #6ac6c9; --accent-strong: #a8e3e2; --accent-2: #7fd3d0;
+  --danger: #ff6b5c;
+  --glow: 0 0 0 3px rgba(216, 206, 43, 0.40);
+  --halftone: rgba(216, 110, 70, 0.14);
+  --hatch: rgba(216, 110, 70, 0.10);
+  --ink-shadow: 4px 4px 0 0 #041318;
+  --on-brick: #e8f4f1;
+  --on-page: #e8f4f1;
+  --on-zap: #192533;
+  --on-danger: #2b0a07;
+  --tick: #0b1a20;
+  --title-shadow: #041318;
+  --zap-strong: #ede354;
+  --input-settled: #071b21;
+  --backdrop: rgba(2, 12, 16, 0.6);
+  color-scheme: dark;
+}
+
 /* ---------- Base ---------- */
 * { box-sizing: border-box; }
 
@@ -830,6 +972,13 @@ button:focus-visible {
 }
 @media (min-width: 62rem) {
   .cell-row[data-cells="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cell-row[data-cells="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+/* MC32's four side-scheme columns hold a pill with a card name in it rather
+   than a dropdown, so they take a middle step the three-cell row does not
+   need: two and two beats four stacked long before the names stop fitting. */
+@media (min-width: 40rem) and (max-width: 61.99rem) {
+  .cell-row[data-cells="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 /* A cell is its control plus the line saying which rung opens it. */
 .cell-row > .cell { display: grid; gap: 0.2rem; align-content: start; }
@@ -899,6 +1048,28 @@ button:focus-visible {
   border-radius: 46% 46% 14% 14% / 68% 68% 22% 22%;
 }
 
+/* The share mark in the topbar — the only SVG in this project, and the reason
+   is that it is the only device here that has to be a precise figure rather
+   than a texture. Halftone, hatching and the per-player mark are approximations
+   by nature; three dots and two bars are not, and CSS gradients gave soft edges
+   and a rotated-rectangle angle that never quite met the dots. The geometry
+   lives in index.html so it can be read as numbers; this only sizes it and
+   hands it the current text colour, so it follows the theme and the button's
+   font size by itself. */
+.icon-share {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.14em;
+}
+.icon-share circle { fill: currentColor; }
+.icon-share path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
 /* Why a field is closed, said in the open rather than only in a tooltip — the
    rung that opens it is information the player wants before they get there.
    Empty while the field is open, so the row does not jump when it opens. */
@@ -961,6 +1132,26 @@ button:focus-visible {
   font-weight: 700;
   box-shadow: inset 4px 0 0 0 var(--zap);
 }
+
+/* MC32's Future Past grid: five cards down the side, four scenarios across the
+   top. Scoped to .fp-table so MC60's scenario table and MC27's rungs are
+   untouched, and written as .sheet-table.fp-table rather than .fp-table for
+   the specificity reason spelled out above: the generic .sheet-table rule
+   further down centres its cells, and at equal specificity the later rule
+   wins. */
+.sheet-table.fp-table th[scope="row"] { text-align: left; }
+/* A card in the victory display is removed from the campaign, so no encounter
+   deck can hold it any more. The row says so the way MC60 says a scenario is
+   out of play — struck name, dimmed to 0.72, the figure where the text on
+   --brick still holds 4.5 — while its cells close one-sided: an already ticked
+   one stays operable, because it may have been recorded before the card was
+   removed and a record that was right must stay correctable. */
+.sheet-table.fp-table tr.is-removed { opacity: 0.72; }
+.sheet-table.fp-table tr.is-removed th[scope="row"] { text-decoration: line-through; }
+/* The four scenario columns keep one width whatever the card names do, so the
+   boxes line up in columns the way they do on the sheet. */
+.sheet-table.fp-table thead th:not(:first-child),
+.sheet-table.fp-table td { width: 15%; }
 
 /* Two field groups stacked in one panel — MC21's scenario 2 and 3 put the
    pooled cards over a box with its own wording — would otherwise touch: .panel
@@ -1511,6 +1702,11 @@ body[class*="dnd-"] .entry-list { min-height: 2.2rem; outline: 1px dashed var(--
     color: var(--text-dim);
   }
   .sheet-table .scenario-name { font-size: 1rem; white-space: normal; }
+  /* Stacked, the card name is the row's heading — same weight the scenario
+     name carries in MC60's table. */
+  .sheet-table.fp-table th[scope="row"] { font-size: 1rem; }
+  .sheet-table.fp-table thead th:not(:first-child),
+  .sheet-table.fp-table td { width: auto; }
   .chip-list { grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
 }
 

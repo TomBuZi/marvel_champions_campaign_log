@@ -6,8 +6,8 @@ Eintippen statt ausdrucken: automatisch gespeichert, zweisprachig, teilbar, druc
 **Live:** https://tombuzi.github.io/marvel_champions_campaign_log/
 
 Umgesetzt sind die Kampagnen **Fear No Evil (MC60)**,
-**The Rise of Red Skull (MC10)**, **The Mad Titan's Shadow (MC21)** und
-**Sinister Motives (MC27)**.
+**The Rise of Red Skull (MC10)**, **The Mad Titan's Shadow (MC21)**,
+**Sinister Motives (MC27)** und **Mutant Genesis (MC32)**.
 Die Kampagne wird beim Anlegen eines Bogens gewählt
 und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
 [Eine Kampagne hinzufügen](#eine-kampagne-hinzufügen).
@@ -19,7 +19,7 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
 ## Was die App kann
 
 * **Der ganze Bogen, je Kampagne der ihre.** Jedes Modul folgt seiner Vorlage Feld
-  für Feld, und die vier Vorlagen sind sehr verschieden:
+  für Feld, und die fünf Vorlagen sind sehr verschieden:
   * *Fear No Evil (MC60)* — Spielerplätze mit Identität und verbleibenden
     Lebenspunkten, die fünf Szenarien mit Schurken-Zuordnung und Fortschritt, die
     aus der Kampagne entfernten Verbündeten und Persona-Unterstützungen, und die
@@ -30,7 +30,7 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     Verbündeten. **Keine** Szenario-Tabelle, kein Fortschritt, kein Würfel — der
     gedruckte MC10-Bogen hat das alles nicht, weil die fünf Szenarien in fester
     Reihenfolge gespielt werden.
-  * *The Mad Titan's Shadow (MC21)* — der schlankeste der vier: je Spieler
+  * *The Mad Titan's Shadow (MC21)* — der schlankeste von allen: je Spieler
     Identität und Lebenspunkte, dazu neun benannte Kästchen in vier
     Szenario-Abschnitten. Sieben von ihnen sagen auf Papier denselben Satz
     („… was added to campaign pool“), deshalb stehen sie hier als eine
@@ -51,8 +51,21 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     gedruckte Bogen an drei Stellen im Regeltext setzt, steht auch hier —
     gezeichnet statt aus der Icon-Schrift des Herausgebers, und mit seiner
     Bedeutung als Name, damit Screenreader „pro Spieler" sagen.
+  * *Mutant Genesis (MC32)* — der kästchenreichste, und keine seiner
+    Schreibflächen hat gedruckte Zeilen. Je Spieler Identität, Lebenspunkte,
+    **Rolle** und darunter die fünf Verbesserungen dieser Rolle als Kästchen;
+    dazu die vier Kampagnen-Nebenpläne in je einer Szenariospalte, die fünf
+    Future-Past-Karten einmal als Menge („Victory Display“, denn Entfernen ist
+    endgültig) und einmal als Gitter aus fünf Karten × vier Szenarien
+    („Encounter Deck“, denn die Karten werden wieder eingemischt), die drei
+    Jubilee-Spalten genau so, wie der Bogen sie druckt — Szenario 2 ein
+    Kästchen, Szenario 3 und 4 je zwei —, die vier CAPTIVE-Verbündeten aus
+    *Abduction Protocols* als Kästchen und die Verbündeten unter *Rescue
+    Captives* oder *Find the Prisoners* als Freitextliste. Das fünfte Szenario
+    gegen Magneto fehlt auch auf dem gedruckten Bogen: im Finale gibt es nichts
+    mehr festzuhalten.
 * **Standard- oder Expertenstufe** — der Haken „Expertenmodus“ oben im
-  Spielerbereich, in allen vier Kampagnen an derselben Stelle. Auf Standardstufe
+  Spielerbereich, in allen fünf Kampagnen an derselben Stelle. Auf Standardstufe
   blendet der Bogen aus, was es dort nicht gibt, statt danach zu fragen:
   * *Fear No Evil (MC60)* — die verbleibenden Lebenspunkte.
   * *The Rise of Red Skull (MC10)* — die verbleibenden Lebenspunkte **und** die
@@ -63,6 +76,9 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   * *Sinister Motives (MC27)* — die verbleibenden Lebenspunkte; das ist auch das
     einzige Feld, das der gedruckte MC27-Bogen mit „Expert Mode Only“
     kennzeichnet. Alles andere bleibt auf beiden Stufen stehen.
+  * *Mutant Genesis (MC32)* — die verbleibenden Lebenspunkte, und nur die: der
+    gedruckte Bogen setzt „(expert)“ unter dieses eine Feld. Rolle und
+    Rollenverbesserungen bleiben auf beiden Stufen stehen.
 
   **Ausblenden ist nicht Löschen**: wer versehentlich umschaltet, findet nach dem
   Zurückschalten alles wieder vor. Gedruckt wird der Haken mit, weil er
@@ -76,7 +92,7 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   und ein importierter Bogen darf Eintragungen tragen, die die aktuelle Zahl
   noch nicht erreicht. Was freigeschaltet ist, wird aus der einen Zahl
   abgeleitet und nie gespeichert.
-* **Karten statt Freitext** (MC10, MC27) — wo auf Papier eine leere Zeile steht, stehen
+* **Karten statt Freitext** (MC10, MC27, MC32) — wo auf Papier eine leere Zeile steht, stehen
   hier die tatsächlichen Karten. Bei MC10 hat jedes dieser Felder genau vier gedruckte
   Möglichkeiten, und jedes trägt seine eigene Regel aus der Kampagne:
   * *Verpflichtungen* — jeder Spieler hat seinen eigenen Satz aller vier, zwei
@@ -98,6 +114,61 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   Feldern der anderen Spieler. Aspect Advantage und Planning Ahead bleiben Freitext,
   weil die Karte aus der eigenen Sammlung beziehungsweise dem eigenen Deck kommt und
   keine endliche gedruckte Liste ist.
+
+  Bei MC32 sind es fünf gedruckte Sätze, und jeder bekommt die Form der Frage,
+  die der Bogen stellt. Die vier **Kampagnen-Nebenpläne** und die vier
+  **CAPTIVE-Verbündeten** fragen, welche — Kästchen. Die fünf
+  **Future-Past-Karten** fragen es zweimal: einmal für die ganze Kampagne, denn
+  eine Karte im Victory Display ist endgültig entfernt, und einmal je Szenario,
+  denn eine im Begegnungsdeck eingetragene Karte wird im nächsten Setup wieder
+  eingemischt und darf in mehreren Spalten stehen. Genau das ist der Unterschied
+  zwischen den beiden Abschnitten, und der Bogen sagt es selbst: der obere druckt
+  keine Spalten, der untere vier. Die **Rollenverbesserungen** fragen, welche der
+  fünf einer Rolle — Kästchen, deren Beschriftungen aus der gewählten Rolle
+  fallen. Nur die Verbündeten unter *Rescue Captives* oder *Find the Prisoners*
+  bleiben Freitext: sie kommen aus den eigenen Decks der Spieler.
+* **Abgeleitete Beschriftungen** (MC32) — welche fünf Verbesserungen ein Spieler
+  überhaupt sieht, entscheidet seine Rolle; ohne Rolle steht dort der Hinweis,
+  erst eine zu wählen. Jeder Spieler muss eine andere Rolle nehmen, eine
+  vergebene ist bei den anderen also abgeblendet. Ein Rollenwechsel **löscht
+  nichts**: Eintragungen der alten Rolle bleiben gespeichert und werden nur
+  nicht mehr als Kästchen gezeigt. Das ist kein Detail — beim Tausch zweier
+  Rollen geht zwangsläufig einer der beiden kurz ohne Rolle durch, und ein
+  Fehlklick im Auswahlfeld darf keine fünf Häkchen kosten. Gesagt wird darüber
+  nichts, und gedruckt auch nicht: es ist Buchführung, kein Hinweis, den jemand
+  braucht, und die Eintragungen stehen im JSON-Export und im Share-Link.
+* **Was aus der Kampagne heraus ist, wird gesperrt** (MC32) — und zwar
+  **einseitig**: ein bereits gesetztes Kästchen bleibt immer bedienbar, denn
+  `normalize()` entscheidet einen Widerspruch nicht, also muss der Ausweg auf
+  dem Bildschirm liegen. Ein importierter oder von Hand bearbeiteter Bogen darf
+  nie festgefroren ankommen.
+  * *Jubilee* — „in play“ und „removed from campaign“ eines Szenarios sind zwei
+    Zustände eines Ergebnisses („im Spiel eintragen, **sonst** aus dem Logbuch
+    entfernen“) und sperren sich gegenseitig, wie MC60s „Abgeschlossen“ und
+    „Gescheitert“. Die Szenarien hängen außerdem aneinander: die Kästchen eines
+    Szenarios sind erst offen, wenn das **vorige** „in play“ trägt — Szenario 3
+    fragt nur nach ihr, weil der Sieg-Schritt von Szenario 2 sie ins Logbuch
+    geschrieben hat und das Setup von Szenario 3 sie ins Spiel bringt.
+    Szenario 2 hat nichts davor und ist immer offen. Und sobald sie entfernt
+    ist, sind die Kästchen **aller späteren Szenarien** zu: sie kommt nicht
+    zurück. Ein trotzdem vorhandener Widerspruch wird zusätzlich benannt — das
+    noch offene Kästchen ist das, das korrigiert werden muss.
+  * *Future Past* — eine Karte im Victory Display ist aus der Kampagne
+    entfernt, also ist ihre ganze Zeile im Begegnungsdeck-Gitter durchgestrichen
+    und zu. Hier zählt die Einseitigkeit am meisten: eine Karte kann in einem
+    frühen Szenario im Begegnungsdeck gestanden haben und zwei Szenarien später
+    im Victory Display landen, und dieser Abschnitt druckt keine Spalten, kann
+    also nicht sagen, *wann* sie entfernt wurde. Die leeren Zellen zu schließen
+    verhindert den nächsten falschen Eintrag; die gesetzten zu schließen würde
+    eine richtige Eintragung für einen Fehler erklären.
+* **Wo es nur um eine Anzahl geht, passiert nichts** (MC32) — wie viele
+  Rollenverbesserungen die Kampagne vergeben hat, hängt an den
+  Nebenplan-Kästchen, begrenzt aber nur eine **Anzahl** und keine bestimmte
+  Karte. Gesperrt wird deshalb nichts: sonst wären genau die Kästchen zu, die
+  beim Erreichen der Grenze zufällig leer waren, und ein frischer Bogen —
+  Grenze 1 — käme sofort zu vier Fünfteln zu. Mitgezählt wird auch nicht: die
+  Regel kennen die Spieler, das Papier prüft sie ebenfalls nicht, und eine
+  ständig mitlaufende Zahl fängt an, wie eine Grenze auszusehen.
 * **Ein bis vier Spieler** — Karten werden hinzugefügt, wenn jemand mitspielt, statt
   vier feste Plätze zu zeigen. Der gedruckte Bogen muss alle vier vorhalten; ein
   Bildschirm nicht.
@@ -126,7 +197,24 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
 * **Automatisch gespeichert** im Speicher des Browsers — kein Server, kein Konto,
   keine Übertragung irgendwohin.
 * **Export / Import** als JSON, und **Link teilen**: der komplette Bogen steckt
-  komprimiert in der Adresse.
+  komprimiert in der Adresse. Der Teilen-Knopf steht oben rechts in der Leiste und
+  nicht im Menü — er ist die eine Handlung, die man mitten im Spiel braucht, und
+  es gibt ihn deshalb genau einmal. Was er tut, hängt am Gerät: auf einem Zeigegerät
+  landet der Link in der Zwischenablage, auf einem Touchgerät öffnet er das
+  System-Teilen; der Knopf trägt das übliche Teilen-Zeichen, drei Punkte mit
+  zwei Verbindungslinien. Es ist das einzige Inline-SVG im Projekt, und zwar aus
+  demselben Grund, aus dem alles andere hier CSS ist: Halbtonraster und
+  Schraffur sind Texturen und dürfen ungefähr sein, dieses Zeichen ist eine
+  Figur und muss stimmen. Gezeichnet statt aus einem Icon-Satz genommen, weil es
+  *nur* seine Geometrie ist — Kreise mit r=3 auf dem 24er-Raster und zwei Balken
+  zwischen ihren Rändern —, und eine lizenzierte Kopie brächte
+  Nennungspflicht und ein Fremdasset für vier Zeilen Rechnung. Entschieden wird
+  das am **Zeiger**
+  (`(hover: none) and (pointer: coarse)`), nicht an der Kennung des Browsers:
+  `navigator.share` gibt es auch auf dem Desktop, wo ein Teilen-Dialog die falsche
+  Antwort ist. Wird der Dialog abgebrochen, passiert nichts — abbrechen ist eine
+  Entscheidung und kein Fehler; scheitert er dagegen, übernimmt die Zwischenablage,
+  und ohne Zwischenablage steht der Link zum Herauskopieren im Dialog.
 * **Druckansicht** als reine Textfassung in Schwarzweiß, damit nichts abgeschnitten wird.
 * **Deutsch und Englisch**, hell und dunkel, beides umschaltbar und gespeichert —
   die Sprache lässt sich auch über die Adresse vorgeben (`…/de/`, `…/en/`).
@@ -287,8 +375,9 @@ auch über `file://` und direkt aus dem Repo-Root über GitHub Pages.
 | `heroes.js` | 68 Helden (Name, Lebenspunkte) als Vorschlagsliste für die Identitätsfelder |
 | `campaigns/fear-no-evil.js` | die Kampagne MC60: eigenes Datenmodell, eigenes Rendering, eigene Strings |
 | `campaigns/rise-of-red-skull.js` | die Kampagne MC10: feste Kartenpools mit ihren Eindeutigkeitsregeln und drei Szenariofelder; bewusst ohne Szenario-Tabelle |
-| `campaigns/mad-titans-shadow.js` | die Kampagne MC21: Spieler und neun benannte Kästchen in vier Szenario-Abschnitten; das schlankeste der vier Module |
+| `campaigns/mad-titans-shadow.js` | die Kampagne MC21: Spieler und neun benannte Kästchen in vier Szenario-Abschnitten; das schlankeste der Module |
 | `campaigns/sinister-motives.js` | die Kampagne MC27: die vier Kartensätze der Kampagne, drei Belohnungsfelder in der Spielerkarte und die Reputationsleiste, die Stufen *und* Felder freischaltet |
+| `campaigns/mutant-genesis.js` | die Kampagne MC32: benannte Kästchen über fünf gedruckten Kartensätzen, ein Gitter aus Kartensatz × Szenario, und Beschriftungen, die aus der gewählten Rolle eines Spielers fallen |
 | `test/lint.js` | Prüfungen ohne Browser: Wörterbücher, Kampagnendefinition, Datenmodell, Paketierung |
 | `test/selftest.html`, `test/run-browser.js` | Selbsttest, der die echte Seite in einem iframe fernsteuert |
 | `fonts/` | Exo 2 (OFL, selbst gehostet), `OFL.txt` daneben |
@@ -317,10 +406,10 @@ gekostet haben.
 
    ```js
    window.registerCampaign({
-     id: "mutant-genesis",      // stabil, wandert in jeden Bogen
-     code: "MC24",
+     id: "kurzname-der-kampagne",  // stabil, wandert in jeden Bogen
+     code: "MC99",
      titleEn: "…", titleDe: "…",
-     theme: "mg",               // -> <html data-campaign="mg">
+     theme: "kk",               // -> <html data-campaign="kk">
      stateVersion: 1,
      emptyState: function () {…},           // DOM-frei
      normalize: function (raw) {…},         // DOM-frei, wirft nie
@@ -342,14 +431,16 @@ gekostet haben.
    spezifischer als das bloße `:root` in der Dark-Media-Query und würde im Dunkelmodus
    die helle Palette malen.
 
-Als Vorlagen dienen die vier vorhandenen Module, und sie sind bewusst
+Als Vorlagen dienen die fünf vorhandenen Module, und sie sind bewusst
 unterschiedlich: `campaigns/fear-no-evil.js` zeigt abgeleiteten Zustand, gegenseitige
 Sperren, eine Auslosung und ein `migrate()`; `campaigns/rise-of-red-skull.js` ist das
 schlanke Gegenstück — reine Eingabefelder, kein `migrate()`, keine erfundenen Felder;
 `campaigns/mad-titans-shadow.js` ist das kürzeste — Spieler plus benannte Kästchen;
 `campaigns/sinister-motives.js` zeigt feste Kartensätze in Zellgittern, in denen die
 *Position* Teil der Eintragung ist, und einen abgeleiteten Zustand, der aus einer
-einzigen Zahl fällt.
+einzigen Zahl fällt; `campaigns/mutant-genesis.js` zeigt Beschriftungen, die aus einer
+Wahl abgeleitet werden, ein Gitter aus Kartensatz × Szenario, und die Grenze zwischen
+einer Sperre und einem Hinweis.
 
 `ctx` liefert `{ state, lang, t(key, …args), save(), rerender(), toast(msg), w }`;
 `w` ist die Widget-Sammlung aus `widgets.js`.
@@ -366,7 +457,7 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (441 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (544 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   langpath | print | import | lock |
                                     #   lockconflict | random | randomspread |
@@ -374,13 +465,16 @@ node test/run-browser.js print      # nur ein Fall: basic | quarantine | share |
                                     #   round | roundlast | roundspread |
                                     #   rrs | rrsdialog | rrsprint | rrspools |
                                     #   rrsexpert | mts | mtsexpert | mtsprint |
-                                    #   sm | smrep | smexpert | smprint
+                                    #   sm | smrep | smexpert | smprint |
+                                    #   mg | mgrole | mgexpert | mgprint |
+                                    #   sharebtn
 BROWSER_LANG=de-DE node test/run-browser.js   # unter einer anderen Browser-Sprache
 ```
 
 `test/seed.html` legt einen ausgefüllten Beispielbogen an und springt in die App —
 praktisch für Screenshots und für den Druckvergleich. `?c=mc10` nimmt den MC10-Bogen,
-`?c=mc21` den MC21-Bogen und `?c=mc27` den MC27-Bogen statt MC60, `?expert=0` stellt
+`?c=mc21` den MC21-Bogen, `?c=mc27` den MC27-Bogen und `?c=mc32` den MC32-Bogen statt
+MC60, `?expert=0` stellt
 den Bogen auf
 Standardstufe, und `?theme=dark` nagelt das
 Theme fest; letzteres braucht man, um zu prüfen, dass der Druck auch aus einer
@@ -449,8 +543,11 @@ Theme sonst hell und dunkel gegeneinander verdreht.
 **Jede Kampagne bringt ihre eigene Palette mit**, gesetzt über
 `[data-campaign]` am `<html>`: MC60 ist comic-orange auf Dunkelrot, MC10 salbeigrün
 auf Tiefgrün mit Senfgelb, MC21 Indigo und Lavendel auf Rostorange mit Gold, MC27
-Karminrot und Altrosa auf Violett mit Pink — alle vier aus dem jeweiligen
-Bogen-PDF gemessen. Ein
+Karminrot und Altrosa auf Violett mit Pink, MC32 Teal und Minze auf Tiefteal mit
+Gold — alle fünf aus dem jeweiligen Bogen-PDF gemessen. Bei MC32 reichte die reine
+Vektormessung nicht: die orange Comic-Schraffur seines Randes ist ein Rasterbild und
+kommt in keiner Vektorfläche vor, sie lebt hier deshalb im Halbtonraster und in der
+Schraffur — was sie auf dem Bogen auch ist. Ein
 solcher Skin muss dieselben **vier** Blöcke spiegeln. Ein einzelner
 `[data-campaign]`-Block wäre spezifischer als das bloße `:root` in der
 Dark-Media-Query und würde im Dunkelmodus die helle Palette malen; umgekehrt muss

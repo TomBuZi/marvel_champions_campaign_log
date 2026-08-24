@@ -2,10 +2,10 @@
 <script>
 /* Legt einen ausgefüllten Beispielbogen an und springt in die App — für
    Screenshots und den Druckvergleich. "?c=mc10" nimmt den MC10-Bogen,
-   "?c=mc21" den MC21-Bogen, "?c=mc27" den MC27-Bogen, ohne Angabe kommt
-   MC60. */
+   "?c=mc21" den MC21-Bogen, "?c=mc27" den MC27-Bogen, "?c=mc32" den
+   MC32-Bogen, ohne Angabe kommt MC60. */
 var q = new URLSearchParams(location.search);
-var which = { mc10: "mc10", mc21: "mc21", mc27: "mc27" }[q.get("c")] || "mc60";
+var which = { mc10: "mc10", mc21: "mc21", mc27: "mc27", mc32: "mc32" }[q.get("c")] || "mc60";
 /* "?theme=dark" (oder light) nagelt das Theme fest — sonst folgt es dem System.
    Gebraucht fuer den Druckvergleich: der Druck muss schwarz auf weiss sein,
    auch aus einer Dark-Mode-Sitzung und auch mit einem Kampagnen-Skin. */
@@ -108,6 +108,49 @@ var logs = {
       lastOnesStanding: ["electro", "scorpion", "vulture"],
       finalScore: null,
       osbornTech: ["arm-cannon", "kinetic-armor", ""]
+    }
+  },
+  mc32: {
+    schemaVersion: 1, id: "seed-5", campaignId: "mutant-genesis", stateVersion: 1,
+    title: "Mutant Genesis, Durchgang 1",
+    createdAt: "2026-08-18T18:00:00.000Z", updatedAt: "2026-08-23T21:10:00.000Z",
+    state: {
+      expert: true,
+      /* Drei Spieler, absichtlich in drei verschiedenen Zustaenden, damit ein
+         Screenshot alle drei zeigt: Rolle mit Haken; Rolle gewechselt, also
+         Eintragungen einer anderen Rolle im Bestand — die bleiben gespeichert,
+         werden aber weder angezeigt noch kommentiert; und gar keine Rolle,
+         wo der Hinweis steht, erst eine zu waehlen. */
+      players: [
+        { hero: "Colossus", hp: 9, role: "brawler",
+          upgrades: ["brawler-coup-de-grace", "brawler-brazen-defense", "brawler-war-cry"] },
+        /* Peacekeeper jetzt, Defender vorher — die zwei Defender-Eintragungen
+           bleiben gespeichert und die Karte sagt, dass es sie gibt. */
+        { hero: "Shadowcat", hp: 6, role: "peacekeeper",
+          upgrades: ["defender-surprise", "defender-bodyguard", "peacekeeper-mentorship"] },
+        { hero: "Wolverine", hp: 11, role: "", upgrades: [] }
+      ],
+      /* Zwei von vier. Wie viele Verbesserungen die Kampagne damit vergeben
+         hat, zaehlt der Bogen absichtlich nicht mit. */
+      sideSchemes: ["frightened-police", "enemy-of-my-enemy"],
+      futurePastVictory: ["nimrod", "nano-sentinel-tech"],
+      /* Dieselbe Karte in Spalte 1 und 2 — das ist erlaubt und soll im
+         Screenshot zu sehen sein — und Spalte 4 leer. "nimrod" steht in
+         Spalte 1 und gleichzeitig oben im Victory Display: so zeigt der
+         Screenshot auch die einseitige Sperre, also eine durchgestrichene
+         Zeile, deren gesetzte Zelle bedienbar bleibt. */
+      futurePastDeck: [["bastion", "nimrod"], ["bastion", "nimrods-portal"],
+                       ["bastions-machinations"], []],
+      /* S2 im Spiel, damit S3 ueberhaupt offen ist; dort entfernt, und S4
+         trotzdem im Spiel: so zeigt der Screenshot den Widerspruchs-Marker,
+         das gesetzte Kaestchen, das trotz der Sperre bedienbar bleibt, und
+         daneben das leere, das zu ist. */
+      jubilee: { s2InPlay: true, s3InPlay: false, s3Removed: true,
+                 s4InPlay: true, s4Removed: false },
+      captiveAllies: ["rictor", "wolfsbane"],
+      /* Ein gestrichener Eintrag, damit die Durchstreichung im Druck zu sehen
+         ist. */
+      removedAllies: ["Lockheed", "~Nightcrawler"]
     }
   }
 };
