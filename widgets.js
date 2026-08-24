@@ -135,18 +135,33 @@
 
   // ---- Select with mutual exclusion ---------------------------------------
   /* One <select> out of a fixed pool. cfg:
-       { value, options: [{value,label}], placeholder, label, onChange(next) }
+       { value, options: [{value,label,lang?,group?}], placeholder, label,
+         onChange(next) }
      Mutual exclusion across a set of these selects is applied afterwards by
-     syncUnique(), which needs them all to exist first. */
+     syncUnique(), which needs them all to exist first.
+
+     `group` opens an <optgroup> whenever it changes from one option to the
+     next, so the pool has to arrive already sorted by it. Omit it and the list
+     stays flat, which is what every caller before MC16 does. It exists because
+     an <option> carries exactly ONE lang attribute: folding a translated
+     qualifier into the label ("Panzerung (Unit-Kosten 4)") would tag German
+     words as English on every entry whose name is not translated yet. In the
+     group label that qualifier is out of the option's way. */
   function poolSelect(cfg) {
     var sel = el("select", "pool-select", { "aria-label": cfg.label, title: cfg.label });
     var ph = el("option", null, { value: "" });
     ph.textContent = cfg.placeholder;
     sel.appendChild(ph);
+    var group = null, into = sel;
     cfg.options.forEach(function (o) {
+      if (o.group !== group) {
+        group = o.group;
+        into = group == null ? sel : el("optgroup", null, { label: group });
+        if (into !== sel) sel.appendChild(into);
+      }
       var opt = el("option", null, { value: o.value, lang: o.lang || null });
       opt.textContent = o.label;
-      sel.appendChild(opt);
+      into.appendChild(opt);
     });
     sel.value = cfg.value || "";
     sel.addEventListener("change", function () { cfg.onChange(sel.value); });
@@ -477,6 +492,118 @@
     return field;
   }
 
+
+  // ---- Growable list of pool selects --------------------------------------
+  /* A list of selects out of one fixed pool, with an add button and a remove
+     button per row. The gap this fills: poolSelect() covers a FIXED number of
+     slots (MC40's three marauders, MC27's three Osborn Tech cells) and
+     stringList() covers free text; neither covers "as many rows as you bought,
+     each one a card off a printed list".
+
+     No drag handle, unlike stringList. There the order can be part of the entry
+     — MC27 says so explicitly, because its position is a reputation tier. Here
+     a list of purchases has no order to get wrong, so offering to reorder it
+     would suggest a meaning it does not have.
+
+     Uniqueness is NOT this widget's business, not even inside one list. The
+     caller tags the selects through `attrs` and hands them all to syncUnique()
+     in one pass, which is the only way a rule spanning SEVERAL lists — MC16's
+     "one copy of each Market card for the players as a group" — can be
+     expressed at all. Keeping it out here also keeps the widget honest about
+     imports: a repeat that arrives from a share link stays visible until
+     normalize() has had its say.
+
+     An empty row is left standing rather than removed on blur, the way
+     stringList removes an emptied text field: a <select> put back to its
+     placeholder has no blur worth the name, and a row silently vanishing under
+     the pointer is worse than one that waits for its own × button.
+
+     cfg: { listId, getArray, options, placeholder, addLabel, removeLabel,
+            removeConfirm?, label?, selectLabel?(i), attrs?(i), onChange? } */
+  function poolList(cfg) {
+    var field = el("div", "field");
+    if (cfg.label) {
+      var label = el("label");
+      label.textContent = cfg.label;
+      field.appendChild(label);
+    }
+
+    var list = el("div", "entry-list", { "data-list-id": cfg.listId });
+
+    /* Nothing to add while a row is still empty — the stringList rule — and
+       nothing to add once every card in the pool is on this list, which is the
+       point at which another row could only repeat one. */
+    function updateAddState() {
+      var arr = cfg.getArray();
+      var hasEmpty = arr.some(function (v) { return !String(v || "").trim(); });
+      add.disabled = hasEmpty || arr.length >= cfg.options.length;
+    }
+
+    function draw() {
+      list.innerHTML = "";
+      cfg.getArray().forEach(function (val, i) {
+        var row = el("div", "entry-row entry-row--pool");
+
+        var select = poolSelect({
+          value: val,
+          options: cfg.options,
+          placeholder: cfg.placeholder,
+          label: cfg.selectLabel ? cfg.selectLabel(i) : cfg.label,
+          onChange: function (next) {
+            cfg.getArray()[i] = next;
+            updateAddState();
+            if (cfg.onChange) cfg.onChange();
+            onCommit();
+          },
+        });
+        /* How the caller finds this select again for its own paint pass. */
+        if (cfg.attrs) {
+          var extra = cfg.attrs(i);
+          Object.keys(extra).forEach(function (k) {
+            if (extra[k] != null) select.setAttribute(k, extra[k]);
+          });
+        }
+
+        var remove = el("button", "entry-remove",
+          { type: "button", "aria-label": cfg.removeLabel, title: cfg.removeLabel });
+        remove.textContent = "×";
+        remove.addEventListener("click", function () {
+          var arr = cfg.getArray();
+          // Confirm only when there is actually a card to lose.
+          if (i < arr.length && String(arr[i] || "").trim() && cfg.removeConfirm &&
+              !window.confirm(cfg.removeConfirm)) return;
+          arr.splice(i, 1);
+          onCommit();
+          draw();
+        });
+
+        row.appendChild(select);
+        row.appendChild(remove);
+        list.appendChild(row);
+      });
+
+      updateAddState();
+      if (cfg.onChange) cfg.onChange();
+    }
+
+    var add = el("button", "entry-add", { type: "button" });
+    add.textContent = cfg.addLabel;
+    add.addEventListener("click", function () {
+      cfg.getArray().push("");
+      onCommit();
+      draw();
+      var sels = list.querySelectorAll("select");
+      if (sels.length) sels[sels.length - 1].focus();
+    });
+
+    draw();
+    field.appendChild(list);
+    field.appendChild(add);
+    /* Deliberately not registered in `entryLists`: that registry exists for
+       drag&drop, and these rows do not drag. */
+    return field;
+  }
+
   // ---- Value coercion (shared with the campaign modules' normalize) --------
   /* Normalise a value into a clean array of non-empty strings.
      opts.split: split a legacy string on newlines (else wrap it as one entry).
@@ -524,6 +651,7 @@
     pickRandom: pickRandom,
     progressRow: progressRow,
     stringList: stringList,
+    poolList: poolList,
     forgetLists: forgetLists,
     coerceStringList: coerceStringList,
     coerceBool: coerceBool,

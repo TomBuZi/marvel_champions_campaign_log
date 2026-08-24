@@ -6,9 +6,10 @@ Eintippen statt ausdrucken: automatisch gespeichert, zweisprachig, teilbar, druc
 **Live:** https://tombuzi.github.io/marvel_champions_campaign_log/
 
 Umgesetzt sind die Kampagnen **Fear No Evil (MC60)**,
-**The Rise of Red Skull (MC10)**, **The Mad Titan's Shadow (MC21)**,
-**Sinister Motives (MC27)**, **Mutant Genesis (MC32)**,
-**NeXt Evolution (MC40)** und **Age of Apocalypse (MC45)**.
+**The Rise of Red Skull (MC10)**, **The Galaxy's Most Wanted (MC16)**,
+**The Mad Titan's Shadow (MC21)**, **Sinister Motives (MC27)**,
+**Mutant Genesis (MC32)**, **NeXt Evolution (MC40)** und
+**Age of Apocalypse (MC45)**.
 Die Kampagne wird beim Anlegen eines Bogens gewählt
 und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
 [Eine Kampagne hinzufügen](#eine-kampagne-hinzufügen).
@@ -31,6 +32,16 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     Verbündeten. **Keine** Szenario-Tabelle, kein Fortschritt, kein Würfel — der
     gedruckte MC10-Bogen hat das alles nicht, weil die fünf Szenarien in fester
     Reihenfolge gespielt werden.
+  * *The Galaxy's Most Wanted (MC16)* — ein Bogen, dessen Spielerbereich eine
+    Einkaufsliste ist: je Spieler Identität, Lebenspunkte und **übrige
+    Units**, darunter „Marktkarten im Spielerdeck“ und „Karten in der Sammlung“
+    als je **eine** Überschrift über allen vier Spielerspalten, so wie das
+    Papier sie druckt. Dann die vier *Galaktische Artefakte*-Nebenpläne als
+    Kästchen über dem Satz, und zuletzt Kontrolle des Machtsteins,
+    Ausweichmarker und die vier Kästchen unter „Kopfgeldjäger besiegt?“. **Kein**
+    Szenario 5: Ronan der Ankläger kommt auf dem gedruckten Bogen kein einziges
+    Mal vor, die Kästchen tragen die Unterzeile „Sieg-Anweisung für Szenarien
+    #1 – 4“, und im Finale gibt es nichts festzuhalten außer dem Sieg.
   * *The Mad Titan's Shadow (MC21)* — der schlankeste von allen: je Spieler
     Identität und Lebenspunkte, dazu neun benannte Kästchen in vier
     Szenario-Abschnitten. Sieben von ihnen sagen auf Papier denselben Satz
@@ -76,9 +87,9 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     —, eingetragen werden nur *Szenarionummer* und *Verdient?*. Sechs Zeilen
     stehen fünf Szenarien gegenüber, eine Zeile bleibt am Ende also
     zwangsläufig leer.
-  * *Age of Apocalypse (MC45)* — der schlankeste von allen: je Spieler Identität
-    und Lebenspunkte, darunter die Tabelle der vier **Mission-Nebenpläne** und
-    darunter fünf benannte Kästchen. Drei der vier Spalten sind gedruckter
+  * *Age of Apocalypse (MC45)* — sehr schlank, wenn auch nicht ganz so knapp wie
+    MC21: je Spieler Identität und Lebenspunkte, darunter die Tabelle der vier
+    **Mission-Nebenpläne** und darunter fünf benannte Kästchen. Drei der vier Spalten sind gedruckter
     Regeltext — *Spielaufbau*, *Besiegt* und *Nicht besiegt* —, und in den
     beiden Ergebnisspalten sitzt je ein Kästchen: sie schließen einander aus,
     und beide streichen den Missionsnamen durch, denn die Regel streicht ihn
@@ -99,6 +110,11 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   * *The Rise of Red Skull (MC10)* — die verbleibenden Lebenspunkte **und** die
     Verpflichtungen; das MC10-Regelheft nennt beides ausdrücklich als Sache der
     Expertenstufe.
+  * *The Galaxy's Most Wanted (MC16)* — die verbleibenden Lebenspunkte, und hier
+    kennzeichnet der gedruckte Bogen sie ausnahmsweise selbst, indem er
+    „(Experte)“ unter das Feld setzt. Die **übrigen Units** bleiben ausdrücklich
+    stehen: sie werden auf beiden Stufen verdient und ausgegeben, die
+    Expertenregeln geben ihnen nur eine weitere Verwendung.
   * *The Mad Titan's Shadow (MC21)* — die verbleibenden Lebenspunkte. Die neun
     Kästchen bleiben auf beiden Stufen stehen.
   * *Sinister Motives (MC27)* — die verbleibenden Lebenspunkte; das ist auch das
@@ -132,7 +148,7 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   und ein importierter Bogen darf Eintragungen tragen, die die aktuelle Zahl
   noch nicht erreicht. Was freigeschaltet ist, wird aus der einen Zahl
   abgeleitet und nie gespeichert.
-* **Karten statt Freitext** (MC10, MC27, MC32, MC40) — wo auf Papier eine leere Zeile steht, stehen
+* **Karten statt Freitext** (MC10, MC16, MC27, MC32, MC40) — wo auf Papier eine leere Zeile steht, stehen
   hier die tatsächlichen Karten. Bei MC10 hat jedes dieser Felder genau vier gedruckte
   Möglichkeiten, und jedes trägt seine eigene Regel aus der Kampagne:
   * *Verpflichtungen* — jeder Spieler hat seinen eigenen Satz aller vier, zwei
@@ -176,6 +192,29 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   anderen abgeblendet. Dass es drei sind, sagen zwei unabhängige Lesungen: der
   Bogen druckt drei Zeilen, und Szenario 1 ist gewonnen, wenn drei der sieben
   Schurken besiegt sind.
+
+  Bei MC16 ist es **der Markt**, und er ist der einzige Pool, dessen Regel über
+  die Spieler hinweg gilt: „von jeder Marktkarte darf die Gruppe während einer
+  Kampagne nur ein Exemplar verwenden“. Das Papier druckt dort eine leere
+  Fläche, hier steht je Spieler eine **wachsende** Liste von Auswahlfeldern über
+  den 28 gedruckten Marktkarten, gruppiert nach ihren Unit-Kosten von 1 bis 7 —
+  denn genau diese Kosten werden gegen das Feld „Übrige Units“ daneben
+  abgerechnet. Eine Karte, die irgendein Spieler gekauft hat, ist bei allen
+  anderen abgeblendet; ein Spieler selbst darf beliebig viele halten. Die vier
+  **Galaktische-Artefakte-Nebenpläne** dagegen sind Kästchen über dem Satz,
+  obwohl der Bogen vier **numerierte** Zeilen druckt: anders als bei MC27s
+  Osborn Tech und MC40s Marauders trägt die Nummer hier nichts — das Set hat
+  genau vier Nebenpläne, und Szenario 4 liest sie als Menge zurück, einen
+  Spielaufbau-Effekt je notiertem Nebenplan. Freitext bleiben allein die
+  **Karten in der Sammlung**: die Sammlung füllt sich mit dem, was die Spieler
+  gerade auf der Hand hatten, und ist keine gedruckte Liste. Ihre Einträge
+  lassen sich zwischen den Spielerspalten ziehen, weil Szenario 3 jeden Spieler
+  genau seine eigenen notierten Karten aus dem Spiel entfernen lässt.
+
+  Von den 28 Marktkarten tragen bislang fünf einen deutschen Namen — mehr gibt
+  keine verfügbare Quelle her, und die übrigen erscheinen so lange mit ihrem
+  englischen. Das ist offene Arbeit, keine Entscheidung: die deutsche Ausgabe
+  übersetzt diese Karten sehr wohl.
 * **Abgeleitete Beschriftungen** (MC32) — welche fünf Verbesserungen ein Spieler
   überhaupt sieht, entscheidet seine Rolle; ohne Rolle steht dort der Hinweis,
   erst eine zu wählen. Jeder Spieler muss eine andere Rolle nehmen, eine

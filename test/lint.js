@@ -1048,6 +1048,219 @@ for (const def of campaigns) {
       a1.overseers.abyss === true && a1.overseers["sugar-man"] === false,
       JSON.stringify(a1.overseers));
   }
+
+  if (def.id === "galaxys-most-wanted") {
+    /* The generic fixture feeds MC60's `scenarios`, MC21's `flags` and MC10's
+       `removed`, none of which is a field on this sheet. None of it may land.
+       `removed` is the one worth naming: this sheet HAS two free-text card
+       lists, so a stray one is easy not to notice. */
+    check(p + "no scenarios key on this sheet", once.scenarios === undefined);
+    check(p + "no flags key on this sheet", once.flags === undefined);
+    check(p + "no removed key on this sheet", once.removed === undefined);
+    check(p + "a notes field is not part of this sheet",
+      def.normalize({ notes: "anything" }).notes === undefined);
+    /* And there is no fifth scenario anywhere in the shape: Ronan does not
+       appear on the printed sheet, so nothing here may grow a slot for him. */
+    check(p + "the sheet has no scenario slots at all",
+      eq(Object.keys(empty).sort(),
+        ["artifacts", "evasion", "expert", "headhunter", "players", "powerStone"]),
+      Object.keys(empty).join());
+
+    /* The level is a real boolean, and standard is the default: a sheet that
+       says nothing is not an expert campaign. */
+    check(p + "the level defaults to standard", empty.expert === false);
+    check(p + "a tolerant truthy level reads as expert",
+      def.normalize({ expert: 1 }).expert === true &&
+      def.normalize({ expert: "true" }).expert === true);
+    check(p + "and anything else reads as standard",
+      def.normalize({ expert: "no" }).expert === false &&
+      def.normalize({ expert: null }).expert === false);
+    /* The whole point of the gate: standard level HIDES the hit points, so a
+       standard sheet must still be able to carry them. */
+    check(p + "a standard sheet still carries hit points",
+      def.normalize({ expert: false, players: [{ hero: "Groot", hp: 7 }] })
+        .players[0].hp === 7);
+    /* And the units are NOT behind that gate: they are earned at both levels,
+       so switching to standard must not take them with the hit points. */
+    check(p + "a standard sheet keeps its units",
+      def.normalize({ expert: false, players: [{ hero: "Groot", units: 5 }] })
+        .players[0].units === 5);
+
+    check(p + "player list capped at 4", once.players.length === 4, once.players.length);
+    check(p + "an empty player list still yields one player",
+      def.normalize({ players: [] }).players.length === 1);
+    check(p + "a player carries exactly the five fields the sheet asks for",
+      eq(Object.keys(empty.players[0]).sort(),
+        ["collection", "hero", "hp", "market", "units"]),
+      JSON.stringify(Object.keys(empty.players[0])));
+    check(p + "units are clamped like hit points",
+      def.normalize({ players: [{ units: "500" }, { units: -4 }, { units: "" }] })
+        .players.map((pl) => pl.units).join() === "99,0,");
+
+    /* The 28 Market cards, pinned BY SLUG rather than by name: the slug is what
+       is persisted, and 23 of the names are still waiting for a German
+       printing, so pinning a label here would break on the day one arrives. */
+    const GMW_MARKET_SAMPLE = ["brainstorm", "contingency-plan", "in-harms-way",
+      "armor-plating", "navigation-column", "triple-threat"];
+    check(p + "a fresh player has bought nothing",
+      eq(empty.players[0].market, []) && eq(empty.players[0].collection, []));
+    check(p + "known market slugs survive and unknown ones do not",
+      eq(def.normalize({ players: [{ market: GMW_MARKET_SAMPLE.concat(["made-up"]) }] })
+        .players[0].market, GMW_MARKET_SAMPLE),
+      JSON.stringify(def.normalize({ players: [{ market: ["made-up"] }] }).players[0].market));
+    check(p + "a repeat inside one player collapses to one",
+      eq(def.normalize({ players: [{ market: ["grapple", "grapple", "onrush"] }] })
+        .players[0].market, ["grapple", "onrush"]));
+    /* A row added but never filled in is stored as "" while the sheet is open,
+       because a select put back to its placeholder has no blur to remove it on.
+       It is not a record, so it does not come back. */
+    check(p + "an empty market row is not a record",
+      eq(def.normalize({ players: [{ market: ["grapple", ""] }] })
+        .players[0].market, ["grapple"]));
+    /* THE regression test for this sheet: "Only one copy of each card from The
+       Market ... for the players as a group." Resolved in player order so the
+       outcome depends on the sheet and not on render order. */
+    const gmwShared = def.normalize({ players: [
+      { market: ["grapple", "onrush"] },
+      { market: ["onrush", "safeguard"] },
+      { market: ["grapple"] }] });
+    check(p + "a market card claimed twice stays with the first player",
+      eq(gmwShared.players[0].market, ["grapple", "onrush"]) &&
+      eq(gmwShared.players[1].market, ["safeguard"]) &&
+      eq(gmwShared.players[2].market, []),
+      JSON.stringify(gmwShared.players.map((pl) => pl.market)));
+    /* The order of a purchase list is not meaningful, so it is also not
+       canonicalised: what arrived is what stays, or rows would jump around
+       under the reader between one load and the next. */
+    check(p + "a market list keeps the order it arrived in",
+      eq(def.normalize({ players: [{ market: ["triple-threat", "brainstorm"] }] })
+        .players[0].market, ["triple-threat", "brainstorm"]));
+    check(p + "the collection is free text and keeps its entries",
+      eq(def.normalize({ players: [{ collection: ["  Enhanced Reflexes  ", "", null, "~done"] }] })
+        .players[0].collection, ["  Enhanced Reflexes  ", "~done"]),
+      JSON.stringify(def.normalize({ players: [{ collection: ["  x  ", ""] }] })
+        .players[0].collection));
+
+    /* The four printed side schemes, by slug, and as a SET: the sheet numbers
+       four lines but the number carries nothing, so the stored order is the
+       printed one however the boxes were ticked. */
+    const GMW_ARTIFACTS = ["hujahdarian-monarch-egg", "magical-teapot",
+      "philosophers-stone", "crystal-ball"];
+    check(p + "a fresh sheet has recorded no artifacts", eq(empty.artifacts, []));
+    check(p + "artifacts come back in printed order, whatever order they arrived in",
+      eq(def.normalize({ artifacts: ["crystal-ball", "magical-teapot"] }).artifacts,
+        ["magical-teapot", "crystal-ball"]));
+    check(p + "all four fit, and an invented one does not",
+      eq(def.normalize({ artifacts: GMW_ARTIFACTS.concat(["made-up"]) }).artifacts,
+        GMW_ARTIFACTS));
+    check(p + "a repeated artifact collapses to one",
+      eq(def.normalize({ artifacts: ["magical-teapot", "magical-teapot"] }).artifacts,
+        ["magical-teapot"]));
+    check(p + "a map where the list belongs records nothing",
+      eq(def.normalize({ artifacts: { "magical-teapot": true } }).artifacts, []));
+
+    /* Power Stone Control stores a SEAT, not a name. An index past the end of
+       the player list is not a player, so it is not a record either. */
+    check(p + "nobody holds the Power Stone on a fresh sheet", empty.powerStone === null);
+    check(p + "a seat that exists is kept",
+      def.normalize({ players: [{}, {}], powerStone: 1 }).powerStone === 1);
+    /* Dropped rather than clamped, and that is the point: clamping 3 down to 0
+       on a one-player sheet would invent a record instead of discarding a
+       broken one. Same for a negative index. */
+    check(p + "a seat past the end of the player list is dropped",
+      def.normalize({ players: [{}], powerStone: 3 }).powerStone === null,
+      def.normalize({ players: [{}], powerStone: 3 }).powerStone);
+    check(p + "a negative seat is not a seat",
+      def.normalize({ players: [{}, {}], powerStone: -1 }).powerStone === null);
+    /* And a player removed by the four-player cap takes the reference with
+       them, because normalize() reads the seat AFTER the cap. */
+    check(p + "a seat belonging to a fifth player is dropped with them",
+      def.normalize({ players: [{}, {}, {}, {}, {}], powerStone: 4 }).powerStone === null);
+    check(p + "and nothing recorded stays nothing",
+      def.normalize({ powerStone: "" }).powerStone === null &&
+      def.normalize({ powerStone: "gamora" }).powerStone === null);
+
+    check(p + "evasion counters start unrecorded, and empty is not zero",
+      empty.evasion === null && def.normalize({ evasion: "" }).evasion === null);
+    check(p + "evasion counters are clamped",
+      def.normalize({ evasion: -2 }).evasion === 0 &&
+      def.normalize({ evasion: "500" }).evasion === 99);
+
+    /* The four printed scenario tiles, by slug and in printed order. There are
+       four and not five: the sheet is subtitled "Victory for Scenarios #1 - 4",
+       and scenario #5 has nothing to record. */
+    const GMW_TILES = ["brotherhood", "infiltrate", "escape", "nebula"];
+    check(p + "the four printed tiles are the four keys, in printed order",
+      eq(Object.keys(empty.headhunter), GMW_TILES),
+      Object.keys(empty.headhunter).join());
+    check(p + "and every one of them starts unmarked",
+      GMW_TILES.every((slug) => empty.headhunter[slug] === false));
+    check(p + "an invented scenario is dropped",
+      def.normalize({ headhunter: { ronan: true } }).headhunter.ronan === undefined);
+    check(p + "a tolerant truthy mark reads as marked, and \"yes\" does not",
+      def.normalize({ headhunter: { nebula: 1 } }).headhunter.nebula === true &&
+      def.normalize({ headhunter: { nebula: "yes" } }).headhunter.nebula === false);
+    check(p + "a list where the map belongs leaves every tile unmarked",
+      eq(def.normalize({ headhunter: ["nebula"] }).headhunter, empty.headhunter));
+
+    /* The market cards are the one table on this sheet whose German is open
+       work, so the count is pinned: 28 is what the pool has, and a slug lost to
+       a typo would otherwise only show up as a card nobody can pick. */
+    const gmwAll = def.normalize({ players: [{ market: [
+      "brainstorm", "by-any-means", "contingency-plan", "in-defiance",
+      "calculate-the-odds", "creative-solution", "grapple", "wing-it",
+      "close-call", "defy-danger", "in-harms-way", "take-the-fight-to-them",
+      "armor-plating", "heavy-cannon", "hyper-thrusters", "reactor-core",
+      "ardent-resolve", "onrush", "safeguard", "sure-gamble",
+      "cargo-hold", "mounted-laser", "navigation-column", "targeting-screen",
+      "grand-strategy", "power-unleashed", "tried-and-true", "triple-threat"] }] });
+    check(p + "all 28 market slugs are real", gmwAll.players[0].market.length === 28,
+      gmwAll.players[0].market.length);
+
+    const dirtyGmw = {
+      players: [
+        { hero: "  Rocket Raccoon  ", hp: "500", units: "7",
+          market: ["grapple", "grapple", "made-up"], collection: ["  Aid  ", "", 42] },
+        { hero: "x".repeat(500), hp: "", units: -3,
+          market: ["grapple", "onrush"], collection: "one\ntwo" },
+        "not even an object",
+        { hero: "Groot", hp: 11, units: 0, market: "not a list" },
+        { hero: "one too many", hp: 3, units: 9 },
+      ],
+      expert: 1,
+      artifacts: ["crystal-ball", "crystal-ball", "made-up", "magical-teapot"],
+      powerStone: "2",
+      evasion: "9",
+      headhunter: { brotherhood: "true", nebula: 0, ronan: true },
+      scenarios: [{ slug: "does-not-exist" }],
+      flags: { invented: true },
+      removed: ["stray"],
+      somethingUnknown: { nested: [1, 2, 3] },
+    };
+    const g1 = def.normalize(dirtyGmw);
+    check(p + "MC16 fixture is idempotent", eq(g1, def.normalize(g1)), JSON.stringify(g1));
+    check(p + "the fixture keeps four players and clamps them",
+      g1.players.length === 4 && g1.players[0].hero === "Rocket Raccoon" &&
+      g1.players[0].hp === 99 && g1.players[0].units === 7 &&
+      g1.players[1].hp === null && g1.players[1].units === 0,
+      JSON.stringify(g1.players.map((pl) => [pl.hero, pl.hp, pl.units])));
+    check(p + "the fixture resolves the group rule in player order",
+      eq(g1.players[0].market, ["grapple"]) &&
+      eq(g1.players[1].market, ["onrush"]) &&
+      eq(g1.players[3].market, []),
+      JSON.stringify(g1.players.map((pl) => pl.market)));
+    check(p + "the fixture splits a legacy collection string on newlines",
+      eq(g1.players[1].collection, ["one", "two"]),
+      JSON.stringify(g1.players[1].collection));
+    check(p + "the fixture's artifacts are a printed-order set",
+      eq(g1.artifacts, ["magical-teapot", "crystal-ball"]), JSON.stringify(g1.artifacts));
+    check(p + "the fixture's seat and counters survive as numbers",
+      g1.powerStone === 2 && g1.evasion === 9, g1.powerStone + "/" + g1.evasion);
+    check(p + "the fixture's tiles keep the four printed keys only",
+      eq(Object.keys(g1.headhunter), GMW_TILES) &&
+      g1.headhunter.brotherhood === true && g1.headhunter.nebula === false,
+      JSON.stringify(g1.headhunter));
+  }
 }
 
 // ------------------------------------------------------------------- roster
