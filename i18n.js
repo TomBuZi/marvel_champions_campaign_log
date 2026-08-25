@@ -15,8 +15,9 @@ window.I18N = {
 
     appTitle: "Kampagnen-Logbuch",
     appSubtitle: "Marvel Champions",
-    /* "%s" = Kampagnentitel, dann Produktcode. */
-    appSubtitlePattern: "Marvel Champions · %s (%s)",
+    /* "%s" = Produktcode. Den Kampagnennamen trägt die Wortmarke darüber, der
+       Untertitel nennt nur noch die Herkunft. */
+    appSubtitlePattern: "Marvel Champions · %s",
     unofficial: "inoffiziell",
     logLabel: "Bogen",
     untitled: "Ohne Titel",
@@ -120,7 +121,7 @@ window.I18N = {
 
     appTitle: "Campaign Log",
     appSubtitle: "Marvel Champions",
-    appSubtitlePattern: "Marvel Champions · %s (%s)",
+    appSubtitlePattern: "Marvel Champions · %s",
     unofficial: "unofficial",
     logLabel: "Log",
     untitled: "Untitled",

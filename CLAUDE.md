@@ -149,6 +149,26 @@ In `styles.css` **vier** Blöcke, nach dem Muster der vorhandenen:
 spezifischer als das bloße `:root` in der Dark-Media-Query und würde im
 Dunkelmodus die helle Palette malen.
 
+**Dazu die Wortmarke — drei Tokens, und die stehen nur einmal.** `--logo-fill`,
+`--logo-plate` und `--logo-edge` kommen nicht aus dem Bogen, sondern aus dem
+**Kampagnen-Logo oben links** auf Seite 1, und sie gehören in den *hellen*
+`[data-campaign]`-Block, sonst nirgends. Das ist die einzige Ausnahme von der
+Vier-Block-Regel und sie ist begründet: die Regel existiert, weil Werte je Theme
+verschieden sind, und diese sind es nicht — Füllung und Plakette sind ein
+geschlossenes Paar aus einem gedruckten Logo, das seinen Kontrast selbst trägt.
+Eine Deklaration im hellen Block gilt in allen vier Zuständen, weil die anderen
+drei Blöcke dasselbe `:root` treffen und diese Namen nie nennen. Im Print-Reset
+fehlen sie ebenfalls absichtlich; der Kommentar dort sagt, warum.
+
+Das Logo ist ein **Rasterbild** mit eigenem Xref, keine Vektorfläche — gemessen
+wird per Median-Cut darüber, die Rollen dann **mit dem Auge** vergeben. Wortmarke
+und Grund automatisch zu trennen scheitert: ein Flood-Fill leckt durch die
+antialiasierten Konturen und hat bei MC60 98 % der Marke mitgefressen. Und die
+Rollen kippen je Kampagne — sieben Marken sind helle Buchstaben auf dunklem
+Grund, MC32 und MC60 dunkle auf hellem. Wer das verwechselt, bekommt 1,0.
+Mindestens 4,5 zwischen Füllung und Plakette; `lint.js` verlangt die drei Tokens,
+der Browser-Test rechnet den Kontrast je Kampagne nach.
+
 **Der Dunkelmodus muss dieselben Farben tragen wie der Hellmodus**, nicht nur
 die dominante. Eine Kampagne, die hell aus Indigo, Rost, Creme und Gold besteht,
 darf dunkel nicht nur indigo sein — sonst liest sie sich wie eine andere
@@ -336,11 +356,21 @@ nichts übrig ist.
   nur, weil jemand hingesehen hat — **jetzt fängt es ein Test**:
   `cellsAreCells()` in `test/selftest.html` liest für jede Zelle jeder
   `.sheet-table` das berechnete `display` und verlangt `table-cell`. Aufgerufen
-  wird es in `basic`, `smrep`, `mg`, `ne` und `aoa` — also einmal je Kampagne,
+  wird es in `basic`, `smrep`, `mg`, `ne`, `aoa` und `aos` — also einmal je Kampagne,
   die überhaupt eine Tabelle druckt (MC10, MC16 und MC21 haben keine, ihre
   Spielerspalten sind `.player-grid`). Nur in der
   Breitansicht sinnvoll: die Schmalvariante macht jede Zelle absichtlich zum
   Block und legt den Rahmen auf die Zeile.
+* **Ein eigenes `display` hebelt das `hidden`-Attribut aus.** `[hidden]` ist
+  eine Regel des UA-Stylesheets, und jede Autorenregel mit `display` schlägt
+  sie. Die Wortmarke hatte `display: inline-flex` und stand deshalb als leere
+  Plakette über dem Kampagnen-Dialog eines frischen Besuchs — was nach einem
+  Renderfehler aussieht, nicht nach einem leeren Zustand. Wer einem Element mit
+  `hidden` ein `display` gibt, schreibt `.x[hidden] { display: none; }` dazu.
+  Bösartig ist daran der Test: die Zusicherung prüfte `node.hidden`, und die
+  **Eigenschaft war die ganze Zeit `true`**. Grün, während es auf dem Schirm
+  stand. Sichtbarkeit prüft man am berechneten `display`, nie am Attribut —
+  gefunden hat es nur ein Blick auf einen Screenshot.
 * **Terminologie über alle Kampagnen hinweg.** Dasselbe Feld heißt überall
   gleich („Verbleibende Lebenspunkte"). Eine Umbenennung in einer Kampagne ist
   keine halbe Arbeit: README, Hilfetexte und Tests gehören dazu.

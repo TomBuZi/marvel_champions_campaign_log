@@ -13,6 +13,12 @@
     <header class="topbar">
       <div class="brand">
         <h1><span data-i18n="appTitle">Kampagnen-Logbuch</span><span class="badge-unofficial" data-i18n="unofficial">inoffiziell</span></h1>
+        <!-- The campaign wordmark, the largest thing in the topbar. Deliberately
+             carries no data-i18n: its text is the campaign title, which is a
+             property of the active log rather than of the language, so core.js
+             writes it. Starts hidden because a first visit has no sheet yet, and
+             an empty plate above the campaign dialog would look like a bug. -->
+        <h2 class="wordmark" id="wordmark" hidden></h2>
         <!-- Names the active log's campaign, so it is written by core.js
              rather than bound to a fixed key. -->
         <p class="subtitle" id="subtitle">Marvel Champions</p>

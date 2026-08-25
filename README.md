@@ -619,6 +619,11 @@ gekostet haben.
    **vier** Blöcke, wie die Tokens darüber — ein einzelner `[data-campaign]`-Block ist
    spezifischer als das bloße `:root` in der Dark-Media-Query und würde im Dunkelmodus
    die helle Palette malen.
+5. Dazu `--logo-fill`, `--logo-plate` und `--logo-edge` in den *hellen* Block — und
+   nur dorthin, siehe „Optik“ weiter unten. Sie kommen aus dem Kampagnen-Logo oben
+   links auf dem Bogen, nicht aus der Bogenpalette, und `lint.js` verlangt sie: ohne
+   sie erbt die neue Kampagne stumm die Basisfarben. Füllung gegen Plakette
+   mindestens 4,5 — das prüft der Browser-Test je Kampagne.
 
 Als Vorlagen dienen die vorhandenen Module, und sie sind bewusst
 unterschiedlich: `campaigns/fear-no-evil.js` zeigt abgeleiteten Zustand, gegenseitige
@@ -657,7 +662,7 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (860 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (871 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   langpath | print | import | lock |
                                     #   lockconflict | random | randomspread |
@@ -746,6 +751,18 @@ ausdrücklichen `[data-theme]`-Überschreibungen und noch einmal in `@media prin
 sitzen — Gelb, Warnrot, die Seitenfläche —, haben eigene `--on-*`-Tokens, weil das
 Theme sonst hell und dunkel gegeneinander verdreht.
 
+Drei Tokens sind davon ausgenommen, und zwar mit Absicht:
+`--logo-fill`, `--logo-plate` und `--logo-edge` stehen **einmal** je Kampagne. Sie
+kommen nicht aus der Bogenpalette, sondern aus dem Kampagnen-Logo oben links auf
+dem Bogen, und ein gedrucktes Logo wechselt die Farbe nicht, wenn das Licht
+ausgeht — Füllung und Plakette sind ein in sich geschlossenes Paar, das seinen
+Kontrast selbst trägt (5,1 im schlechtesten Fall, MC32). Eine Deklaration im
+hellen `[data-campaign]`-Block gilt in allen vier Zuständen: die Dark-Media-Query
+und die beiden `[data-theme]`-Blöcke treffen dasselbe `:root`, nennen diese drei
+Namen aber nie, also bleibt der Wert stehen. Im Print-Reset fehlen sie ebenfalls
+absichtlich — ihr einziger Verbraucher ist die Wortmarke in der Topbar, und die
+ist im Druck `display: none`.
+
 **Jede Kampagne bringt ihre eigene Palette mit**, gesetzt über
 `[data-campaign]` am `<html>`: MC60 ist comic-orange auf Dunkelrot, MC10 salbeigrün
 auf Tiefgrün mit Senfgelb, MC21 Indigo und Lavendel auf Rostorange mit Gold, MC27
@@ -760,9 +777,22 @@ Dark-Media-Query und würde im Dunkelmodus die helle Palette malen; umgekehrt mu
 der Print-Reset `[data-campaign][data-theme]` mitnennen, sonst druckt eine
 Dark-Mode-Sitzung die Kampagnenfarben statt Schwarz auf Weiß.
 
+Der Kampagnenname steht als **Wortmarke** in der Topbar — das größte Element der
+Seite, in den Logofarben statt in der Bogenpalette. Die Plakette umschließt nur
+den Text, wie das gedruckte Logo, und trägt zwei Ringe: den inneren in
+`--logo-edge`, der zum Logo gehört, und einen äußeren in `--panel-border`, der es
+nicht tut. Der äußere ist trotzdem nötig, denn eine gemessene Plakette verliert
+das Panel hinter sich in genau *einem* Theme immer — eine dunkle erreicht gegen
+das dunkle Panel 1,0–1,3, eine weiße 1,0 gegen das weiße. Der App-Titel darüber
+ist deshalb die kleine Zeile, und der Untertitel nennt nur noch den Produktcode.
+
 Komponenten-CSS nennt nie eine Kampagnenfarbe, sondern nur die generischen Tokens.
 `test/lint.js` kann das nicht prüfen, deshalb steht es hier: wer eine Farbe direkt
-in eine Regel schreibt, macht sie für jede weitere Kampagne falsch.
+in eine Regel schreibt, macht sie für jede weitere Kampagne falsch. Die einzige
+Ausnahme ist die Wortmarke: dort prüft `lint.js`, dass jede Kampagne ihre drei
+`--logo-*`-Tokens selbst deklariert. Nicht aus Ordnungsliebe, sondern weil ein
+Fehlen dort *unsichtbar* statt falsch wäre — die Kampagne erbt dann still die
+Basispalette und malt MC60s Karminrot auf Weiß über ihren eigenen Bogen.
 
 `color-scheme` ist pro Theme gesetzt, damit auch die Teile, die die Seite nicht selbst
 malt — das aufgeklappte `<select>`, die Zahlen-Spinner, Scrollbalken — dem Theme folgen

@@ -1584,6 +1584,40 @@ for (const def of campaigns) {
 }
 check("stylesheet exists", fs.existsSync(path.join(root, "styles.css")));
 
+/* The only check in this file that looks inside a palette, and it exists because
+   the wordmark tokens are the one place where a missing declaration is INVISIBLE
+   rather than wrong: --logo-fill and --logo-plate are not inherited from the
+   base by accident but by design, so a campaign that forgets them silently
+   paints MC60's crimson-on-white over its own sheet and nothing else complains.
+   The theme-key check above catches a typo in the selector; this catches an
+   empty block behind a correct one.
+
+   Deliberately narrow. It does not police the four-block rule or token
+   completeness for the sheet palette — those are still eyes-only, and README
+   says so. It asks one question: does this campaign name its own wordmark? */
+const css = read("styles.css");
+for (const def of campaigns) {
+  const theme = def.theme || def.id;
+  /* MC60 has no [data-campaign] block of its own — it IS the base palette, so
+     its wordmark lives in the base :root. Slicing to the next campaign block
+     keeps the base from answering for everyone else. */
+  const marker = ':root[data-campaign="' + theme + '"] {';
+  const at = css.indexOf(marker);
+  const block = at === -1
+    ? css.slice(0, css.indexOf(':root[data-campaign='))
+    : css.slice(at, css.indexOf("\n}", at));
+  const p = def.id + ": wordmark ";
+  if (at === -1) {
+    /* Only the base palette may go without a block, and only one campaign can
+       be the base. */
+    check(p + "campaign without a [data-campaign] block is the base one",
+      theme === "fne", theme);
+  }
+  check(p + "declares --logo-fill", /--logo-fill:\s*#[0-9a-f]{6}/i.test(block));
+  check(p + "declares --logo-plate", /--logo-plate:\s*#[0-9a-f]{6}/i.test(block));
+  check(p + "declares --logo-edge", /--logo-edge:\s*#[0-9a-f]{6}/i.test(block));
+}
+
 /* applyLanguage() (core.js) translates by writing node.textContent, so a
    data-i18n on an element that CONTAINS other elements deletes them. That is
    how the new-log dialog lost its title input — silently, because the dialog
