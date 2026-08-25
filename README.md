@@ -8,8 +8,8 @@ Eintippen statt ausdrucken: automatisch gespeichert, zweisprachig, teilbar, druc
 Umgesetzt sind die Kampagnen **Fear No Evil (MC60)**,
 **The Rise of Red Skull (MC10)**, **The Galaxy's Most Wanted (MC16)**,
 **The Mad Titan's Shadow (MC21)**, **Sinister Motives (MC27)**,
-**Mutant Genesis (MC32)**, **NeXt Evolution (MC40)** und
-**Age of Apocalypse (MC45)**.
+**Mutant Genesis (MC32)**, **NeXt Evolution (MC40)**,
+**Age of Apocalypse (MC45)** und **Agents of S.H.I.E.L.D. (MC50)**.
 Die Kampagne wird beim Anlegen eines Bogens gewählt
 und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
 [Eine Kampagne hinzufügen](#eine-kampagne-hinzufügen).
@@ -104,6 +104,33 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     Unus bis En Sabah Nur kommen auf dem gedruckten Bogen nicht ein einziges Mal
     vor, und der fünfte Mission-Nebenplan *Den Professor beschützen* fehlt auch
     dort, weil er für Szenario 5 reserviert und nie zur Wahl ist.
+  * *Agents of S.H.I.E.L.D. (MC50)* — der vollste Bogen, und der einzige bisher,
+    dessen größter Abschnitt gar nicht eingetragen wird. Oben Identität und
+    Lebenspunkte, darunter unter dem Abzeichen *Notizen* die Tabelle
+    **Verbleibende Geheimnismarker nach Szenario**: drei Direktoriumsmitglieder
+    mal vier Szenarien, zwölf Zahlen, und jede davon legt der Spielaufbau des
+    nächsten Szenarios wieder aus. Ein leeres Feld ist deshalb etwas anderes als
+    eine eingetragene Null, und der Druck zeigt es als Strich. Dann je ein
+    Szenariokasten: *Schergen und Nebenpläne im Spiel* (Szenario 1, die
+    Alarmstufe von Szenario 2), *Befreite Gefangene* (Szenario 2, die
+    Schlossmarker von Szenario 3), die vier **Adaptoid-Umgebungen** als benannte
+    Kästchen (Szenario 3 — das Häkchen heißt „war am Ende noch im Spiel“, und
+    genau die legt Szenario 5 wieder aus) und die **Überlebenden Thunderbolts**
+    als wachsende Auswahlliste, in der kein Scherge zweimal vorkommen kann.
+    Zuletzt die **Beweiskombinationen**: 27 gedruckte Zeilen, neun je
+    Direktoriumsmitglied, und zusammen alle 27 Kombinationen aus drei Mitteln,
+    drei Motiven und drei Gelegenheiten. Das Regelheft sagt, wie gestrichen
+    wird — „zieht jede Kombination durch, die das Symbol auf der neuen
+    Beweiskarte zeigt“ —, also hängt jede Durchstreichung allein an den
+    erhaltenen Beweiskarten. Eingetragen werden deshalb die neun Karten, und die
+    Tabelle darunter wird daraus gerechnet: ein gedrucktes Feld, das nicht
+    abgefragt, sondern hergeleitet wird, wie MC16s übrige Units. Gesperrt wird
+    dabei nichts, obwohl das Spiel nie mehr als zwei Karten je Gruppe hergibt —
+    ein Bogen aus einem Import oder einem alten Link darf nicht einfrieren, und
+    sind alle drei Karten einer Gruppe angehakt, streicht sich die Tabelle
+    vollständig durch und sagt das von selbst. Die neun Symbole des Bogens sind
+    hier gezeichnet, nicht die Kunst des Herausgebers, und jedes trägt seinen
+    Kartennamen als Namen für Screenreader und in der Legende darüber.
 * **Standard- oder Expertenstufe** — der Haken „Expertenmodus“ oben im
   Spielerbereich, in jeder Kampagne an derselben Stelle. Auf Standardstufe
   blendet der Bogen aus, was es dort nicht gibt, statt danach zu fragen:
@@ -138,6 +165,12 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     Apocalypse muss jeder Spieler seine verbleibenden Lebenspunkte im
     Kampagnenlogbuch notieren, nachdem ihr ein Szenario gewonnen habt.“ Die
     Missionstabelle und die Schergen-Kästchen bleiben auf beiden Stufen stehen.
+  * *Agents of S.H.I.E.L.D. (MC50)* — die verbleibenden Lebenspunkte, und wie bei
+    MC40 und MC45 kennzeichnet der gedruckte Bogen sie **nicht**, das Regelheft
+    aber schon, unter „Bleibender Schaden“ und in jeder Siegliste als „Nur
+    Experten-Kampagne“. Die Geheimnismarker, die Szenariozahlen, die
+    Adaptoid-Umgebungen, die Thunderbolts und die Beweiskarten bleiben auf beiden
+    Stufen stehen.
 
   **Ausblenden ist nicht Löschen**: wer versehentlich umschaltet, findet nach dem
   Zurückschalten alles wieder vor. Gedruckt wird der Haken mit, weil er
@@ -527,6 +560,7 @@ auch über `file://` und direkt aus dem Repo-Root über GitHub Pages.
 | `campaigns/mutant-genesis.js` | die Kampagne MC32: benannte Kästchen über fünf gedruckten Kartensätzen, ein Gitter aus Kartensatz × Szenario, und Beschriftungen, die aus der gewählten Rolle eines Spielers fallen |
 | `campaigns/next-evolution.js` | die Kampagne MC40: drei numerierte Auswahlfelder aus einem gedruckten Schurkensatz, zwei freie Zahlen, und ein Gitter, dessen drei gedruckte Spalten nur gelesen werden |
 | `campaigns/age-of-apocalypse.js` | die Kampagne MC45: eine Tabelle, deren zwei gedruckte Ergebnisspalten je ein Kästchen tragen, das das andere ausschließt und den Zeilennamen durchstreicht, dazu eine Überschrift über fünf benannten Kästchen; das schlankeste Datenmodell aller Module |
+| `campaigns/agents-of-shield.js` | die Kampagne MC50: eine Zählertabelle aus gedruckten Zeilen mal gedruckten Spalten, vier Szenariokästen, und ein Block aus 27 gedruckten Kombinationen, der nicht eingetragen, sondern aus neun Kästchen gerechnet wird — samt neun gezeichneten Symbolen, die ihren Kartennamen tragen |
 | `test/lint.js` | Prüfungen ohne Browser: Wörterbücher, Kampagnendefinition, Datenmodell, Paketierung |
 | `test/selftest.html`, `test/run-browser.js` | Selbsttest, der die echte Seite in einem iframe fernsteuert |
 | `fonts/` | Exo 2 (OFL, selbst gehostet), `OFL.txt` daneben |
@@ -596,7 +630,11 @@ Zeilen hinweg und einem Feld, das erst mit dieser Auswahl aufgeht;
 `campaigns/age-of-apocalypse.js` hat das schlankeste Datenmodell — zwei
 Wahrheitswerte je gedruckter Zeile, die sich gegenseitig ausschließen und
 gemeinsam die Zeile durchstreichen, und eine Wahrheitswert-Karte über einem
-gedruckten Kartensatz.
+gedruckten Kartensatz; `campaigns/agents-of-shield.js` zeigt den umgekehrten
+Fall zu MC40 — ein großer gedruckter Block, an dem **nichts** eingetragen wird,
+weil er sich vollständig aus einer Handvoll Kästchen ergibt, dazu eine Tabelle
+aus gedruckten Zeilen mal gedruckten Spalten und neun gezeichnete Symbole, die
+ihre Bedeutung als Namen tragen.
 
 `ctx` liefert `{ state, lang, t(key, …args), save(), rerender(), toast(msg), w }`;
 `w` ist die Widget-Sammlung aus `widgets.js`.
@@ -613,7 +651,7 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (606 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (849 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   langpath | print | import | lock |
                                     #   lockconflict | random | randomspread |
@@ -624,14 +662,19 @@ node test/run-browser.js print      # nur ein Fall: basic | quarantine | share |
                                     #   sm | smrep | smexpert | smprint |
                                     #   mg | mgrole | mgexpert | mgprint |
                                     #   ne | neschemes | neexpert | neprint |
+                                    #   aoa | aoamissions | aoaexpert | aoaprint |
+                                    #   gmw | gmwmarket | gmwunits | gmwexpert |
+                                    #   gmwprint |
+                                    #   aos | aosevidence | aosexpert | aosprint |
                                     #   sharebtn
 BROWSER_LANG=de-DE node test/run-browser.js   # unter einer anderen Browser-Sprache
 ```
 
 `test/seed.html` legt einen ausgefüllten Beispielbogen an und springt in die App —
 praktisch für Screenshots und für den Druckvergleich. `?c=mc10` nimmt den MC10-Bogen,
-`?c=mc21` den MC21-Bogen, `?c=mc27` den MC27-Bogen, `?c=mc32` den MC32-Bogen,
-`?c=mc40` den MC40-Bogen und `?c=mc45` den MC45-Bogen statt MC60, `?expert=0` stellt
+`?c=mc16` den MC16-Bogen, `?c=mc21` den MC21-Bogen, `?c=mc27` den MC27-Bogen,
+`?c=mc32` den MC32-Bogen, `?c=mc40` den MC40-Bogen, `?c=mc45` den MC45-Bogen und
+`?c=mc50` den MC50-Bogen statt MC60, `?expert=0` stellt
 den Bogen auf
 Standardstufe, und `?theme=dark` nagelt das
 Theme fest; letzteres braucht man, um zu prüfen, dass der Druck auch aus einer
@@ -796,6 +839,20 @@ im Footer der Seite. Der Ko-fi-Link öffnet in einem neuen Tab und trägt
   Auszeichnung sagt, ob der deutsche Druck eine eigene Zeichenkette gesetzt hat;
   mehr kann die Tabelle nicht wissen, und ein zweiter Mechanismus für eine
   einzige Karte wäre der schlechtere Tausch.
+* **Bei MC50 sind beide Fälle im selben Modul, und sie trennt nicht die Sprache,
+  sondern das Papier.** Auch hier druckt das deutsche Regelheft auf Seite 24 den
+  vollständigen deutschen Bogen, also ist am **gedruckten Wortlaut** nichts
+  offen — Abschnittsnamen, Zeilen- und Spaltentitel, die vier Szenariozeilen,
+  die drei Direktoriumsmitglieder und die vier Adaptoid-Umgebungen stehen
+  wörtlich so da. Offen sind die **Kartennamen**, und zwar weil der Bogen sie gar
+  nicht druckt: die neun Beweissymbole stehen dort wortlos, und die überlebenden
+  Thunderbolts sind eine leere Schreibfläche. Diese sechzehn Namen musste das
+  Modul selbst besorgen, und genau einer von ihnen hat einen belegten deutschen:
+  **Wiretap** heißt „Abhördaten“ auf dem Kartenbild auf Seite 5 des deutschen
+  Regelhefts. Die anderen fünfzehn tragen `de: null` im MC27-Sinn — noch nicht
+  eingetragen, nicht „bleibt englisch“ —, denn
+  `translations/de/pack/aos_encounter.json` führt nur zehn Spielerkarten und das
+  Regelheft hat keine Kartenliste.
 * **Die deutschen Szenarionamen sind vorläufig.** Von MC60 gibt es noch keine
   offizielle deutsche Ausgabe; sie stehen als eine Zeile je Szenario in
   `campaigns/fear-no-evil.js` und sind dort zu korrigieren, sobald es eine gibt.

@@ -170,6 +170,7 @@ Vorlagen, bewusst verschieden:
 | `campaigns/next-evolution.js` | eine Tabelle, deren Zeile eine gedruckte Karte ist und deren gedruckte Spalten nur gelesen werden; eine Auswahl mit Eindeutigkeit über die Zeilen hinweg; und ein Feld, das erst mit dieser Auswahl aufgeht |
 | `campaigns/galaxys-most-wanted.js` | eine **wachsende** Auswahlliste aus einem festen Pool, deren Eindeutigkeit über alle Spieler hinweg gilt; ein gedrucktes Feld, das nicht abgefragt, sondern gerechnet wird — samt `migrate()`, die den alten Kontostand *exakt* umrechnet statt einen Standardwert zu raten; ein Feld, das per Index auf einen Spieler zeigt statt auf seinen Namen; und zwei Zahlen, aus denen der nächste Spielaufbau abgeleitet wird |
 | `campaigns/age-of-apocalypse.js` | sehr schlank: zwei Wahrheitswerte je gedruckter Zeile, die sich gegenseitig ausschließen und gemeinsam den Zeilennamen durchstreichen — dazu ein Bogen, dessen deutscher Druck vorlag, also nichts als Platzhalter stehen ließ |
+| `campaigns/agents-of-shield.js` | der umgekehrte Fall zu MC40: ein großer **gedruckter Block, an dem nichts eingetragen wird**, weil er sich aus einer Handvoll Kästchen vollständig ergibt; dazu eine Tabelle aus gedruckten Zeilen mal gedruckten Spalten, gezeichnete Symbole, die ihre Bedeutung als `aria-label` tragen, und ein Bogen, dessen deutscher Druck vorlag, dessen Kartennamen aber trotzdem offen sind, weil das Papier gar keine druckt |
 
 Harte Punkte:
 

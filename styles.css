@@ -1230,6 +1230,243 @@
   color-scheme: dark;
 }
 
+/* ---------- Campaign skin: Agents of S.H.I.E.L.D. (MC50) ----------
+   Sampled from mc50_agents_of_shield_campaign_log.pdf, and like MC45 this
+   palette comes from the VECTORISED INTERIOR ALONE. That is a decision about
+   what the sheet is, so it is worth stating plainly: everything raster on this
+   page is scenery and none of it is in the palette.
+
+   The page carries the same trap MC32, MC40 and MC45 do -- get_images() reports
+   one raster over the whole page plus one over every panel strip -- and the
+   orange comic border with its black hatching therefore exists in NO vector
+   fill at all. Averaged out of the rendered pixmap it is #c85634 along the top
+   edge and #d25b33 down the left. NEITHER is used below, and that follows from
+   where the border sits: it hatches OUTSIDE the grey frame, so it is a frame
+   around the sheet rather than part of it, exactly as on MC45 and unlike MC32
+   and MC40 whose sheets hatch INSIDE their frames. Hence no orange in
+   --halftone and --hatch.
+
+   The vector fills of the content stream, weighted by area, give #ffffff 38.4%
+   (the panels and their highlights), #111213 15.9% (the frame, the drop shadows
+   and the lettering), #c7aaaa 10.6% and #dbbab9 8.9% (the two rose tints the
+   panels and the table body alternate between), #272527 9.7% and #474b4d 9.7%
+   (the grey frame around the sheet), #7a1429 0.69% (every heading band, every
+   row label and the outline of all four printed checkboxes), #863037 0.23% (the
+   lighter maroon of the "Scenario n" badges) and #d5ca02 0.16% (the yellow
+   badges). The printed checkbox fill measures #f8f2f1.
+
+   THE NINE CELL COLOURS ARE DATA, NOT CHROME, and they are why this campaign
+   needs nine variables no other campaign has. Each is one evidence card, and
+   the combination block identifies a card by colour and symbol alone: #feb57b
+   Medical Records, #76c9f1 Wiretap, #f9a2b1 Security Scanner, #acd68e Money,
+   #67676a Blackmail, #f9db81 Ideology, #c6a7cf Security Clearance, #f99888
+   Travel, #85a2d4 Authority. Printed as measured in light mode. In dark mode
+   they are darkened rather than dropped, because nine chips that all go grey
+   would take the sheet's only means of telling its cards apart with them.
+
+   --ev-halo IS NOT DECORATION. Dark ink on the Blackmail grey #67676a reads
+   3.33, the one printed swatch a glyph cannot sit on unaided -- and the printed
+   sheet solves it the same way, drawing every one of its symbols with a light
+   outline. The drawn icons carry that halo, so a symbol stays legible on all
+   nine chips without any of them being repainted to suit us.
+
+   Roles. --page is the grey frame of the sheet, lifted just far enough that the
+   panels read as panels on it; and it is also what keeps MC50 apart from MC60
+   and MC40, whose reds and wines would otherwise sit close to this maroon --
+   no other campaign here has a grey page. --bar is the maroon #7a1429 of every
+   heading band and every printed box outline, --pill and --panel-2 the two rose
+   tints as printed, --panel-1 the printed white, --check the printed box fill,
+   --zap the badge yellow, --ink the printed near-black.
+
+   Contrasts, computed rather than eyeballed. Light: --on-page on --page 9.1,
+   --on-brick on --brick 10.1, ink on --panel-1 18.8, on --panel-2 10.5, on
+   --pill 8.7, on --check 16.9, --on-zap on the badge 11.0, --text-dim on
+   --panel-1 9.2 and on --panel-2 5.1, and the tick on the filled box 9.7. On
+   the nine chips a dark glyph reads 10.8, 10.2, 9.7, 11.4, 3.3, 13.8, 8.8, 8.8
+   and 7.3 -- the 3.3 is Blackmail, which is what --ev-halo is for. Dark:
+   --on-page 15.2, --on-brick 11.5, ink on the panels 12.8 and 13.1, on --pill
+   8.2, on --check 13.9, --on-zap 12.1, --text-dim 7.0 and 7.1, the tick on the
+   filled box 6.3, and a light glyph on the nine dark chips 5.8, 6.6, 7.9, 6.0,
+   9.6, 5.0, 7.6, 6.7 and 7.1.
+
+   The dark mode carries the whole colour mood and not just the dominant hue:
+   maroon bars, rose panels and the badge gold all survive, because a sheet that
+   went plain grey in the dark would read as a different campaign.
+
+   Four blocks, mirroring the four base blocks. A single [data-campaign] block
+   would be more specific than the bare :root inside the dark media query and
+   would therefore paint the light palette in dark mode; and [data-campaign]
+   alone cannot beat an explicit [data-theme], so the two combinations are
+   spelled out. The repetition is deliberate: a delta-only block drifts apart
+   the next time a theme changes. */
+:root[data-campaign="aos"] {
+  --page:      #3a3d42;   /* the grey frame the sheet sits in, between #474b4d
+                             and #272527 -- and the one page colour no other
+                             campaign in this app uses                     */
+  --bar:       #7a1429;   /* maroon: bars, borders, ink outlines -- every
+                             heading band and every printed box outline    */
+  --brick:     #5a2733;   /* mid maroon, table body -- derived between
+                             --page and --bar and kept dark enough that the
+                             text on it holds 10.1                         */
+  --panel-1:   #ffffff;   /* panel gradient, top -- as printed             */
+  --panel-2:   #dbbab9;   /* ... bottom, the sheet's rose                  */
+  --pill:      #c7aaaa;   /* heading pill, table header row: the sheet's
+                             second rose, the one its table body uses      */
+  --check:     #f8f2f1;   /* empty checkbox -- printed, not derived        */
+  --zap:       #d5ca02;   /* accent gold, off the "Player Information",
+                             "Notes" and "Evidence Combinations" badges    */
+  --ink:       #111213;   /* near-black text                               */
+
+  --bg-input: #fffafa;
+  --text-dim: #5a4147;    /* dimmed from the maroon, dark enough to hold
+                             5.1 on the rose panel                         */
+  --accent-strong: #520d1c;
+  --accent-2: #a8324b;
+  /* Stays red: here the colour carries meaning, not identity. */
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(213, 202, 2, 0.55);
+  /* The sheet's own maroon and near-black, because this border hatches
+     OUTSIDE the frame and its orange is therefore not part of the sheet. */
+  --halftone: rgba(122, 20, 41, 0.18);
+  --hatch: rgba(17, 18, 19, 0.10);
+  --on-brick: #f6eaec;
+  --on-page: #f2e9e9;
+  --on-zap: #111213;
+  --on-danger: #fff4ef;
+  /* The printed box filled in: its own maroon outline as the ground, its own
+     near-white as the mark. */
+  --check-on: #7a1429;
+  --tick: #f8f2f1;
+  /* The printed drop shadow under every badge on the page. */
+  --ink-shadow: 4px 4px 0 0 #241f20;
+  --title-shadow: #f2e9e9;
+  --zap-strong: #e6da1c;
+  --input-settled: #d6c3c3;
+  --backdrop: rgba(20, 10, 13, 0.55);
+
+  /* The nine evidence cards, as printed. */
+  --ev-medical-records:    #feb57b;
+  --ev-wiretap:            #76c9f1;
+  --ev-security-scanner:   #f9a2b1;
+  --ev-money:              #acd68e;
+  --ev-blackmail:          #67676a;
+  --ev-ideology:           #f9db81;
+  --ev-security-clearance: #c6a7cf;
+  --ev-travel:             #f99888;
+  --ev-authority:          #85a2d4;
+  --ev-ink: #14171a;
+  --ev-halo: rgba(255, 255, 255, 0.92);
+  --ev-wash: rgba(255, 255, 255, 0.66);
+}
+/* --accent and --panel-border are left alone on purpose: they are already
+   defined as var(--bar) and follow it by themselves. */
+@media (prefers-color-scheme: dark) {
+  :root[data-campaign="aos"] {
+    --page: #14161a; --bar: #d78a9b; --brick: #4a2129;
+    --panel-1: #33202a; --panel-2: #2b2126; --pill: #5c3a44;
+    --check: #2a1a20; --zap: #dfd42e; --ink: #f3e9ea;
+    --check-on: #d78a9b; --tick: #2a1a20;
+    --bg-input: #1d161a; --panel-border: #8d5462; --text-dim: #c2a9b0;
+    --accent: #d78a9b; --accent-strong: #f0b5c1; --accent-2: #e2a3b0;
+    --danger: #ff6b5c;
+    --glow: 0 0 0 3px rgba(223, 212, 46, 0.40);
+    --halftone: rgba(215, 138, 155, 0.12);
+    --hatch: rgba(243, 233, 234, 0.08);
+    --ink-shadow: 4px 4px 0 0 #08090b;
+    --on-brick: #f6eaec;
+    --on-page: #f3e9ea;
+    --on-zap: #111213;
+    --on-danger: #2b0a07;
+    --title-shadow: #08090b;
+    --zap-strong: #ece14a;
+    --input-settled: #120d10;
+    --backdrop: rgba(8, 4, 6, 0.6);
+
+    --ev-medical-records:    #8a4d1e;
+    --ev-wiretap:            #1d5a76;
+    --ev-security-scanner:   #7c2f3d;
+    --ev-money:              #3f6330;
+    --ev-blackmail:          #3c3c40;
+    --ev-ideology:           #7a6512;
+    --ev-security-clearance: #5b4266;
+    --ev-travel:             #8a3a2e;
+    --ev-authority:          #33507e;
+    --ev-ink: #f4eeee;
+    --ev-halo: rgba(0, 0, 0, 0.65);
+    --ev-wash: rgba(0, 0, 0, 0.58);
+  }
+}
+:root[data-campaign="aos"][data-theme="light"] {
+  --page: #3a3d42; --bar: #7a1429; --brick: #5a2733;
+  --panel-1: #ffffff; --panel-2: #dbbab9; --pill: #c7aaaa;
+  --check: #f8f2f1; --zap: #d5ca02; --ink: #111213;
+  --check-on: #7a1429; --tick: #f8f2f1;
+  --bg-input: #fffafa; --panel-border: var(--bar); --text-dim: #5a4147;
+  --accent: var(--bar); --accent-strong: #520d1c; --accent-2: #a8324b;
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(213, 202, 2, 0.55);
+  --halftone: rgba(122, 20, 41, 0.18);
+  --hatch: rgba(17, 18, 19, 0.10);
+  --ink-shadow: 4px 4px 0 0 #241f20;
+  --on-brick: #f6eaec;
+  --on-page: #f2e9e9;
+  --on-zap: #111213;
+  --on-danger: #fff4ef;
+  --title-shadow: #f2e9e9;
+  --zap-strong: #e6da1c;
+  --input-settled: #d6c3c3;
+  --backdrop: rgba(20, 10, 13, 0.55);
+
+  --ev-medical-records:    #feb57b;
+  --ev-wiretap:            #76c9f1;
+  --ev-security-scanner:   #f9a2b1;
+  --ev-money:              #acd68e;
+  --ev-blackmail:          #67676a;
+  --ev-ideology:           #f9db81;
+  --ev-security-clearance: #c6a7cf;
+  --ev-travel:             #f99888;
+  --ev-authority:          #85a2d4;
+  --ev-ink: #14171a;
+  --ev-halo: rgba(255, 255, 255, 0.92);
+  --ev-wash: rgba(255, 255, 255, 0.66);
+  color-scheme: light;
+}
+:root[data-campaign="aos"][data-theme="dark"] {
+  --page: #14161a; --bar: #d78a9b; --brick: #4a2129;
+  --panel-1: #33202a; --panel-2: #2b2126; --pill: #5c3a44;
+  --check: #2a1a20; --zap: #dfd42e; --ink: #f3e9ea;
+  --check-on: #d78a9b; --tick: #2a1a20;
+  --bg-input: #1d161a; --panel-border: #8d5462; --text-dim: #c2a9b0;
+  --accent: #d78a9b; --accent-strong: #f0b5c1; --accent-2: #e2a3b0;
+  --danger: #ff6b5c;
+  --glow: 0 0 0 3px rgba(223, 212, 46, 0.40);
+  --halftone: rgba(215, 138, 155, 0.12);
+  --hatch: rgba(243, 233, 234, 0.08);
+  --ink-shadow: 4px 4px 0 0 #08090b;
+  --on-brick: #f6eaec;
+  --on-page: #f3e9ea;
+  --on-zap: #111213;
+  --on-danger: #2b0a07;
+  --title-shadow: #08090b;
+  --zap-strong: #ece14a;
+  --input-settled: #120d10;
+  --backdrop: rgba(8, 4, 6, 0.6);
+
+  --ev-medical-records:    #8a4d1e;
+  --ev-wiretap:            #1d5a76;
+  --ev-security-scanner:   #7c2f3d;
+  --ev-money:              #3f6330;
+  --ev-blackmail:          #3c3c40;
+  --ev-ideology:           #7a6512;
+  --ev-security-clearance: #5b4266;
+  --ev-travel:             #8a3a2e;
+  --ev-authority:          #33507e;
+  --ev-ink: #f4eeee;
+  --ev-halo: rgba(0, 0, 0, 0.65);
+  --ev-wash: rgba(0, 0, 0, 0.58);
+  color-scheme: dark;
+}
+
 /* ---------- Base ---------- */
 * { box-sizing: border-box; }
 
@@ -1796,6 +2033,110 @@ button:focus-visible {
 /* .hint is written for a line ABOVE its controls; under the minion boxes it
    needs its margin on the other side. */
 [data-section="overseers"] .hint { margin: 0.6rem 0 0; }
+
+/* MC50's counter table: the board member down the side, four scenario columns
+   across. Left-aligned like every other row header on a sheet table, and
+   written as .sheet-table.sc-table for the specificity reason spelled out
+   above -- the generic .sheet-table rule further down centres its cells, and at
+   equal specificity the later rule would win. */
+.sheet-table.sc-table th[scope="row"] { text-align: left; }
+/* Four equal number columns; the names are what needs the room. */
+.sheet-table.sc-table thead th:not(:first-child),
+.sheet-table.sc-table td { width: 15%; }
+
+/* ---------- MC50: the evidence block ----------
+   The nine cards as boxes, then the three printed tables that follow from
+   them. Nothing in the tables is a control -- what they say is decided by the
+   boxes -- so the whole block is laid out for reading rather than for input. */
+.ev-group {
+  display: grid;
+  grid-template-columns: minmax(5rem, auto) 1fr;
+  gap: 0.4rem 0.8rem;
+  align-items: center;
+}
+.ev-group + .ev-group { margin-top: 0.5rem; }
+/* The printed column heading, doing double duty as the legend's group name. */
+.ev-group-name {
+  font-family: var(--font-head);
+  font-style: italic;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-dim);
+}
+
+/* Three tables of nine rows. Keyed on nothing but the class, unlike .cell-row
+   and .player-grid, because the count here is the three printed board members
+   and cannot change. Three across only once each table can hold its three
+   columns without the symbols crowding; below that they stack, which is the
+   right answer for a block this tall anyway. */
+.ev-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: 1rem;
+}
+@media (min-width: 62rem) {
+  .ev-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.ev-block { display: grid; gap: 0.35rem; align-content: start; }
+.ev-block-name {
+  margin: 0;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* A cell is one flat colour band with a symbol on it, as printed. --ev is set
+   on the cell itself by the module, so the colour travels with the card rather
+   than with the column. */
+.sheet-table.ev-table td.ev-cell {
+  background: var(--ev);
+  padding: 0.25rem;
+}
+.sheet-table.ev-table thead th { width: 33.33%; }
+/* Crossing the row out, drawn the way a pen does it: one line straight through
+   the three cells, plus enough fade that a struck row stops competing with the
+   ones still open. Not text-decoration -- there is no text in these cells at
+   this width, only the symbol.
+
+   The fade is a WASH and not opacity, and the difference is the whole reason
+   this rule is three lines longer than it looks like it should be. opacity
+   blends the chip into whatever is behind it, which here is the maroon table
+   body: in dark mode that happens to look right, and in light mode it turns
+   nine pastels into mud. --ev-wash blends towards the panel instead, so a
+   struck chip pales in both themes. Two background layers, the strike first
+   because the first layer is the one on top. */
+.sheet-table.ev-table tr.is-struck td.ev-cell {
+  background-image:
+    linear-gradient(
+      to bottom,
+      transparent calc(50% - 1px),
+      var(--ev-ink) calc(50% - 1px),
+      var(--ev-ink) calc(50% + 1px),
+      transparent calc(50% + 1px)),
+    linear-gradient(var(--ev-wash), var(--ev-wash));
+}
+.sheet-table.ev-table tr.is-struck .ev-icon { opacity: 0.5; }
+.ev-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: none;
+  stroke: var(--ev-ink);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* The halo the printed sheet draws around every one of its symbols. It is
+     load-bearing: dark ink on the Blackmail grey reads 3.3 on its own. */
+  filter: drop-shadow(0 0 1.6px var(--ev-halo));
+}
+.ev-table .ev-icon { display: block; width: 1.65rem; height: 1.65rem; margin: 0 auto; }
+/* The same symbol in the legend, where it sits beside its name. */
+.flag > .ev-icon { width: 1.25rem; height: 1.25rem; }
+/* The card name under the symbol. Hidden while the table IS a table: the
+   legend right above already pairs every symbol with its name, and the sheet
+   prints symbols alone. In the narrow layout there is no legend beside the row
+   any more, so it comes back -- see the narrow block further down. */
+.ev-name { display: none; }
 
 /* Two field groups stacked in one panel — MC21's scenario 2 and 3 put the
    pooled cards over a box with its own wording — would otherwise touch: .panel
@@ -2431,6 +2772,30 @@ body[class*="dnd-"] .entry-list { min-height: 2.2rem; outline: 1px dashed var(--
   /* Stacked, the outcome box sits next to the column name rather than above a
      paragraph of it, so the rule text follows on its own line. */
   .sheet-table.ms-table td.outcome-cell { vertical-align: baseline; }
+  /* MC50 stacked. The cell stops being a colour band -- a full-width band of
+     Blackmail grey with the card name written on it reads 3.3 -- so the colour
+     moves onto the symbol as a small tile and the name becomes ordinary text
+     on the row. The strike follows: a line through the name rather than
+     through a band that is no longer there. */
+  .sheet-table.ev-table td.ev-cell { background: none; padding: 0.25rem 0; }
+  .ev-table .ev-icon {
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0 0.5rem 0 0;
+    padding: 2px;
+    box-sizing: content-box;
+    background: var(--ev);
+    border: var(--rule) solid var(--bar);
+    border-radius: 4px;
+  }
+  .ev-name { display: inline; vertical-align: middle; }
+  .sheet-table.ev-table tr.is-struck td.ev-cell { background-image: none; }
+  .sheet-table.ev-table tr.is-struck .ev-name {
+    text-decoration: line-through;
+    opacity: 0.72;
+  }
+  .sheet-table.ev-table tr.is-struck .ev-icon { opacity: 0.5; }
+  .ev-group { grid-template-columns: minmax(0, 1fr); }
   .chip-list { grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
 }
 
@@ -2498,6 +2863,15 @@ body[class*="dnd-"] .entry-list { min-height: 2.2rem; outline: 1px dashed var(--
      there is to cross the mission or minion out, and the printout has to show
      the same mark the pen would make. */
   .print-line .struck { text-decoration: line-through; }
+  /* MC50 prints three groups of nine combination lines inside ONE section --
+     one section per panel on screen, so the board member cannot be a heading of
+     its own without the printout growing sections the sheet does not have. It
+     is a line that leads its group instead. */
+  .print-subhead {
+    font-weight: 700;
+    margin-top: 2mm;
+    break-after: avoid;
+  }
 
   .print-disclaimer {
     margin-top: 8mm;

@@ -100,6 +100,7 @@ for (const def of campaigns) {
 
 section("Campaign definitions");
 const seenIds = new Set();
+const seenThemes = new Set();
 for (const def of campaigns) {
   const p = def.id + ": ";
   check(p + "id is a kebab-case slug", /^[a-z0-9]+(-[a-z0-9]+)*$/.test(def.id), def.id);
@@ -117,6 +118,14 @@ for (const def of campaigns) {
      there is an older shape in the wild that has to be carried forward. */
   check(p + "migrate() present once stateVersion > 1",
     def.stateVersion === 1 || typeof def.migrate === "function");
+  /* The skin hook, and the reason it is checked at all: two campaigns sharing
+     a theme key would silently paint one of them in the other's colours, and
+     the keys are short enough to collide by a typo -- MC45 is "aoa" and MC50
+     "aos". A campaign with no theme falls back to its id, which is already
+     unique. */
+  const theme = def.theme || def.id;
+  check(p + "theme key is unique", !seenThemes.has(theme), theme);
+  seenThemes.add(theme);
 }
 
 // ------------------------------------------------------- data round-trip
@@ -1295,6 +1304,230 @@ for (const def of campaigns) {
       eq(Object.keys(g1.headhunter), GMW_TILES) &&
       g1.headhunter.brotherhood === true && g1.headhunter.nebula === false,
       JSON.stringify(g1.headhunter));
+  }
+
+  if (def.id === "agents-of-shield") {
+    /* The generic fixture feeds MC60's `scenarios`, MC21's `flags` and MC10's
+       `removed`, none of which is a field on this sheet. None of it may land.
+       `scenarios` is the one worth naming: this sheet has four scenario panels
+       and a column per scenario, so a stray list of them would look plausible
+       to a later reader. */
+    check(p + "no scenarios key on this sheet", once.scenarios === undefined);
+    check(p + "no flags key on this sheet", once.flags === undefined);
+    check(p + "no removed key on this sheet", once.removed === undefined);
+    check(p + "a notes field is not part of this sheet",
+      def.normalize({ notes: "anything" }).notes === undefined);
+    /* And there is no crossed-out-rows field either, which is the whole point
+       of the design: the 27 rows are painted from the nine cards and are stored
+       nowhere. A key for them arriving from anywhere has to fall away. */
+    check(p + "the crossed-out rows are not a stored field",
+      def.normalize({ combos: { "chief-medical-officer-0": true } }).combos === undefined);
+    check(p + "the sheet's shape is exactly what the paper holds",
+      eq(Object.keys(empty).sort(),
+        ["adaptoids", "captives", "evidence", "expert", "minions", "players",
+          "secrets", "thunderbolts"]),
+      Object.keys(empty).join());
+
+    /* The level is a real boolean, and standard is the default: a sheet that
+       says nothing is not an expert campaign. */
+    check(p + "the level defaults to standard", empty.expert === false);
+    check(p + "a tolerant truthy level reads as expert",
+      def.normalize({ expert: 1 }).expert === true &&
+      def.normalize({ expert: "true" }).expert === true);
+    check(p + "and anything else reads as standard",
+      def.normalize({ expert: "no" }).expert === false &&
+      def.normalize({ expert: null }).expert === false);
+    /* The whole point of the gate: standard level HIDES the hit points, so a
+       standard sheet must still be able to carry them. */
+    check(p + "a standard sheet still carries hit points",
+      def.normalize({ expert: false, players: [{ hero: "Nick Fury", hp: 7 }] })
+        .players[0].hp === 7);
+
+    check(p + "a fresh sheet has exactly one player", empty.players.length === 1);
+    check(p + "a player carries the identity and the hit points, nothing else",
+      eq(Object.keys(empty.players[0]).sort(), ["hero", "hp"]),
+      JSON.stringify(Object.keys(empty.players[0])));
+
+    /* The counter table, pinned BY SLUG and BY LENGTH: three printed rows in
+       printed order, four printed cells each, whatever arrives. */
+    const AOS_BOARD = ["chief-medical-officer", "chief-surveillance-officer",
+      "chief-tactical-officer"];
+    check(p + "the counter table always has the three printed rows",
+      eq(Object.keys(empty.secrets), AOS_BOARD), Object.keys(empty.secrets).join());
+    check(p + "and every row is always four cells long",
+      AOS_BOARD.every((slug) => empty.secrets[slug].length === 4));
+    check(p + "a short row is filled up and a long one cut back",
+      def.normalize({ secrets: { "chief-medical-officer": [1] } })
+        .secrets["chief-medical-officer"].length === 4 &&
+      def.normalize({ secrets: { "chief-medical-officer": [1, 2, 3, 4, 5, 6] } })
+        .secrets["chief-medical-officer"].length === 4);
+    check(p + "a fresh cell is empty, which is not the same as zero",
+      empty.secrets["chief-medical-officer"].every((v) => v === null));
+    /* The cell that was never filled in has to stay distinguishable from a
+       recorded zero: scenario #2 puts back as many counters as stand here, and
+       zero of them is a legal answer. */
+    check(p + "a recorded zero survives as a zero",
+      def.normalize({ secrets: { "chief-tactical-officer": [0, null, "", 3] } })
+        .secrets["chief-tactical-officer"][0] === 0);
+    check(p + "an empty string reads as nothing recorded",
+      def.normalize({ secrets: { "chief-tactical-officer": [0, null, "", 3] } })
+        .secrets["chief-tactical-officer"][2] === null);
+    check(p + "a cell stays in the column it arrived in",
+      eq(def.normalize({ secrets: { "chief-tactical-officer": [0, 1, 2, 3] } })
+        .secrets["chief-tactical-officer"], [0, 1, 2, 3]));
+    check(p + "an invented board member is dropped",
+      def.normalize({ secrets: { "chief-catering-officer": [1, 1, 1, 1] } })
+        .secrets["chief-catering-officer"] === undefined);
+    check(p + "a list where the map belongs leaves every row empty",
+      eq(def.normalize({ secrets: [[1, 2, 3, 4]] }).secrets, empty.secrets));
+
+    /* The two scenario numbers, with the same "empty is not zero" rule. */
+    check(p + "the two scenario numbers start empty",
+      empty.minions === null && empty.captives === null);
+    check(p + "and are clamped rather than refused",
+      def.normalize({ minions: "500", captives: -3 }).minions === 99 &&
+      def.normalize({ minions: "500", captives: -3 }).captives === 0);
+
+    /* The four printed Adaptoid environments, by slug and in printed order —
+       which is the sheet's reading order across its 2x2 grid, not the card
+       numbering. */
+    const AOS_ADAPTOIDS = ["flying-upgrade", "sarah-garza-upgrade",
+      "psionic-upgrade", "strong-upgrade"];
+    check(p + "the four printed environments are the four keys, in printed order",
+      eq(Object.keys(empty.adaptoids), AOS_ADAPTOIDS),
+      Object.keys(empty.adaptoids).join());
+    check(p + "and every one of them starts unmarked",
+      AOS_ADAPTOIDS.every((slug) => empty.adaptoids[slug] === false));
+    check(p + "an invented environment is dropped",
+      def.normalize({ adaptoids: { "made-up": true } }).adaptoids["made-up"] === undefined);
+    check(p + "a tolerant truthy mark reads as marked, and \"yes\" does not",
+      def.normalize({ adaptoids: { "flying-upgrade": 1 } }).adaptoids["flying-upgrade"] === true &&
+      def.normalize({ adaptoids: { "flying-upgrade": "yes" } }).adaptoids["flying-upgrade"] === false);
+
+    /* The surviving Thunderbolts: a list out of a pool, unknown names and
+       repeats gone, arrival order kept. */
+    check(p + "a fresh sheet lists no survivors", eq(empty.thunderbolts, []));
+    check(p + "an unknown minion is dropped and a known one kept",
+      eq(def.normalize({ thunderbolts: ["jolt", "not-a-minion", "batroc"] }).thunderbolts,
+        ["jolt", "batroc"]));
+    check(p + "a repeat is dropped, because nobody survives twice",
+      eq(def.normalize({ thunderbolts: ["jolt", "jolt"] }).thunderbolts, ["jolt"]));
+    check(p + "the arrival order survives",
+      eq(def.normalize({ thunderbolts: ["batroc", "jolt"] }).thunderbolts,
+        ["batroc", "jolt"]));
+    check(p + "an empty row on its way to being filled is not a survivor",
+      eq(def.normalize({ thunderbolts: ["", null, "jolt"] }).thunderbolts, ["jolt"]));
+
+    /* The nine evidence cards — the field this sheet actually keeps. */
+    const AOS_EVIDENCE = ["medical-records", "wiretap", "security-scanner",
+      "money", "blackmail", "ideology", "security-clearance", "travel", "authority"];
+    check(p + "the nine printed symbols are the nine keys, in printed order",
+      eq(Object.keys(empty.evidence), AOS_EVIDENCE), Object.keys(empty.evidence).join());
+    check(p + "and none of them starts gained",
+      AOS_EVIDENCE.every((slug) => empty.evidence[slug] === false));
+    check(p + "an invented card is dropped",
+      def.normalize({ evidence: { "made-up": true } }).evidence["made-up"] === undefined);
+    check(p + "a tolerant truthy card reads as gained, and \"yes\" does not",
+      def.normalize({ evidence: { wiretap: 1 } }).evidence.wiretap === true &&
+      def.normalize({ evidence: { wiretap: "yes" } }).evidence.wiretap === false);
+    /* THE regression test for this sheet's one rule that is not a shape: the
+       game cannot hand out all three cards of a group, because one of each is
+       in the A.I.M. envelope — and normalize() takes it anyway rather than
+       picking which tick to throw away. The screen shows the consequence by
+       striking every row; nothing here resolves it. Same one-sided reading as
+       MC45's contradictory mission row. */
+    const aosAll = def.normalize({
+      evidence: { "medical-records": true, wiretap: true, "security-scanner": true },
+    });
+    check(p + "all three cards of one group survive normalize",
+      aosAll.evidence["medical-records"] === true && aosAll.evidence.wiretap === true &&
+      aosAll.evidence["security-scanner"] === true, JSON.stringify(aosAll.evidence));
+    check(p + "and the impossible group does not spread to the others",
+      aosAll.evidence.money === false && aosAll.evidence.authority === false);
+
+    /* The printed combination block, checked against the game rather than
+       against itself: 27 rows, nine to a board member, and between them every
+       combination of a means, a motive and an opportunity exactly once. A typo
+       in that table would otherwise be silent — the sheet would simply strike
+       the wrong row. Read off the module's own source, because the table is
+       printed matter and never reaches the state. */
+    const aosSrc = read("campaigns/agents-of-shield.js");
+    const aosGroup = (name) => {
+      const body = aosSrc.slice(aosSrc.indexOf('"' + name + '": ['));
+      return body.slice(0, body.indexOf("\n    ],"))
+        .match(/\["[^\]]+"\]/g).map((row) => JSON.parse(row));
+    };
+    const aosRows = AOS_BOARD.map(aosGroup);
+    check(p + "nine printed rows under every board member",
+      aosRows.every((rows) => rows.length === 9),
+      aosRows.map((r) => r.length).join());
+    const aosFlat = aosRows.flat();
+    check(p + "every row names a card the sheet prints, in column order",
+      aosFlat.every((row) => row.length === 3 &&
+        AOS_EVIDENCE.indexOf(row[0]) < 3 &&
+        AOS_EVIDENCE.indexOf(row[1]) >= 3 && AOS_EVIDENCE.indexOf(row[1]) < 6 &&
+        AOS_EVIDENCE.indexOf(row[2]) >= 6));
+    const aosKeys = new Set(aosFlat.map((row) => row.join("+")));
+    check(p + "the 27 printed rows are 27 different combinations",
+      aosKeys.size === 27, aosKeys.size);
+    /* And they are ALL of them: three means times three motives times three
+       opportunities. Together with the line above, the table is a bijection. */
+    const aosWanted = [];
+    for (const m of AOS_EVIDENCE.slice(0, 3)) {
+      for (const t of AOS_EVIDENCE.slice(3, 6)) {
+        for (const o of AOS_EVIDENCE.slice(6)) aosWanted.push(m + "+" + t + "+" + o);
+      }
+    }
+    check(p + "and they cover every combination the game can make",
+      aosWanted.every((key) => aosKeys.has(key)),
+      aosWanted.filter((key) => !aosKeys.has(key)).join());
+
+    const dirtyAos = {
+      players: [
+        { hero: "  Nick Fury  ", hp: "500" },
+        { hero: "x".repeat(500), hp: "" },
+        "not even an object",
+        { hero: "Maria Hill", hp: 11 },
+        { hero: "one too many", hp: 3 },
+      ],
+      expert: 1,
+      secrets: {
+        "chief-medical-officer": ["2", -5, null, "500"],
+        "chief-surveillance-officer": [1],
+        "chief-catering-officer": [9, 9, 9, 9],
+      },
+      minions: "7",
+      captives: null,
+      adaptoids: { "flying-upgrade": "true", "strong-upgrade": 0, "made-up": true },
+      thunderbolts: ["moonstone", "moonstone", "does-not-exist", "jolt"],
+      evidence: { wiretap: "true", travel: 1, money: "yes", "made-up": true },
+      scenarios: [{ slug: "does-not-exist" }],
+      flags: { invented: true },
+      removed: ["stray"],
+      somethingUnknown: { nested: [1, 2, 3] },
+    };
+    const a1 = def.normalize(dirtyAos);
+    check(p + "MC50 fixture is idempotent", eq(a1, def.normalize(a1)), JSON.stringify(a1));
+    check(p + "the fixture keeps four players and clamps them",
+      a1.players.length === 4 && a1.players[0].hero === "Nick Fury" &&
+      a1.players[0].hp === 99 && a1.players[1].hp === null,
+      JSON.stringify(a1.players));
+    check(p + "the fixture's counter table is three rows of four, clamped",
+      eq(Object.keys(a1.secrets), AOS_BOARD) &&
+      eq(a1.secrets["chief-medical-officer"], [2, 0, null, 99]) &&
+      eq(a1.secrets["chief-surveillance-officer"], [1, null, null, null]),
+      JSON.stringify(a1.secrets));
+    check(p + "the fixture's environments keep the four printed keys only",
+      eq(Object.keys(a1.adaptoids), AOS_ADAPTOIDS) &&
+      a1.adaptoids["flying-upgrade"] === true && a1.adaptoids["strong-upgrade"] === false,
+      JSON.stringify(a1.adaptoids));
+    check(p + "the fixture's survivors lose the repeat and the unknown",
+      eq(a1.thunderbolts, ["moonstone", "jolt"]), JSON.stringify(a1.thunderbolts));
+    check(p + "the fixture's evidence keeps the nine printed keys only",
+      eq(Object.keys(a1.evidence), AOS_EVIDENCE) &&
+      a1.evidence.wiretap === true && a1.evidence.travel === true &&
+      a1.evidence.money === false,
+      JSON.stringify(a1.evidence));
   }
 }
 
