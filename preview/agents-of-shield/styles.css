@@ -2132,6 +2132,21 @@ button:focus-visible {
 .ev-table .ev-icon { display: block; width: 1.65rem; height: 1.65rem; margin: 0 auto; }
 /* The same symbol in the legend, where it sits beside its name. */
 .flag > .ev-icon { width: 1.25rem; height: 1.25rem; }
+/* The deduced card: two of a group gained means the third is the one sealed in
+   the A.I.M. envelope, so it can never be gained and its box is closed. The
+   colour is doing real work here rather than warning about a mistake -- this
+   name is the answer the campaign is played for -- but it is never the only
+   signal: the box also carries the dashed border every locked control has, and
+   its title says why it cannot be ticked. */
+.flag.is-deduced {
+  border-color: var(--danger);
+  box-shadow: inset 0 0 0 1px var(--danger);
+}
+.flag.is-deduced > span {
+  color: var(--danger);
+  font-weight: 900;
+}
+.flag.is-deduced > .ev-icon { stroke: var(--danger); }
 /* The card name under the symbol. Hidden while the table IS a table: the
    legend right above already pairs every symbol with its name, and the sheet
    prints symbols alone. In the narrow layout there is no legend beside the row
