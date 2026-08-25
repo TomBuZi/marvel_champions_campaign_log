@@ -4,9 +4,10 @@
    Screenshots und den Druckvergleich. "?c=mc10" nimmt den MC10-Bogen,
    "?c=mc16" den MC16-Bogen, "?c=mc21" den MC21-Bogen, "?c=mc27" den
    MC27-Bogen, "?c=mc32" den MC32-Bogen, "?c=mc40" den MC40-Bogen,
-   "?c=mc45" den MC45-Bogen, ohne Angabe kommt MC60. */
+   "?c=mc45" den MC45-Bogen, "?c=mc50" den MC50-Bogen, ohne Angabe kommt
+   MC60. */
 var q = new URLSearchParams(location.search);
-var which = { mc10: "mc10", mc16: "mc16", mc21: "mc21", mc27: "mc27", mc32: "mc32", mc40: "mc40", mc45: "mc45" }[q.get("c")] || "mc60";
+var which = { mc10: "mc10", mc16: "mc16", mc21: "mc21", mc27: "mc27", mc32: "mc32", mc40: "mc40", mc45: "mc45", mc50: "mc50" }[q.get("c")] || "mc60";
 /* "?theme=dark" (oder light) nagelt das Theme fest — sonst folgt es dem System.
    Gebraucht fuer den Druckvergleich: der Druck muss schwarz auf weiss sein,
    auch aus einer Dark-Mode-Sitzung und auch mit einem Kampagnen-Skin. */
@@ -266,6 +267,56 @@ var logs = {
         infiltrate: true,
         escape: false,
         nebula: true
+      }
+    }
+  },
+  mc50: {
+    schemaVersion: 1, id: "seed-9", campaignId: "agents-of-shield", stateVersion: 1,
+    title: "Agents of S.H.I.E.L.D., Durchgang 1",
+    createdAt: "2026-08-21T18:00:00.000Z", updatedAt: "2026-08-25T20:10:00.000Z",
+    state: {
+      expert: true,
+      players: [
+        { hero: "Nick Fury", hp: 9 },
+        { hero: "Maria Hill", hp: 11 },
+        { hero: "Quicksilver", hp: 8 }
+      ],
+      /* Vier Szenarien gespielt. Die letzte Spalte bleibt bei der
+         Medizinischen Leitung leer: ein leeres Feld ist etwas anderes als eine
+         eingetragene Null und muss im Druck als Strich erscheinen. */
+      secrets: {
+        "chief-medical-officer": [0, 1, 2, null],
+        "chief-surveillance-officer": [2, 0, 1, 3],
+        "chief-tactical-officer": [1, 2, 3, 4]
+      },
+      minions: 5,
+      captives: 3,
+      /* Zwei der vier Adaptoid-Umgebungen im Spiel, damit beide Zustaende im
+         Bild sind. */
+      adaptoids: {
+        "flying-upgrade": true,
+        "sarah-garza-upgrade": false,
+        "psionic-upgrade": true,
+        "strong-upgrade": false
+      },
+      /* Zwei ueberlebende Thunderbolts: Jolt aus dem Schurkenset und ein
+         Elite-Scherge aus einem modularen Set. */
+      thunderbolts: ["jolt", "moonstone"],
+      /* Vier erhaltene Beweiskarten: zwei aus der Gruppe Mittel und je eine aus
+         den beiden anderen. Damit ist ein guter Teil der 27 Kombinationen
+         durchgestrichen und der Rest bleibt offen — beide Zustaende sind also
+         im Bild —, und weil bei den Mitteln zwei von drei gefunden sind, steht
+         die dritte Karte als Beweis des Maulwurfs rot und zugemacht da. */
+      evidence: {
+        "medical-records": true,
+        "wiretap": true,
+        "security-scanner": false,
+        "money": false,
+        "blackmail": true,
+        "ideology": false,
+        "security-clearance": false,
+        "travel": true,
+        "authority": false
       }
     }
   }

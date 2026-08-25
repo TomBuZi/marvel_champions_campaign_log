@@ -5058,7 +5058,625 @@
         });
       }
 
-      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint, mg: caseMg, mgrole: caseMgRole, mgexpert: caseMgExpert, mgprint: caseMgPrint, ne: caseNe, neschemes: caseNeSchemes, neexpert: caseNeExpert, neprint: caseNePrint, aoa: caseAoa, aoamissions: caseAoaMissions, aoaexpert: caseAoaExpert, aoaprint: caseAoaPrint, gmw: caseGmw, gmwmarket: caseGmwMarket, gmwunits: caseGmwUnits, gmwexpert: caseGmwExpert, gmwprint: caseGmwPrint, sharebtn: caseShareButton };
+
+      // ----------------------------------------------------------- MC50
+      /* The MC50 sheet is a player block, a counter table of three printed rows
+         by four printed columns, four scenario boxes and then a block of 27
+         printed combinations. Its signature is that block: the 27 rows are
+         never entered, they are painted from the nine evidence cards above
+         them, so the boxes and the rows are the two halves of one assertion. */
+      function aosLog() {
+        return {
+          schemaVersion: 1, id: "aos1", campaignId: "agents-of-shield", stateVersion: 1,
+          title: "Agents of S.H.I.E.L.D.",
+          createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-02T00:00:00.000Z",
+          state: {
+            /* Expert, because the hit points only exist there. caseAosExpert is
+               the one that starts at standard. */
+            expert: true,
+            players: [{ hero: "", hp: null }],
+            /* Everything else deliberately absent: normalize() has to build the
+               counter table, the four environments and all nine evidence flags
+               out of a state that mentions none of them. */
+          },
+        };
+      }
+      /* The sections the printed sheet has, by their stable data-section keys —
+         not by their labels, which the German print words differently. */
+      var AOS_SECTIONS = ["players", "secrets", "scenario1", "scenario2",
+        "scenario3", "scenario4", "evidence"];
+      /* The row headers of the counter table, the four environment boxes and the
+         nine evidence boxes, as one list: the language-tag rule has to hold
+         across all three. Every one of them is translated, so the untagged case
+         is all this list can show — the tagged case lives in the minion pool
+         below, which is why the rule is checked in two places rather than one. */
+      var AOS_NAMES = '[data-section="secrets"] th[scope="row"], ' +
+        '[data-section="scenario3"] .flag > span, ' +
+        '[data-section="evidence"] .flag > span';
+      /* The minion pool, placeholder excluded: it is not a card name. */
+      var AOS_POOL = '[data-thunderbolt] option[value]:not([value=""])';
+
+      /* The three card names of one printed combination row, read off the row
+         itself. Every expectation about which rows a card strikes is derived
+         through this rather than written out, so it keeps checking the rule and
+         not a copy of the table. */
+      function aosRowNames(tr) {
+        return Array.prototype.map.call(tr.querySelectorAll(".ev-name"),
+          function (n) { return n.textContent.trim(); });
+      }
+
+      function caseAos() {
+        var seeded = aosLog();
+        /* Two survivors, because the rule worth checking here spans the rows:
+           nobody survives twice, so a name on one row has to be closed on the
+           other. One row could not show that. */
+        seeded.state.thunderbolts = ["jolt", "batroc"];
+        seed({ aos1: seeded }, "aos1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var app = d.getElementById("campaign");
+          var at = function (sel) { return app.querySelectorAll(sel); };
+
+          var found = AOS_SECTIONS.filter(function (id) {
+            return !!app.querySelector('[data-section="' + id + '"]');
+          });
+          log("every printed section has a panel",
+            found.length === AOS_SECTIONS.length, found.join());
+          log("and no panel beyond them",
+            at("[data-section]").length === AOS_SECTIONS.length,
+            at("[data-section]").length);
+          /* In the printed order, top to bottom. Read off the document rather
+             than written out, so it keeps checking the order and not the
+             words. */
+          var order = function () {
+            return Array.prototype.map.call(at("[data-section]"), function (n) {
+              return n.getAttribute("data-section");
+            }).join();
+          };
+          log("in the order the sheet prints them",
+            order() === AOS_SECTIONS.join(), order());
+
+          /* Every cell of every table has to still BE a table cell -- see
+             cellsAreCells() for what goes wrong when one is not. This sheet has
+             four of them: the counter table and one per board member. */
+          var cellTroubleAos = cellsAreCells(w, d);
+          log("every cell of every table is still a table cell",
+            cellTroubleAos === null, cellTroubleAos);
+
+          var scRows = at('[data-section="secrets"] tbody tr');
+          log("the counter table is the three printed rows", scRows.length === 3,
+            scRows.length);
+          log("and every row is the four printed columns",
+            Array.prototype.every.call(scRows, function (tr) {
+              return tr.querySelectorAll("td .num-input").length === 4;
+            }));
+          /* A bare number field in a grid is unnameable, so every cell carries
+             its row AND its column. Checked against the words on screen rather
+             than a string in here, so it survives a retranslation. */
+          log("every cell of it is named by its own row",
+            Array.prototype.every.call(scRows, function (tr) {
+              var name = tr.querySelector('th[scope="row"]').textContent.trim();
+              return Array.prototype.every.call(tr.querySelectorAll(".num-input"),
+                function (box) {
+                  var label = box.getAttribute("aria-label") || "";
+                  return label.indexOf(name) === 0 && label.length > name.length;
+                });
+            }),
+            scRows[0].querySelector(".num-input").getAttribute("aria-label"));
+          /* And no two cells of one row share a name, or the four columns would
+             be indistinguishable to a screen reader. */
+          log("and no two cells of one row share a name",
+            Array.prototype.every.call(scRows, function (tr) {
+              var seen = {};
+              return Array.prototype.every.call(tr.querySelectorAll(".num-input"),
+                function (box) {
+                  var label = box.getAttribute("aria-label");
+                  if (seen[label]) return false;
+                  seen[label] = true;
+                  return true;
+                });
+            }));
+
+          var envs = at('[data-section="scenario3"] .flag');
+          log("scenario #3 is four named boxes", envs.length === 4, envs.length);
+          log("and every one of them is named",
+            Array.prototype.every.call(envs, function (f) {
+              return f.querySelector("span").textContent.trim().length > 0;
+            }));
+
+          /* The nine cards, in three printed groups. Counted off the groups
+             rather than in one heap, because which group a card sits in is what
+             decides which column of the tables it can appear in. */
+          var groups = at('[data-section="evidence"] .ev-group');
+          log("the evidence legend is three printed groups", groups.length === 3,
+            groups.length);
+          log("with three named cards in each",
+            Array.prototype.every.call(groups, function (g) {
+              var boxes = g.querySelectorAll(".flag");
+              return boxes.length === 3 &&
+                Array.prototype.every.call(boxes, function (f) {
+                  return f.querySelector("span").textContent.trim().length > 0;
+                });
+            }),
+            Array.prototype.map.call(groups, function (g) {
+              return g.querySelectorAll(".flag").length;
+            }).join());
+          /* A symbol nobody can read is worse than the word for it: every
+             drawing carries its card's name, in the legend and in every cell. */
+          log("every drawing on the sheet carries a name",
+            Array.prototype.every.call(at(".ev-icon"), function (svg) {
+              return (svg.getAttribute("aria-label") || "").trim().length > 0;
+            }),
+            at(".ev-icon").length);
+
+          var picks = at("[data-thunderbolt]");
+          var optOf = function (sel, val) {
+            return Array.prototype.filter.call(sel.options, function (o) {
+              return o.value === val;
+            })[0];
+          };
+          log("scenario #4 lists one select per survivor", picks.length === 2,
+            picks.length);
+          log("nobody survives twice, so the other row's pick is closed",
+            optOf(picks[0], picks[1].value).disabled === true &&
+            optOf(picks[1], picks[0].value).disabled === true);
+          log("while each row keeps its own pick open",
+            optOf(picks[0], picks[0].value).disabled === false &&
+            optOf(picks[1], picks[1].value).disabled === false);
+          /* One flat list rather than groups: which product a minion came in
+             says nothing about the sheet. */
+          log("the pool is one flat list",
+            picks[0].querySelectorAll("optgroup").length === 0);
+          /* Sorted by the name actually shown. Compared against this list's own
+             sort rather than a written-out order, so it survives a translated
+             name and a longer pool alike — and the placeholder, which is not a
+             minion, is left out. */
+          var poolNames = Array.prototype.map.call(picks[0].options, function (o) {
+            return o.value ? o.textContent.trim() : null;
+          }).filter(Boolean);
+          log("and alphabetical in the language being read",
+            poolNames.join("|") === poolNames.slice().sort(function (a, b) {
+              return a.localeCompare(b, "de");
+            }).join("|"), poolNames.join());
+
+          var comboRows = at('[data-section="evidence"] .ev-table tbody tr');
+          log("the block is 27 printed combinations", comboRows.length === 27,
+            comboRows.length);
+          log("of three cards each",
+            Array.prototype.every.call(comboRows, function (tr) {
+              return aosRowNames(tr).length === 3;
+            }));
+          /* Nothing in those tables is a control: what they say is decided by
+             the nine boxes, so a box in there would be a second, contradicting
+             way to record the same thing. */
+          log("and not one of them is a control",
+            at('[data-section="evidence"] .ev-table input, ' +
+              '[data-section="evidence"] .ev-table select').length === 0);
+
+          /* A fresh sheet records nothing, and records it nowhere. */
+          /* The sheet's own boxes only: the expert switch in the player panel
+             head is a setting rather than a record, and this fixture has it
+             on. */
+          log("a fresh sheet has nothing ticked",
+            Array.prototype.every.call(
+              at('[data-section="scenario3"] .sheet-check, ' +
+                '[data-section="evidence"] .sheet-check'),
+              function (b) { return b.checked === false; }));
+          log("and no combination struck",
+            at('[data-section="evidence"] tbody tr.is-struck').length === 0);
+
+          /* The rule itself, derived instead of written out: a name is tagged as
+             English exactly when it is the SAME string in both languages. Read
+             in German, then in English, then switched back — so this keeps
+             checking the rule however many names get translated later, instead
+             of decaying into a list somebody has to maintain. */
+          var names = function () {
+            return Array.prototype.map.call(at(AOS_NAMES), function (n) {
+              return n.textContent.trim();
+            });
+          };
+          var tagged = Array.prototype.map.call(at(AOS_NAMES), function (n) {
+            return n.getAttribute("lang") === "en";
+          });
+          /* The pool by card rather than by row — see below for why. */
+          var poolNamed = function () {
+            var out = {};
+            Array.prototype.forEach.call(at(AOS_POOL), function (o) {
+              out[o.value] = o.textContent.trim();
+            });
+            return out;
+          };
+          var poolTagged = {};
+          Array.prototype.forEach.call(at(AOS_POOL), function (o) {
+            poolTagged[o.value] = o.getAttribute("lang") === "en";
+          });
+          d.getElementById("btn-lang").click();
+          var english = names(), englishPool = poolNamed();
+          d.getElementById("btn-lang").click();
+          var german = names(), germanPool = poolNamed();
+          log("the language tag follows the name actually shown",
+            german.length === english.length && german.length > 0 &&
+            german.every(function (n, i) { return tagged[i] === (n === english[i]); }),
+            german.join() + " / " + english.join() + " / " + tagged.join());
+          /* The same rule on the minion pool, matched BY CARD rather than by
+             position: that list is sorted by the name being shown, so two
+             languages may put it in two different orders and an index would
+             compare a minion against a different one. */
+          log("and it holds in the minion pool too, matched by card",
+            Object.keys(germanPool).length > 0 &&
+            Object.keys(germanPool).every(function (slug) {
+              return poolTagged[slug] === (germanPool[slug] === englishPool[slug]);
+            }),
+            JSON.stringify(germanPool) + " / " + JSON.stringify(englishPool));
+          /* And the sheet really is a mixture rather than all-or-nothing, or
+             both assertions above would hold with the rule wired backwards.
+             Across both lists, because every PRINTED name on this sheet is
+             translated and every minion is not — the two cases live in
+             different places here, unlike MC40 where one table carries both. */
+          var everyTag = tagged.concat(Object.keys(poolTagged).map(function (slug) {
+            return poolTagged[slug];
+          }));
+          log("and the sheet holds tagged and untagged names side by side",
+            everyTag.indexOf(true) !== -1 && everyTag.indexOf(false) !== -1,
+            everyTag.join());
+
+          /* Switching twice rebuilt the sheet twice, so everything below has to
+             be looked up again. */
+          var cell = d.querySelectorAll(
+            '[data-section="secrets"] tbody tr')[1].querySelectorAll(".num-input")[2];
+          cell.value = "3";
+          fire(cell, "input");
+          fire(cell, "blur");
+          tick(d.querySelectorAll('[data-section="scenario3"] .sheet-check')[1]);
+          tick(d.querySelectorAll('[data-section="evidence"] .flag .sheet-check')[1]);
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).aos1.state;
+            /* Slugs read off the stored maps rather than written out here, so
+               the assertions survive a renamed board member or card. */
+            var members = Object.keys(st.secrets);
+            log("the counter went into its own row and its own column",
+              JSON.stringify(st.secrets[members[1]]) === JSON.stringify([null, null, 3, null]),
+              JSON.stringify(st.secrets));
+            log("and no other row was touched",
+              st.secrets[members[0]].concat(st.secrets[members[2]])
+                .every(function (v) { return v === null; }),
+              JSON.stringify(st.secrets));
+            var envKeys = Object.keys(st.adaptoids);
+            log("the environment was stored under its own slug",
+              st.adaptoids[envKeys[1]] === true &&
+              envKeys.filter(function (k) { return st.adaptoids[k]; }).length === 1,
+              JSON.stringify(st.adaptoids));
+            var cardKeys = Object.keys(st.evidence);
+            log("the evidence card was stored under its own slug",
+              st.evidence[cardKeys[1]] === true &&
+              cardKeys.filter(function (k) { return st.evidence[k]; }).length === 1,
+              JSON.stringify(st.evidence));
+            /* THE thing this sheet does differently: the 27 rows are painted
+               from the nine cards, so nothing about them may be written down. */
+            log("and the crossed-out rows were stored nowhere",
+              st.combos === undefined && st.evidenceRows === undefined,
+              Object.keys(st).join());
+            finish();
+          }, 500);
+        });
+      }
+
+      /* The signature mechanic: nine boxes, and 27 printed rows that follow from
+         them. Every expectation is derived from the row's own three names, so
+         this keeps checking the rule rather than a copy of the printed table. */
+      function caseAosEvidence() {
+        seed({ aos1: aosLog() }, "aos1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var app = d.getElementById("campaign");
+          var rows = function () {
+            return app.querySelectorAll('[data-section="evidence"] .ev-table tbody tr');
+          };
+          var boxes = function () {
+            return app.querySelectorAll('[data-section="evidence"] .flag');
+          };
+          /* Tick the card whose name is `name`, found by the words on screen. */
+          var card = function (name) {
+            var hit = null;
+            Array.prototype.forEach.call(boxes(), function (f) {
+              if (f.querySelector("span").textContent.trim() === name) hit = f;
+            });
+            return hit.querySelector(".sheet-check");
+          };
+          var setCard = function (name, on) {
+            var box = card(name);
+            box.checked = on;
+            fire(box, "change");
+          };
+          /* What the rule says the screen should look like, computed from the
+             names in each row rather than from the module. */
+          var agrees = function (gained) {
+            return Array.prototype.every.call(rows(), function (tr) {
+              var want = aosRowNames(tr).some(function (n) {
+                return gained.indexOf(n) !== -1;
+              });
+              return tr.classList.contains("is-struck") === want;
+            });
+          };
+          var struckCount = function () {
+            return app.querySelectorAll(
+              '[data-section="evidence"] tbody tr.is-struck').length;
+          };
+
+          /* The names are read off the screen so the case never spells one out:
+             the first card of each printed group. */
+          var groups = app.querySelectorAll('[data-section="evidence"] .ev-group');
+          var first = Array.prototype.map.call(groups, function (g) {
+            return g.querySelector(".flag > span").textContent.trim();
+          });
+
+          log("a fresh sheet strikes nothing", struckCount() === 0, struckCount());
+
+          var before = rows()[0];
+          setCard(first[0], true);
+          log("one card strikes exactly the rows that show it", agrees([first[0]]),
+            struckCount());
+          /* Nine of the 27, every time: each card appears in a third of the
+             combinations. Written as a number because it is a fact about the
+             game, not about this table. */
+          log("which is nine of the twenty-seven", struckCount() === 9, struckCount());
+          /* And spread over all three board members rather than piled under
+             one: a card that only ever struck one table would still count to
+             nine and would still be wrong. */
+          log("and spread over all three board members",
+            Array.prototype.every.call(
+              app.querySelectorAll('[data-section="evidence"] .ev-table'),
+              function (table) {
+                return table.querySelectorAll("tbody tr.is-struck").length > 0;
+              }));
+          /* Painted in place, not re-rendered — a re-render would replace the
+             row and take the focus out of whatever was being used. */
+          log("the tables were painted rather than rebuilt", rows()[0] === before);
+
+          setCard(first[1], true);
+          log("a second card from another group strikes the union",
+            agrees([first[0], first[1]]), struckCount());
+          log("and the union is more than either alone", struckCount() > 9,
+            struckCount());
+
+          setCard(first[0], false);
+          log("taking one back leaves only the other's rows struck",
+            agrees([first[1]]), struckCount());
+          setCard(first[1], false);
+          log("taking both back clears every strike", struckCount() === 0,
+            struckCount());
+
+          /* THE DEDUCTION, and the payoff of the campaign: one card of every
+             group is sealed in the A.I.M. envelope, so two gained means the
+             third is the mole's and can never be gained. Read the group's three
+             names off the screen; which two get ticked does not matter. */
+          var means = Array.prototype.map.call(
+            groups[0].querySelectorAll(".flag > span"),
+            function (n) { return n.textContent.trim(); });
+          var flagOf = function (name) {
+            var hit = null;
+            Array.prototype.forEach.call(boxes(), function (f) {
+              if (f.querySelector("span").textContent.trim() === name) hit = f;
+            });
+            return hit;
+          };
+          setCard(means[0], true);
+          log("one card of a group deduces nothing yet",
+            app.querySelectorAll(".flag.is-deduced").length === 0);
+          setCard(means[1], true);
+          log("two of a group name the third as the mole's",
+            flagOf(means[2]).classList.contains("is-deduced"));
+          log("and close its box, because it can never be gained",
+            card(means[2]).disabled === true);
+          log("and say why", (card(means[2]).title || "").length > 0,
+            card(means[2]).title);
+          /* Only that one: the other two groups are untouched, and the two
+             cards that WERE gained stay operable. */
+          log("nothing else on the sheet is deduced",
+            app.querySelectorAll(".flag.is-deduced").length === 1);
+          log("and the two gained cards stay operable",
+            card(means[0]).disabled === false && card(means[1]).disabled === false);
+          /* Live rather than decided at render time. */
+          setCard(means[1], false);
+          log("taking one back takes the deduction back",
+            app.querySelectorAll(".flag.is-deduced").length === 0 &&
+            card(means[2]).disabled === false);
+
+          /* The state the game cannot produce. It is not refused and not
+             resolved: with three ticked the count is not two, so nothing closes
+             and the sheet cannot freeze. Same one-sided reading as MC45's
+             contradiction. */
+          means.forEach(function (n) { setCard(n, true); });
+          log("all three of one group deduce nothing, so nothing is frozen",
+            app.querySelectorAll(".flag.is-deduced").length === 0);
+          log("and strike every combination instead",
+            struckCount() === 27, struckCount());
+          log("and every box stays operable",
+            Array.prototype.every.call(
+              app.querySelectorAll('[data-section="evidence"] .sheet-check'),
+              function (b) { return b.disabled === false; }));
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).aos1.state;
+            var gained = Object.keys(st.evidence).filter(function (k) {
+              return st.evidence[k];
+            });
+            log("only the cards were stored, and all three of them",
+              gained.length === 3, JSON.stringify(st.evidence));
+            log("and not one crossed-out row",
+              st.combos === undefined && st.rows === undefined,
+              Object.keys(st).join());
+            finish();
+          }, 500);
+        });
+      }
+
+      function caseAosExpert() {
+        var seeded = aosLog();
+        seeded.state.expert = false;
+        /* Filled in, but not visible at standard level — exactly the state that
+           would lose data if hiding were clearing. This sheet does not print
+           "(expert)" beside the field at all; the rulebook is what records it at
+           expert level only, so the gate is worth a case of its own. */
+        seeded.state.players = [{ hero: "Nick Fury", hp: 6 }];
+        seeded.state.secrets = { "chief-medical-officer": [2, null, null, null] };
+        seeded.state.evidence = { wiretap: true };
+        seed({ aos1: seeded }, "aos1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var card = function () { return d.querySelector(".player-card"); };
+          var toggle = function () {
+            return d.querySelector("[data-section=players] .panel-head .flag .sheet-check");
+          };
+          var struck = function () {
+            return d.querySelectorAll(
+              '[data-section="evidence"] tbody tr.is-struck').length;
+          };
+
+          log("the switch is in the player panel head", !!toggle());
+          log("it starts unticked", toggle().checked === false);
+          log("standard hides the hit points", !card().querySelector(".num-input"));
+          log("the identity field is not hidden with them",
+            !!card().querySelector(".text-input"));
+          /* The level governs the hit points and nothing else: every count and
+             every box on this sheet is recorded at both campaign levels. */
+          log("and nothing else on the sheet goes with them",
+            d.querySelectorAll('[data-section="secrets"] .num-input').length === 12 &&
+            d.querySelectorAll('[data-section="scenario3"] .flag').length === 4 &&
+            d.querySelectorAll('[data-section="evidence"] .flag').length === 9);
+          log("and every printed section is still there",
+            d.querySelectorAll("[data-section]").length === AOS_SECTIONS.length,
+            d.querySelectorAll("[data-section]").length);
+
+          toggle().checked = true;
+          fire(toggle(), "change");
+          log("expert reveals the hit points",
+            !!card().querySelector(".num-input"));
+          log("and the value was still there",
+            card().querySelector(".num-input").value === "6",
+            card().querySelector(".num-input").value);
+
+          toggle().checked = false;
+          fire(toggle(), "change");
+          log("switching back hides them again", !card().querySelector(".num-input"));
+          /* Two re-renders have rebuilt the whole sheet by now, so what the
+             switch does not govern has to have come back as it was — the
+             painted strikes included, since those are derived after every
+             render rather than stored. */
+          log("and the counter came back on its own row and column",
+            d.querySelectorAll(
+              '[data-section="secrets"] tbody tr')[0]
+              .querySelectorAll(".num-input")[0].value === "2");
+          log("and the crossed-out rows were painted again",
+            struck() === 9, struck());
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).aos1.state;
+            log("the sheet is back at standard", st.expert === false);
+            log("but the hidden hit points survived", st.players[0].hp === 6,
+              st.players[0].hp);
+            finish();
+          }, 500);
+        });
+      }
+
+      function caseAosPrint() {
+        var seeded = aosLog();
+        seeded.state.players = [{ hero: "Nick Fury", hp: 9 }, { hero: "Maria Hill", hp: 6 }];
+        /* A recorded zero beside a cell that was never filled in: the printout
+           has to keep them apart, because scenario #2 puts back as many
+           counters as stand here and zero of them is a legal answer. */
+        seeded.state.secrets = { "chief-tactical-officer": [0, 1, null, 4] };
+        seeded.state.minions = 5;
+        seeded.state.captives = 0;
+        /* Two marked and two not, so the printout has to show both. */
+        seeded.state.adaptoids = { "flying-upgrade": true, "psionic-upgrade": true };
+        seeded.state.thunderbolts = ["jolt"];
+        /* One card gained, so nine of the 27 rows print struck and eighteen
+           print open. */
+        seeded.state.evidence = { wiretap: true };
+        seed({ aos1: seeded }, "aos1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          w.dispatchEvent(new w.Event("beforeprint"));
+          var pv = d.getElementById("print-view");
+          var text = pv.textContent;
+          var app = d.getElementById("campaign");
+          log("print view built", pv.children.length > 0, pv.children.length);
+          log("print names the campaign", /Agents of S\.H\.I\.E\.L\.D\. \(MC50\)/.test(text));
+          log("print says which level was played",
+            /\[x\] Expertenmodus/.test(text), text.slice(0, 120));
+          /* Named, not just the bare number: textContent runs the lines
+             together, so a digit on its own proves nothing about where it sat. */
+          log("print carries the hit points",
+            /Lebenspunkte: 9/.test(text) && /Lebenspunkte: 6/.test(text));
+
+          /* The section headings are read off the screen, so a section can be
+             found in the printout without this file knowing its words. */
+          var heading = function (id) {
+            return app.querySelector('[data-section="' + id + '"] h2').textContent.trim();
+          };
+          var printed = function (id) {
+            var want = heading(id);
+            var out = null;
+            Array.prototype.forEach.call(pv.querySelectorAll(".print-section"), function (s) {
+              if (s.querySelector("h2").textContent.trim() === want) out = s;
+            });
+            return out;
+          };
+          log("every printed section has a block in the printout",
+            AOS_SECTIONS.every(function (id) { return !!printed(id); }),
+            AOS_SECTIONS.filter(function (id) { return !printed(id); }).join());
+
+          var scText = printed("secrets").textContent;
+          log("the counter row prints all four of its columns",
+            /0/.test(scText) && /1/.test(scText) && /4/.test(scText));
+          /* The empty cell and the recorded zero must not print the same. */
+          log("and an empty cell prints as a dash, not as a zero",
+            scText.indexOf("—") !== -1, scText);
+          log("a recorded zero prints as a zero",
+            printed("scenario2").textContent.indexOf("0") !== -1,
+            printed("scenario2").textContent);
+
+          var s3 = printed("scenario3").textContent;
+          log("the environments print marked and unmarked alike",
+            (s3.match(/\[x\]/g) || []).length === 2 &&
+            (s3.match(/\[ \]/g) || []).length === 2, s3);
+
+          var ev = printed("evidence");
+          var evText = ev.textContent;
+          log("the printout carries the nine cards",
+            (evText.match(/\[x\]/g) || []).length === 1 &&
+            (evText.match(/\[ \]/g) || []).length === 8, evText.slice(0, 200));
+          /* And the 27 rows as well, because the derived table IS the sheet
+             here — leaving it out would print something that is not the log. */
+          var lines = ev.querySelectorAll(".print-line");
+          log("and all 27 combinations below them",
+            Array.prototype.filter.call(lines, function (p) {
+              return p.querySelectorAll("span").length === 3;
+            }).length === 27,
+            lines.length);
+          log("nine of them struck and eighteen not",
+            ev.querySelectorAll(".print-line .struck").length === 27 &&
+            Array.prototype.filter.call(lines, function (p) {
+              return p.querySelectorAll(".struck").length === 3;
+            }).length === 9,
+            ev.querySelectorAll(".print-line .struck").length);
+          /* Never printed: the wording of anything the screen only hints at. */
+          log("the printout does not repeat the screen's hint",
+            text.indexOf(
+              app.querySelector('[data-section="evidence"] .hint').textContent) === -1);
+          finish();
+        });
+      }
+
+      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint, mg: caseMg, mgrole: caseMgRole, mgexpert: caseMgExpert, mgprint: caseMgPrint, ne: caseNe, neschemes: caseNeSchemes, neexpert: caseNeExpert, neprint: caseNePrint, aoa: caseAoa, aoamissions: caseAoaMissions, aoaexpert: caseAoaExpert, aoaprint: caseAoaPrint, gmw: caseGmw, gmwmarket: caseGmwMarket, gmwunits: caseGmwUnits, gmwexpert: caseGmwExpert, gmwprint: caseGmwPrint,
+        aos: caseAos, aosevidence: caseAosEvidence,
+        aosexpert: caseAosExpert, aosprint: caseAosPrint, sharebtn: caseShareButton };
       (cases[CASE] || caseBasic)();
     </script>
   </body>
