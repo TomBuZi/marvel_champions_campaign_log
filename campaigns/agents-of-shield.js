@@ -70,16 +70,24 @@
    are what this sheet stores, and the 27 rows are painted from them. Same move
    as MC16, which computes a printed balance instead of asking for it.
 
-   Two consequences worth writing down, because both look like oversights:
+   Three consequences worth writing down:
 
-     * NOTHING IS CAPPED AT SIX, OR AT TWO PER GROUP. Three of the nine cards go
-       into the A.I.M. envelope, one from each group, so no real campaign can
-       gain more than six, nor more than two of any one group. normalize() still
-       accepts whatever arrives — from an import, a hand-edited file or an old
-       #log= link — and picks no winner, the one-sided rule this project follows
-       everywhere. A sheet with all three cards of a group ticked strikes out all
-       27 rows, which says by itself that something is wrong without this file
-       claiming to know what.
+     * THE THIRD CARD OF A GROUP IS THE ANSWER, and the screen says so. Each
+       group holds three cards and exactly one of them is sealed in the A.I.M.
+       envelope, so once the other two have been gained the third is the mole's
+       and can never be gained. Its box is closed, because there is nothing left
+       to record there, and its name is called out in red: that name is what the
+       whole campaign is played to find out, and it is a derivation rather than
+       a guess — the rulebook's own process of elimination, one group at a time.
+       The tables already said the same thing by leaving only rows with that
+       card standing; this puts it where it can be read at a glance.
+     * THE CLOSING IS ONE-SIDED, AND normalize() STILL CAPS NOTHING. Only an
+       UNTICKED box is ever closed, so a sheet that arrives with all three cards
+       of a group ticked — from an import, a hand-edited file or an old #log=
+       link — does not freeze: with three ticked the count is not two, nothing
+       closes, and the way out stays on screen. normalize() keeps such a sheet
+       exactly as it came and picks no winner, the rule this project follows
+       everywhere; the tables say the rest by striking all 27 rows.
      * THE PRINTOUT CARRIES BOTH. renderPrint() prints the nine boxes AND all 27
        rows with their strikes. MC16 deliberately leaves its derived lines out of
        the printout; here the derived table IS the sheet, so leaving it out would
@@ -109,16 +117,17 @@
    the complete German log on its page 24, and every printed string below is read
    off that page. Nothing in the printed wording is a translation of ours.
 
-   GERMAN IS OPEN WORK FOR THE CARD NAMES, and that is a different thing that
-   must not be confused with it. The sheet prints no card names at all — the
-   names below identify symbols the paper leaves wordless, and the pool of
-   surviving Thunderbolts is a list of minions the paper leaves blank. Of those
-   sixteen names exactly ONE has a German printing to point at: Wiretap is
-   "Abhördaten" on the card shown on page 5 of the German rulebook. The other
-   fifteen carry `de: null` meaning NOT ENTERED YET — the MC27 reading, not the
-   MC10/MC21 "stays English in the German printing" decision — because
-   translations/de/pack/aos_encounter.json holds ten player cards and no
-   encounter cards, and the German rulebook has no card list.
+   THE CARD NAMES ARE A SEPARATE QUESTION FROM THE PRINTED WORDING, and the two
+   must not be run together. The sheet prints no card names at all: the nine
+   evidence symbols stand there wordless and the Thunderbolt field is a blank
+   write-in area, so those names had to be fetched rather than read off the
+   paper. The nine evidence cards are all entered in German. The eleven
+   Thunderbolt minions are not: they carry `de: null` meaning NOT ENTERED YET —
+   the MC27 reading, not the MC10/MC21 "stays English in the German printing"
+   decision — because translations/de/pack/aos_encounter.json holds ten player
+   cards and no encounter cards, and the German rulebook has no card list. If
+   they turn out to keep their English names in the German printing, as figures
+   normally do, this comment is what has to change with them.
 
    emptyState() and normalize() must not touch the DOM — not at load time and
    not when called. CI exercises them headlessly to prove that normalize() is
@@ -176,15 +185,15 @@
      grouping; `icon` names the drawing, and the drawing is keyed by slug, so
      the two can never point at different symbols. */
   var EVIDENCE = [
-    { slug: "medical-records",    group: "means",       en: "Medical Records",    de: null },
+    { slug: "medical-records",    group: "means",       en: "Medical Records",    de: "Medizinische Unterlagen" },
     { slug: "wiretap",            group: "means",       en: "Wiretap",            de: "Abhördaten" },
-    { slug: "security-scanner",   group: "means",       en: "Security Scanner",   de: null },
-    { slug: "money",              group: "motive",      en: "Money",              de: null },
-    { slug: "blackmail",          group: "motive",      en: "Blackmail",          de: null },
-    { slug: "ideology",           group: "motive",      en: "Ideology",           de: null },
-    { slug: "security-clearance", group: "opportunity", en: "Security Clearance", de: null },
-    { slug: "travel",             group: "opportunity", en: "Travel",             de: null },
-    { slug: "authority",          group: "opportunity", en: "Authority",          de: null },
+    { slug: "security-scanner",   group: "means",       en: "Security Scanner",   de: "Sicherheitsscanner" },
+    { slug: "money",              group: "motive",      en: "Money",              de: "Geld" },
+    { slug: "blackmail",          group: "motive",      en: "Blackmail",          de: "Erpressung" },
+    { slug: "ideology",           group: "motive",      en: "Ideology",           de: "Ideologie" },
+    { slug: "security-clearance", group: "opportunity", en: "Security Clearance", de: "Sicherheitsfreigabe" },
+    { slug: "travel",             group: "opportunity", en: "Travel",             de: "Dienstreise" },
+    { slug: "authority",          group: "opportunity", en: "Authority",          de: "Machtbefugnis" },
   ];
 
   /* The columns, in printed order. The key is both the group in EVIDENCE and
@@ -251,26 +260,35 @@
 
   /* The Thunderbolt minions that can be left standing when scenario #4 ends.
      Jolt is in the villain's own encounter set and is therefore always in the
-     game; the other six are the Elite Thunderbolts of the six modular sets the
-     scenario lets you choose from (EN p. 15: "Gravitational Pull, Hard Sound,
-     Pale Little Spider, Power of the Atom, Supersonic, and The Leaper"). At most
-     three of them can survive one game, since only two of those six sets are in
-     play — but nothing is capped here, because the scenario customisation rules
-     let the sets move around.
+     game; the rest are the Elite Thunderbolts of the modular sets the scenario
+     lets you choose from — the six the rulebook names for the base box (EN
+     p. 15: "Gravitational Pull, Hard Sound, Pale Little Spider, Power of the
+     Atom, Supersonic, and The Leaper") plus the four that have shipped in
+     products since. Nothing is capped: the scenario customisation rules let the
+     sets move around, and the victory instruction records every Thunderbolt
+     minion in play rather than only the Elite ones.
 
-     THIS POOL IS KNOWINGLY INCOMPLETE. Thunderbolt minions have shipped in
-     products since, and this is the base box alone. `group` carries the product
-     they come from and is a proper name in both languages, so a later product
-     is one more <optgroup> and a row per name — no reshaping. */
-  var THUNDERBOLT_SET = "Agents of S.H.I.E.L.D.";
+     BY NAME, NOT BY CARD, and that is deliberate rather than sloppy: the sheet
+     says "record each of their names", and two different cards are printed
+     "Atlas". One entry covers both, which is exactly what a written-down name
+     does on the paper.
+
+     The order here is the order they were entered — base box first, then the
+     later products. What the dropdown shows is sorted, and sorted at render
+     rather than here, because the sort has to follow the DISPLAYED name and
+     that changes with the language. */
   var THUNDERBOLTS = [
-    { slug: "jolt",            group: THUNDERBOLT_SET, en: "Jolt",            de: null },
-    { slug: "moonstone",       group: THUNDERBOLT_SET, en: "Moonstone",       de: null },
-    { slug: "songbird",        group: THUNDERBOLT_SET, en: "Songbird",        de: null },
-    { slug: "black-widow",     group: THUNDERBOLT_SET, en: "Black Widow",     de: null },
-    { slug: "radioactive-man", group: THUNDERBOLT_SET, en: "Radioactive Man", de: null },
-    { slug: "mach-iv",         group: THUNDERBOLT_SET, en: "MACH-IV",         de: null },
-    { slug: "batroc",          group: THUNDERBOLT_SET, en: "Batroc",          de: null },
+    { slug: "jolt",            en: "Jolt",            de: null },
+    { slug: "moonstone",       en: "Moonstone",       de: null },
+    { slug: "songbird",        en: "Songbird",        de: null },
+    { slug: "black-widow",     en: "Black Widow",     de: null },
+    { slug: "radioactive-man", en: "Radioactive Man", de: null },
+    { slug: "mach-iv",         en: "MACH-IV",         de: null },
+    { slug: "batroc",          en: "Batroc",          de: null },
+    { slug: "joystick",        en: "Joystick",        de: null },
+    { slug: "atlas",           en: "Atlas",           de: null },
+    { slug: "fixer",           en: "Fixer",           de: null },
+    { slug: "blizzard",        en: "Blizzard",        de: null },
   ];
 
   /* The nine drawings, keyed by the same slug as the card. Plain line art of
@@ -610,7 +628,7 @@
        rows in all three combination tables, and the uniqueness rule spans every
        select of the Thunderbolt list, so neither can be decided while one cell
        is being built. Derived, never stored. */
-    paintCombos(state);
+    paintEvidence(t, state);
     paintThunderbolts();
   }
 
@@ -882,14 +900,16 @@
   function renderThunderbolts(t, lang, state, ctx) {
     var section = panel("scenario4", t("secScenario", "4"));
 
+    /* Sorted by the name actually shown, so the list stays alphabetical in
+       whichever language it is read in — and sorted on a COPY, because
+       THUNDERBOLTS is the printed-order table everything else reads. */
     var options = THUNDERBOLTS.map(function (entry) {
       return {
         value: entry.slug,
         label: entryName(entry, lang),
         lang: entryLang(entry, lang),
-        group: entry.group,
       };
-    });
+    }).sort(function (a, b) { return a.label.localeCompare(b.label, lang); });
 
     section.appendChild(W.poolList({
       listId: "aos-thunderbolts",
@@ -946,7 +966,7 @@
       EVIDENCE.forEach(function (entry) {
         if (entry.group !== group.key) return;
         var label = entryName(entry, lang);
-        row.appendChild(flagBox(label, {
+        var flag = flagBox(label, {
           lang: entryLang(entry, lang),
           lead: evidenceIcon(entry.slug, label),
           checked: state.evidence[entry.slug],
@@ -955,11 +975,19 @@
             state.evidence[entry.slug] = next;
             ctx.save();
             /* In place: no control appears or disappears, only which rows are
-               crossed out — and they sit in three different tables. The
+               crossed out, which box is closed and which name turns red — and
+               those sit in three different tables and in two other groups. The
                MC27/MC32/MC40/MC45 rule. */
-            paintCombos(state);
+            paintEvidence(t, state);
           },
-        }));
+        });
+        /* How paintEvidence() finds the box and its wording again. Written out
+           rather than computed: setAttribute() lowercases an attribute name on
+           an HTML element, so a computed camelCase one would land silently
+           mangled. */
+        flag.setAttribute("data-evidence", entry.slug);
+        flag.querySelector(".sheet-check").setAttribute("data-evidence-box", entry.slug);
+        row.appendChild(flag);
       });
       line.appendChild(row);
       gained.appendChild(line);
@@ -1004,7 +1032,7 @@
 
     var tbody = W.el("tbody");
     COMBOS[member.slug].forEach(function (combo, at) {
-      /* How paintCombos() finds this row again, and the only place the row's
+      /* How paintEvidence() finds this row again, and the only place the row's
          identity is written down. */
       var tr = W.el("tr", null, { "data-combo": member.slug + "-" + at });
       combo.forEach(function (slug, col) {
@@ -1032,11 +1060,45 @@
     return wrap;
   }
 
-  /* The whole of what the boxes do, in one pass over all three tables: a row is
-     crossed out as soon as one of its three cards has been gained. Derived
-     every time and stored nowhere, so an import, an old #log= link and a click
-     all end up in the same place. */
-  function paintCombos(state) {
+  /* The whole of what the nine boxes do, derived every time and stored nowhere,
+     so an import, an old #log= link and a click all end up in the same place.
+
+     TWO THINGS, and the second one is the campaign's payoff. First, a printed
+     combination is crossed out as soon as one of its three cards has been
+     gained — the rule quoted in the file header. Second, the deduction: three
+     cards make up each group and exactly ONE of them is sealed in the A.I.M.
+     envelope, so once the other two have been gained the third is the mole's,
+     and it can never be gained. Its box is closed, because there is nothing
+     left to record there, and its name is called out: that name IS the answer
+     the whole campaign is played for.
+
+     THE CLOSING IS ONE-SIDED, the MC60/MC32/MC40/MC45 rule. Only an UNTICKED
+     box is ever closed. A sheet that arrives with all three cards of a group
+     ticked — from an import, a hand-edited file or an old link — is impossible
+     in play, and normalize() keeps it rather than picking which tick to throw
+     away; with three ticked the count is not two, so nothing closes and the way
+     out stays on screen. The tables say the rest by striking every row. */
+  function paintEvidence(t, state) {
+    GROUPS.forEach(function (group) {
+      var cards = EVIDENCE.filter(function (entry) {
+        return entry.group === group.key;
+      });
+      var gained = cards.filter(function (entry) {
+        return state.evidence[entry.slug];
+      }).length;
+
+      cards.forEach(function (entry) {
+        var deduced = gained === 2 && !state.evidence[entry.slug];
+        var flag = document.querySelector('[data-evidence="' + entry.slug + '"]');
+        if (flag) flag.classList.toggle("is-deduced", deduced);
+        var box = document.querySelector('[data-evidence-box="' + entry.slug + '"]');
+        if (!box) return;
+        box.disabled = deduced;
+        box.title = deduced ? t("evidenceDeduced")
+          : (box.getAttribute("aria-label") || "");
+      });
+    });
+
     BOARD.forEach(function (member) {
       COMBOS[member.slug].forEach(function (combo, at) {
         var tr = document.querySelector('[data-combo="' + member.slug + "-" + at + '"]');
@@ -1191,8 +1253,8 @@
     render: render,
     renderPrint: renderPrint,
 
-    helpDe: "Der MC50-Bogen ist der vollste von allen: vier Spielerfelder, eine kleine Zählertabelle, vier Szenariokästen und darunter ein Block aus 81 gedruckten Zellen, der fast die halbe Seite einnimmt. Oben stehen Identität und verbleibende Lebenspunkte. Darunter, unter dem gelben Abzeichen „Notizen“, die Tabelle „Verbleibende Geheimnismarker nach Szenario“: drei Direktoriumsmitglieder mal vier Szenarien, also zwölf Zahlen. Der Spielaufbau jedes Szenarios legt genau so viele Geheimnismarker wieder aus, wie hier für das vorige stehen — deshalb ist ein leeres Feld etwas anderes als eine eingetragene Null, und der Druck zeigt es als Strich. Szenario 1 hält die Zahl der Schergen und Nebenpläne im Spiel fest, die Szenario 2 als Alarmstufe wieder einliest; Szenario 2 die Zahl der befreiten Gefangenen, die Szenario 3 in Schlossmarker umrechnet. Szenario 3 hat vier benannte Kästchen für die Adaptoid-Umgebungen: das Häkchen heißt nicht „besiegt“, sondern „war am Ende noch im Spiel“, und genau die legt Szenario 5 wieder aus. Szenario 4 sammelt die überlebenden Thunderbolts als Auswahlliste; kein Scherge kann zweimal überleben, deshalb schließt ein gewählter Name sich für die anderen Zeilen. Diese Liste ist bewusst unvollständig: sie enthält die sieben Schergen des Grundprodukts, und später erschienene kommen als eigene Gruppe dazu. Der große Block sind die Beweiskombinationen. Auf dem Papier stehen dort 27 Zeilen zum Durchstreichen, neun je Direktoriumsmitglied, und zusammen sind sie alle 27 Kombinationen aus drei Mitteln, drei Motiven und drei Gelegenheiten. Das Regelheft sagt, wie gestrichen wird: „Zieht jede Kombination aus Mittel, Motiv und Gelegenheit im Kampagnenlogbuch durch, die das Symbol auf der neuen Beweiskarte zeigen.“ Damit hängt jede Durchstreichung allein daran, welche Beweiskarten ihr erhalten habt — und genau die neun Karten sind es, die hier angehakt werden. Die Tabelle darunter wird daraus gerechnet und nichts an ihr wird einzeln eingetragen. Es wird auch nichts gesperrt: drei der neun Karten liegen im A.I.M.-Umschlag, je eine pro Gruppe, mehr als sechs kann es also nie geben und mehr als zwei je Gruppe auch nicht — aber ein Bogen aus einem Import oder einem alten Link darf nicht eingefroren werden, und welcher Haken der falsche wäre, weiß dieser Bogen nicht. Sind alle drei Karten einer Gruppe angehakt, streicht sich die ganze Tabelle durch; das sagt von allein, dass etwas nicht stimmt. Die neun Symbole sind hier gezeichnet, nicht die Kunst des Herausgebers, und jedes trägt seinen Kartennamen — in der Legende sichtbar und für Screenreader als Beschriftung. Acht dieser neun Namen stehen noch englisch da: der gedruckte Bogen nennt keine Kartennamen, und nur „Abhördaten“ ist im deutschen Regelheft belegt. Oben im Spielerbereich steht der Haken „Expertenmodus“. Wie bei MC40 und MC45 kennzeichnet der gedruckte Bogen die verbleibenden Lebenspunkte nicht als Expertenfeld, das Regelheft aber schon: unter „Bleibender Schaden“ und in jeder Siegliste als „Nur Experten-Kampagne“. Auf Standardstufe blendet der Bogen das Feld aus. Ausblenden heißt nicht löschen — der Wert bleibt im Bogen, im Export und im Share-Link. Und was der Bogen nicht hat, hat er bewusst nicht: keine Szenario-Tabelle, kein „Abgeschlossen“, keinen Fortschritt und kein Notizfeld. Das gelbe „Notizen“ ist der Titel der Zählertabelle, kein Feld. Zu Szenario 5 steht auf dem Papier nichts, weil dessen Spielaufbau die Zahlen von Szenario 4 liest.",
-    helpEn: "The MC50 sheet is the fullest of them all: four player panels, one small counter table, four scenario boxes, and below them a block of 81 printed cells that takes up nearly half the page. At the top sit the identity and the remaining hit points. Below that, under the yellow “Notes” badge, is the table “Remaining Secret Counters by Scenario”: three board members by four scenarios, twelve numbers. Every scenario's setup puts back exactly as many secret counters as are recorded here for the previous one — which is why an empty cell is a different thing from a recorded zero, and the printout shows it as a dash. Scenario #1 records the minions and side schemes in play, which scenario #2 reads back as its Alert Level; scenario #2 records the rescued captives, which scenario #3 turns into lock counters. Scenario #3 has four named boxes for the Adaptoid environments, and a tick there does not mean “defeated” but “still in play at the end” — those are the ones scenario #5 puts back into play. Scenario #4 collects the surviving Thunderbolts as a pick list; no minion survives twice, so a name already chosen is closed to the other rows. That list is knowingly incomplete: it holds the seven minions of the base box, and minions from later products join it as a group of their own. The big block is the evidence combinations. On paper there are 27 rows to cross out, nine under each board member, and between them they are all 27 combinations of three means, three motives and three opportunities. The rulebook says how the crossing out works: “cross out each combination of means, motive, and opportunity in the campaign log that includes the icon on the evidence card gained.” Every strike therefore follows from which evidence cards you have gained and from nothing else — and those nine cards are what is ticked here. The table below them is computed from that; nothing in it is entered row by row. Nothing is locked, either: three of the nine cards are in the A.I.M. envelope, one from each group, so no campaign can gain more than six or more than two of a group — but a sheet arriving from an import or an old share link must not be frozen, and this sheet does not know which tick would be the wrong one. Tick all three cards of one group and the whole table crosses itself out, which says by itself that something is off. The nine symbols are drawn here rather than taken from the publisher's artwork, and each carries its card's name — visible in the legend and as the accessible name for a screen reader. Eight of those nine names are still shown in English: the printed sheet names no cards at all, and only “Wiretap” has a German printing to point at. At the top of the player area sits the “Expert level” box. As with MC40 and MC45, the printed sheet does not mark the remaining hit points as an expert field, while the rulebook does: under PERSISTENT DAMAGE, and in every victory list as “Expert Campaign Only”. At standard level the sheet hides the field. Hiding is not clearing — the value stays in the sheet, in the export and in a share link. And what the sheet does not have, it deliberately does not have: no scenario table, no “completed”, no progress counter and no notes field. The yellow “Notes” is the title of the counter table, not a field. Scenario #5 appears nowhere on the paper, because its setup reads scenario #4's numbers.",
+    helpDe: "Der MC50-Bogen ist der vollste von allen: vier Spielerfelder, eine kleine Zählertabelle, vier Szenariokästen und darunter ein Block aus 81 gedruckten Zellen, der fast die halbe Seite einnimmt. Oben stehen Identität und verbleibende Lebenspunkte. Darunter, unter dem gelben Abzeichen „Notizen“, die Tabelle „Verbleibende Geheimnismarker nach Szenario“: drei Direktoriumsmitglieder mal vier Szenarien, also zwölf Zahlen. Der Spielaufbau jedes Szenarios legt genau so viele Geheimnismarker wieder aus, wie hier für das vorige stehen — deshalb ist ein leeres Feld etwas anderes als eine eingetragene Null, und der Druck zeigt es als Strich. Szenario 1 hält die Zahl der Schergen und Nebenpläne im Spiel fest, die Szenario 2 als Alarmstufe wieder einliest; Szenario 2 die Zahl der befreiten Gefangenen, die Szenario 3 in Schlossmarker umrechnet. Szenario 3 hat vier benannte Kästchen für die Adaptoid-Umgebungen: das Häkchen heißt nicht „besiegt“, sondern „war am Ende noch im Spiel“, und genau die legt Szenario 5 wieder aus. Szenario 4 sammelt die überlebenden Thunderbolts als alphabetische Auswahlliste; kein Scherge kann zweimal überleben, deshalb schließt ein gewählter Name sich für die anderen Zeilen. Die Liste führt Namen, keine Karten — „Atlas“ ist auf zwei verschiedenen Karten gedruckt, und der Bogen verlangt den Namen. Der große Block sind die Beweiskombinationen. Auf dem Papier stehen dort 27 Zeilen zum Durchstreichen, neun je Direktoriumsmitglied, und zusammen sind sie alle 27 Kombinationen aus drei Mitteln, drei Motiven und drei Gelegenheiten. Das Regelheft sagt, wie gestrichen wird: „Zieht jede Kombination aus Mittel, Motiv und Gelegenheit im Kampagnenlogbuch durch, die das Symbol auf der neuen Beweiskarte zeigen.“ Damit hängt jede Durchstreichung allein daran, welche Beweiskarten ihr erhalten habt — und genau die neun Karten sind es, die hier angehakt werden. Die Tabelle darunter wird daraus gerechnet und nichts an ihr wird einzeln eingetragen. Und daraus fällt die Pointe der Kampagne: je Gruppe liegt genau eine der drei Karten im A.I.M.-Umschlag, sind also zwei erhalten, ist die dritte die des Maulwurfs. Ihr Kästchen wird zugemacht — es gibt dort nichts mehr einzutragen — und ihr Name steht rot da. Das Zumachen ist einseitig: geschlossen wird nur ein Kästchen ohne Häkchen. Kommt ein Bogen aus einem Import oder einem alten Link mit allen drei Karten einer Gruppe an, was im Spiel nicht vorkommen kann, friert er deshalb nicht ein — es sind dann nicht zwei, also schließt nichts, und die ganze Tabelle streicht sich durch, was von allein sagt, dass etwas nicht stimmt. Die neun Symbole sind hier gezeichnet, nicht die Kunst des Herausgebers, und jedes trägt seinen Kartennamen — in der Legende sichtbar und für Screenreader als Beschriftung. Die neun Kartennamen sind eingetragen; der gedruckte Bogen nennt keine, sie stammen also nicht vom Papier. Englisch bleiben vorerst die Namen der Thunderbolt-Schergen. Oben im Spielerbereich steht der Haken „Expertenmodus“. Wie bei MC40 und MC45 kennzeichnet der gedruckte Bogen die verbleibenden Lebenspunkte nicht als Expertenfeld, das Regelheft aber schon: unter „Bleibender Schaden“ und in jeder Siegliste als „Nur Experten-Kampagne“. Auf Standardstufe blendet der Bogen das Feld aus. Ausblenden heißt nicht löschen — der Wert bleibt im Bogen, im Export und im Share-Link. Und was der Bogen nicht hat, hat er bewusst nicht: keine Szenario-Tabelle, kein „Abgeschlossen“, keinen Fortschritt und kein Notizfeld. Das gelbe „Notizen“ ist der Titel der Zählertabelle, kein Feld. Zu Szenario 5 steht auf dem Papier nichts, weil dessen Spielaufbau die Zahlen von Szenario 4 liest.",
+    helpEn: "The MC50 sheet is the fullest of them all: four player panels, one small counter table, four scenario boxes, and below them a block of 81 printed cells that takes up nearly half the page. At the top sit the identity and the remaining hit points. Below that, under the yellow “Notes” badge, is the table “Remaining Secret Counters by Scenario”: three board members by four scenarios, twelve numbers. Every scenario's setup puts back exactly as many secret counters as are recorded here for the previous one — which is why an empty cell is a different thing from a recorded zero, and the printout shows it as a dash. Scenario #1 records the minions and side schemes in play, which scenario #2 reads back as its Alert Level; scenario #2 records the rescued captives, which scenario #3 turns into lock counters. Scenario #3 has four named boxes for the Adaptoid environments, and a tick there does not mean “defeated” but “still in play at the end” — those are the ones scenario #5 puts back into play. Scenario #4 collects the surviving Thunderbolts as an alphabetical pick list; no minion survives twice, so a name already chosen is closed to the other rows. The list holds names rather than cards — two different cards are printed “Atlas”, and the sheet asks for the name. The big block is the evidence combinations. On paper there are 27 rows to cross out, nine under each board member, and between them they are all 27 combinations of three means, three motives and three opportunities. The rulebook says how the crossing out works: “cross out each combination of means, motive, and opportunity in the campaign log that includes the icon on the evidence card gained.” Every strike therefore follows from which evidence cards you have gained and from nothing else — and those nine cards are what is ticked here. The table below them is computed from that; nothing in it is entered row by row. And out of it falls the campaign's payoff: each group has exactly one of its three cards sealed in the A.I.M. envelope, so once two have been gained the third is the mole's. Its box is closed — there is nothing left to record there — and its name is called out in red. The closing is one-sided: only a box without a tick is ever closed. A sheet arriving from an import or an old share link with all three cards of a group ticked, which cannot happen in play, therefore does not freeze — three is not two, so nothing closes, and the whole table crosses itself out, which says by itself that something is off. The nine symbols are drawn here rather than taken from the publisher's artwork, and each carries its card's name — visible in the legend and as the accessible name for a screen reader. The nine card names are entered in German; the printed sheet names no cards at all, so they did not come off the paper. The Thunderbolt minions keep their English names for now. At the top of the player area sits the “Expert level” box. As with MC40 and MC45, the printed sheet does not mark the remaining hit points as an expert field, while the rulebook does: under PERSISTENT DAMAGE, and in every victory list as “Expert Campaign Only”. At standard level the sheet hides the field. Hiding is not clearing — the value stays in the sheet, in the export and in a share link. And what the sheet does not have, it deliberately does not have: no scenario table, no “completed”, no progress counter and no notes field. The yellow “Notes” is the title of the counter table, not a field. Scenario #5 appears nowhere on the paper, because its setup reads scenario #4's numbers.",
 
     /* Zwei Gruppen, und die Unterscheidung sagt, wer eine Änderung entscheidet:
 
@@ -1244,7 +1306,8 @@
         duplicateHero: "Dieser Held ist schon einem anderen Spieler zugeordnet.",
 
         lblGained: "Erhaltene Beweiskarten",
-        evidenceHint: "Ein Häkchen streicht jede Kombination durch, die dieses Symbol zeigt. Die Tabellen darunter werden daraus gerechnet und nicht einzeln eingetragen.",
+        evidenceHint: "Ein Häkchen streicht jede Kombination durch, die dieses Symbol zeigt. Die Tabellen darunter werden daraus gerechnet und nicht einzeln eingetragen. Sind zwei Karten einer Gruppe erhalten, liegt die dritte im A.I.M.-Umschlag: sie ist nicht mehr anhakbar und steht rot da — das ist der Beweis des Maulwurfs.",
+        evidenceDeduced: "Diese Karte liegt im A.I.M.-Umschlag und kann nicht mehr erhalten werden: die beiden anderen dieser Gruppe sind gefunden. Sie gehört zum Maulwurf.",
         adaptoidHint: "Ein Häkchen heißt „war am Ende des Szenarios noch im Spiel“ — genau diese Umgebungen legt Szenario 5 wieder aus.",
         thunderboltPlaceholder: "Scherge …",
         addThunderbolt: "+ Scherge",
@@ -1283,7 +1346,8 @@
         duplicateHero: "This hero is already assigned to another player.",
 
         lblGained: "Evidence cards gained",
-        evidenceHint: "A tick crosses out every combination showing that icon. The tables below follow from it and are not filled in row by row.",
+        evidenceHint: "A tick crosses out every combination showing that icon. The tables below follow from it and are not filled in row by row. Once two cards of a group have been gained, the third is the one in the A.I.M. envelope: it stops being tickable and is called out in red — that is the mole's evidence.",
+        evidenceDeduced: "This card is in the A.I.M. envelope and can never be gained: the other two of its group have been found. It is the mole's.",
         adaptoidHint: "A tick means “still in play when the scenario ended” — those are the environments scenario #5 puts back into play.",
         thunderboltPlaceholder: "Minion …",
         addThunderbolt: "+ Minion",

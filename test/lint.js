@@ -1417,6 +1417,24 @@ for (const def of campaigns) {
         ["batroc", "jolt"]));
     check(p + "an empty row on its way to being filled is not a survivor",
       eq(def.normalize({ thunderbolts: ["", null, "jolt"] }).thunderbolts, ["jolt"]));
+    /* The pool is a list of NAMES rather than of cards -- two different cards
+       are printed "Atlas" and one entry covers both -- so a repeated name would
+       be a silent duplicate in the dropdown rather than an error anywhere.
+       Read off the source, because the pool never reaches the state. */
+    const aosPool = read("campaigns/agents-of-shield.js");
+    const aosMinions = aosPool.slice(aosPool.indexOf("var THUNDERBOLTS = ["))
+      .split("];")[0].match(/slug: "([a-z0-9-]+)"/g).map((m) => m.slice(7, -1));
+    const aosMinionNames = aosPool.slice(aosPool.indexOf("var THUNDERBOLTS = ["))
+      .split("];")[0].match(/en: "([^"]+)"/g).map((m) => m.slice(5, -1));
+    check(p + "every minion in the pool has its own slug",
+      new Set(aosMinions).size === aosMinions.length, aosMinions.join());
+    check(p + "and its own name, since the sheet records names",
+      new Set(aosMinionNames).size === aosMinionNames.length, aosMinionNames.join());
+    check(p + "and the pool the module offers is the pool normalize() accepts",
+      aosMinions.every((slug) =>
+        def.normalize({ thunderbolts: [slug] }).thunderbolts.length === 1),
+      aosMinions.filter((slug) =>
+        def.normalize({ thunderbolts: [slug] }).thunderbolts.length !== 1).join());
 
     /* The nine evidence cards — the field this sheet actually keeps. */
     const AOS_EVIDENCE = ["medical-records", "wiretap", "security-scanner",

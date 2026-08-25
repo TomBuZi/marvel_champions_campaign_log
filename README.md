@@ -116,7 +116,9 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     Schlossmarker von Szenario 3), die vier **Adaptoid-Umgebungen** als benannte
     Kästchen (Szenario 3 — das Häkchen heißt „war am Ende noch im Spiel“, und
     genau die legt Szenario 5 wieder aus) und die **Überlebenden Thunderbolts**
-    als wachsende Auswahlliste, in der kein Scherge zweimal vorkommen kann.
+    als wachsende, alphabetisch sortierte Auswahlliste, in der kein Scherge
+    zweimal vorkommen kann. Sie führt Namen, keine Karten: „Atlas“ steht auf
+    zwei verschiedenen Karten, und der Bogen verlangt den Namen.
     Zuletzt die **Beweiskombinationen**: 27 gedruckte Zeilen, neun je
     Direktoriumsmitglied, und zusammen alle 27 Kombinationen aus drei Mitteln,
     drei Motiven und drei Gelegenheiten. Das Regelheft sagt, wie gestrichen
@@ -124,11 +126,15 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     Beweiskarte zeigt“ —, also hängt jede Durchstreichung allein an den
     erhaltenen Beweiskarten. Eingetragen werden deshalb die neun Karten, und die
     Tabelle darunter wird daraus gerechnet: ein gedrucktes Feld, das nicht
-    abgefragt, sondern hergeleitet wird, wie MC16s übrige Units. Gesperrt wird
-    dabei nichts, obwohl das Spiel nie mehr als zwei Karten je Gruppe hergibt —
-    ein Bogen aus einem Import oder einem alten Link darf nicht einfrieren, und
-    sind alle drei Karten einer Gruppe angehakt, streicht sich die Tabelle
-    vollständig durch und sagt das von selbst. Die neun Symbole des Bogens sind
+    abgefragt, sondern hergeleitet wird, wie MC16s übrige Units. Und daraus
+    fällt die Pointe der Kampagne: je Gruppe liegt genau eine der drei Karten im
+    A.I.M.-Umschlag, sind also zwei erhalten, ist die dritte die des Maulwurfs.
+    Ihr Kästchen wird zugemacht — es gibt dort nichts mehr einzutragen — und ihr
+    Name steht rot da. Das Zumachen ist einseitig: geschlossen wird nur ein
+    Kästchen **ohne** Häkchen, ein Bogen aus einem Import oder einem alten Link
+    mit allen drei Karten einer Gruppe friert also nicht ein; die Tabelle
+    streicht sich dann vollständig durch und sagt das von selbst. Die neun
+    Symbole des Bogens sind
     hier gezeichnet, nicht die Kunst des Herausgebers, und jedes trägt seinen
     Kartennamen als Namen für Screenreader und in der Legende darüber.
 * **Standard- oder Expertenstufe** — der Haken „Expertenmodus“ oben im
@@ -651,7 +657,7 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (849 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (860 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   langpath | print | import | lock |
                                     #   lockconflict | random | randomspread |
@@ -839,20 +845,23 @@ im Footer der Seite. Der Ko-fi-Link öffnet in einem neuen Tab und trägt
   Auszeichnung sagt, ob der deutsche Druck eine eigene Zeichenkette gesetzt hat;
   mehr kann die Tabelle nicht wissen, und ein zweiter Mechanismus für eine
   einzige Karte wäre der schlechtere Tausch.
-* **Bei MC50 sind beide Fälle im selben Modul, und sie trennt nicht die Sprache,
-  sondern das Papier.** Auch hier druckt das deutsche Regelheft auf Seite 24 den
-  vollständigen deutschen Bogen, also ist am **gedruckten Wortlaut** nichts
-  offen — Abschnittsnamen, Zeilen- und Spaltentitel, die vier Szenariozeilen,
-  die drei Direktoriumsmitglieder und die vier Adaptoid-Umgebungen stehen
-  wörtlich so da. Offen sind die **Kartennamen**, und zwar weil der Bogen sie gar
-  nicht druckt: die neun Beweissymbole stehen dort wortlos, und die überlebenden
-  Thunderbolts sind eine leere Schreibfläche. Diese sechzehn Namen musste das
-  Modul selbst besorgen, und genau einer von ihnen hat einen belegten deutschen:
-  **Wiretap** heißt „Abhördaten“ auf dem Kartenbild auf Seite 5 des deutschen
-  Regelhefts. Die anderen fünfzehn tragen `de: null` im MC27-Sinn — noch nicht
-  eingetragen, nicht „bleibt englisch“ —, denn
+* **Bei MC50 trennt nicht die Sprache die beiden Fälle, sondern das Papier.**
+  Auch hier druckt das deutsche Regelheft auf Seite 24 den vollständigen
+  deutschen Bogen, also ist am **gedruckten Wortlaut** nichts offen —
+  Abschnittsnamen, Zeilen- und Spaltentitel, die vier Szenariozeilen, die drei
+  Direktoriumsmitglieder und die vier Adaptoid-Umgebungen stehen wörtlich so da.
+  Die **Kartennamen** dagegen druckt der Bogen gar nicht: die neun Beweissymbole
+  stehen dort wortlos, und die überlebenden Thunderbolts sind eine leere
+  Schreibfläche. Diese Namen musste das Modul selbst besorgen. Die neun
+  Beweiskarten sind eingetragen; die elf Thunderbolt-Schergen tragen `de: null`
+  im MC27-Sinn — noch nicht eingetragen, nicht „bleibt englisch“ —, denn
   `translations/de/pack/aos_encounter.json` führt nur zehn Spielerkarten und das
-  Regelheft hat keine Kartenliste.
+  Regelheft hat keine Kartenliste. Weil auf diesem Bogen damit **jeder gedruckte
+  Name übersetzt und jeder Schergenname englisch** ist, prüft der Selbsttest die
+  Sprachauszeichnung hier an zwei Stellen statt an einer — und im Schergen-Pool
+  nach Karte statt nach Position, weil der alphabetisch nach der *angezeigten*
+  Sprache sortiert und die beiden Sprachen ihn deshalb verschieden ordnen
+  können.
 * **Die deutschen Szenarionamen sind vorläufig.** Von MC60 gibt es noch keine
   offizielle deutsche Ausgabe; sie stehen als eine Zeile je Szenario in
   `campaigns/fear-no-evil.js` und sind dort zu korrigieren, sobald es eine gibt.

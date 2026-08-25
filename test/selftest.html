@@ -5087,12 +5087,14 @@
         "scenario3", "scenario4", "evidence"];
       /* The row headers of the counter table, the four environment boxes and the
          nine evidence boxes, as one list: the language-tag rule has to hold
-         across all three, and between them they carry both cases — the board
-         members and the environments are printed in German, eight of the nine
-         card names are not translated yet. */
+         across all three. Every one of them is translated, so the untagged case
+         is all this list can show — the tagged case lives in the minion pool
+         below, which is why the rule is checked in two places rather than one. */
       var AOS_NAMES = '[data-section="secrets"] th[scope="row"], ' +
         '[data-section="scenario3"] .flag > span, ' +
         '[data-section="evidence"] .flag > span';
+      /* The minion pool, placeholder excluded: it is not a card name. */
+      var AOS_POOL = '[data-thunderbolt] option[value]:not([value=""])';
 
       /* The three card names of one printed combination row, read off the row
          itself. Every expectation about which rows a card strikes is derived
@@ -5221,6 +5223,21 @@
           log("while each row keeps its own pick open",
             optOf(picks[0], picks[0].value).disabled === false &&
             optOf(picks[1], picks[1].value).disabled === false);
+          /* One flat list rather than groups: which product a minion came in
+             says nothing about the sheet. */
+          log("the pool is one flat list",
+            picks[0].querySelectorAll("optgroup").length === 0);
+          /* Sorted by the name actually shown. Compared against this list's own
+             sort rather than a written-out order, so it survives a translated
+             name and a longer pool alike — and the placeholder, which is not a
+             minion, is left out. */
+          var poolNames = Array.prototype.map.call(picks[0].options, function (o) {
+            return o.value ? o.textContent.trim() : null;
+          }).filter(Boolean);
+          log("and alphabetical in the language being read",
+            poolNames.join("|") === poolNames.slice().sort(function (a, b) {
+              return a.localeCompare(b, "de");
+            }).join("|"), poolNames.join());
 
           var comboRows = at('[data-section="evidence"] .ev-table tbody tr');
           log("the block is 27 printed combinations", comboRows.length === 27,
@@ -5261,18 +5278,47 @@
           var tagged = Array.prototype.map.call(at(AOS_NAMES), function (n) {
             return n.getAttribute("lang") === "en";
           });
+          /* The pool by card rather than by row — see below for why. */
+          var poolNamed = function () {
+            var out = {};
+            Array.prototype.forEach.call(at(AOS_POOL), function (o) {
+              out[o.value] = o.textContent.trim();
+            });
+            return out;
+          };
+          var poolTagged = {};
+          Array.prototype.forEach.call(at(AOS_POOL), function (o) {
+            poolTagged[o.value] = o.getAttribute("lang") === "en";
+          });
           d.getElementById("btn-lang").click();
-          var english = names();
+          var english = names(), englishPool = poolNamed();
           d.getElementById("btn-lang").click();
-          var german = names();
+          var german = names(), germanPool = poolNamed();
           log("the language tag follows the name actually shown",
             german.length === english.length && german.length > 0 &&
             german.every(function (n, i) { return tagged[i] === (n === english[i]); }),
             german.join() + " / " + english.join() + " / " + tagged.join());
-          /* And it really is a mixture rather than all-or-nothing, or the
-             assertion above would hold with the rule wired backwards. */
+          /* The same rule on the minion pool, matched BY CARD rather than by
+             position: that list is sorted by the name being shown, so two
+             languages may put it in two different orders and an index would
+             compare a minion against a different one. */
+          log("and it holds in the minion pool too, matched by card",
+            Object.keys(germanPool).length > 0 &&
+            Object.keys(germanPool).every(function (slug) {
+              return poolTagged[slug] === (germanPool[slug] === englishPool[slug]);
+            }),
+            JSON.stringify(germanPool) + " / " + JSON.stringify(englishPool));
+          /* And the sheet really is a mixture rather than all-or-nothing, or
+             both assertions above would hold with the rule wired backwards.
+             Across both lists, because every PRINTED name on this sheet is
+             translated and every minion is not — the two cases live in
+             different places here, unlike MC40 where one table carries both. */
+          var everyTag = tagged.concat(Object.keys(poolTagged).map(function (slug) {
+            return poolTagged[slug];
+          }));
           log("and the sheet holds tagged and untagged names side by side",
-            tagged.indexOf(true) !== -1 && tagged.indexOf(false) !== -1, tagged.join());
+            everyTag.indexOf(true) !== -1 && everyTag.indexOf(false) !== -1,
+            everyTag.join());
 
           /* Switching twice rebuilt the sheet twice, so everything below has to
              be looked up again. */
@@ -5402,15 +5448,50 @@
           log("taking both back clears every strike", struckCount() === 0,
             struckCount());
 
-          /* The state the game cannot produce, because one card of each group
-             stays in the A.I.M. envelope. It is not refused and not resolved:
-             the sheet simply shows what it means, which is that every
-             combination is out. Same one-sided reading as MC45's contradiction. */
+          /* THE DEDUCTION, and the payoff of the campaign: one card of every
+             group is sealed in the A.I.M. envelope, so two gained means the
+             third is the mole's and can never be gained. Read the group's three
+             names off the screen; which two get ticked does not matter. */
           var means = Array.prototype.map.call(
             groups[0].querySelectorAll(".flag > span"),
             function (n) { return n.textContent.trim(); });
+          var flagOf = function (name) {
+            var hit = null;
+            Array.prototype.forEach.call(boxes(), function (f) {
+              if (f.querySelector("span").textContent.trim() === name) hit = f;
+            });
+            return hit;
+          };
+          setCard(means[0], true);
+          log("one card of a group deduces nothing yet",
+            app.querySelectorAll(".flag.is-deduced").length === 0);
+          setCard(means[1], true);
+          log("two of a group name the third as the mole's",
+            flagOf(means[2]).classList.contains("is-deduced"));
+          log("and close its box, because it can never be gained",
+            card(means[2]).disabled === true);
+          log("and say why", (card(means[2]).title || "").length > 0,
+            card(means[2]).title);
+          /* Only that one: the other two groups are untouched, and the two
+             cards that WERE gained stay operable. */
+          log("nothing else on the sheet is deduced",
+            app.querySelectorAll(".flag.is-deduced").length === 1);
+          log("and the two gained cards stay operable",
+            card(means[0]).disabled === false && card(means[1]).disabled === false);
+          /* Live rather than decided at render time. */
+          setCard(means[1], false);
+          log("taking one back takes the deduction back",
+            app.querySelectorAll(".flag.is-deduced").length === 0 &&
+            card(means[2]).disabled === false);
+
+          /* The state the game cannot produce. It is not refused and not
+             resolved: with three ticked the count is not two, so nothing closes
+             and the sheet cannot freeze. Same one-sided reading as MC45's
+             contradiction. */
           means.forEach(function (n) { setCard(n, true); });
-          log("all three cards of one group strike every combination",
+          log("all three of one group deduce nothing, so nothing is frozen",
+            app.querySelectorAll(".flag.is-deduced").length === 0);
+          log("and strike every combination instead",
             struckCount() === 27, struckCount());
           log("and every box stays operable",
             Array.prototype.every.call(
