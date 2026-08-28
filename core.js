@@ -726,15 +726,24 @@
     });
   }
 
-  /* Subtitle and the campaign skin hook. Both depend on the active log rather
-     than on a fixed key, so they are written here instead of via data-i18n. */
+  /* Wordmark, subtitle and the campaign skin hook. All three depend on the
+     active log rather than on a fixed key, so they are written here instead of
+     via data-i18n. The wordmark and the skin hook belong together: the plate
+     takes its colours from the [data-campaign] palette, so whatever sets one
+     has to set the other or the two disagree for a frame. */
   function applyCampaignChrome() {
     var def = activeCampaign();
     var sub = document.getElementById("subtitle");
+    var mark = document.getElementById("wordmark");
     if (def) {
-      sub.textContent = fmt(tr().appSubtitlePattern, campaignTitle(def), def.code);
+      mark.textContent = campaignTitle(def);
+      mark.hidden = false;
+      /* The name is above in full size, so the subtitle keeps only the code. */
+      sub.textContent = fmt(tr().appSubtitlePattern, def.code);
       document.documentElement.setAttribute("data-campaign", def.theme || def.id);
     } else {
+      mark.textContent = "";
+      mark.hidden = true;
       sub.textContent = tr().appSubtitle;
       document.documentElement.removeAttribute("data-campaign");
     }

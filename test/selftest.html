@@ -97,6 +97,9 @@
           var cellTroubleFne = cellsAreCells(w, d);
           log("every cell of the table is still a table cell",
             cellTroubleFne === null, cellTroubleFne);
+          var markTroubleFne = wordmarkReads(w, d);
+          log("the wordmark names this campaign and reads on its plate",
+            markTroubleFne === null, markTroubleFne);
 
           /* Standard level is the default, and it has no hit-point field. The
              rest of this case is about that field, so switch to expert first —
@@ -826,6 +829,61 @@
         return (hi + 0.05) / (lo + 0.05);
       }
 
+      /* The campaign wordmark: shown, naming the right campaign, and legible.
+         Returns null or a diagnostic, like cellsAreCells().
+
+         --logo-fill, --logo-plate and --logo-shadow are the only tokens taken
+         from the printed campaign LOGO rather than the sheet, and nothing else
+         in the suite looks at a palette at all. Fill and plate are also the only
+         pair whose contrast cannot be argued from the theme: they travel
+         together, so if one is edited without the other the wordmark goes
+         quietly unreadable in BOTH themes. MC32 is the tight one at 4.50 by
+         construction.
+
+         The extrusion is checked for being PAINTED, not for contrast. Every one
+         of the nine logos is letters offset into a hard block of a second
+         colour, and that block separates by hue rather than luminance -- MC16's
+         purple on its navy is 1.5 and perfectly legible. What must not happen is
+         the shadow going missing, which is silent: an undefined --logo-shadow
+         makes the whole text-shadow declaration invalid and the letters simply
+         go flat, looking like a design choice rather than a fault.
+
+         The name is compared against the log picker rather than spelled out.
+         The picker heads each campaign with campaignTitle(def) + " (" + code +
+         ")" (core.js), which is the same source the wordmark draws from, so a
+         retitled campaign moves both at once instead of failing here -- and a
+         wordmark showing the WRONG campaign still gets caught. */
+      function wordmarkReads(w, d) {
+        var mark = d.getElementById("wordmark");
+        if (!mark) return "no #wordmark in the document";
+        if (mark.hidden) return "wordmark is hidden while a sheet is open";
+        var name = mark.textContent.trim();
+        if (!name) return "wordmark is empty while a sheet is open";
+        var sel = d.getElementById("log-select");
+        var opt = sel && sel.options[sel.selectedIndex];
+        var label = (opt && opt.parentNode && opt.parentNode.label) || "";
+        if (label.indexOf(name + " (") !== 0) {
+          return "wordmark says " + name + ", the picker heads " + label;
+        }
+        var cs = w.getComputedStyle(mark);
+        var ratio = contrast(cs.color, cs.backgroundColor);
+        if (!(ratio >= 4.5)) {
+          return "fill on plate is only " + ratio.toFixed(2) +
+            " (" + cs.color + " on " + cs.backgroundColor + ")";
+        }
+        var shadow = cs.textShadow;
+        if (!shadow || shadow === "none") {
+          return "the wordmark draws no extrusion (text-shadow: " + shadow + ")";
+        }
+        /* Same colour as the plate would paint the extrusion into the ground --
+           declared, computed, and invisible. */
+        var shCol = /rgba?\([^)]*\)/.exec(shadow);
+        if (shCol && shCol[0] === cs.backgroundColor) {
+          return "the extrusion is the plate colour (" + shCol[0] + ")";
+        }
+        return null;
+      }
+
       // ---------------------------------------------------------------- random
       // The die next to an empty villain field rolls one of the unused villains.
       function caseRandom() {
@@ -1472,6 +1530,18 @@
             JSON.stringify(Object.keys(store())));
           log("with no way out, having nothing to go back to",
             d.getElementById("btn-campaign-cancel").hidden);
+          /* The branch of applyCampaignChrome() that has no campaign to name.
+             An empty plate over the dialog would read as a rendering fault, and
+             nothing else covers this state. */
+          /* The COMPUTED display, not the .hidden property: .wordmark sets a
+             display of its own, and an author rule beats the UA sheet, so the
+             attribute alone left an empty plate on screen while this assertion
+             still passed. */
+          log("no wordmark before a campaign is chosen",
+            w.getComputedStyle(d.getElementById("wordmark")).display === "none" &&
+              d.getElementById("wordmark").textContent === "",
+            w.getComputedStyle(d.getElementById("wordmark")).display + " / " +
+              JSON.stringify(d.getElementById("wordmark").textContent));
 
           var choices = d.getElementById("campaign-choices");
           var radios = choices.querySelectorAll("input[type=radio]");
@@ -1541,9 +1611,16 @@
           log("the skin hook follows the campaign",
             d.documentElement.getAttribute("data-campaign") === "trors",
             d.documentElement.getAttribute("data-campaign"));
+          /* The code, not the wording around it. This used to demand literal
+             parentheses and broke the day the subtitle dropped the campaign
+             name in favour of the wordmark; the code is the part that means
+             something. */
           log("the subtitle names MC10",
-            /\(MC10\)/.test(d.getElementById("subtitle").textContent),
+            /MC10/.test(d.getElementById("subtitle").textContent),
             d.getElementById("subtitle").textContent);
+          var markTroubleDlg = wordmarkReads(w, d);
+          log("the wordmark names the chosen campaign and reads",
+            markTroubleDlg === null, markTroubleDlg);
           var groups = d.getElementById("log-select").querySelectorAll("optgroup");
           /* One heading per REGISTERED campaign, not per campaign that has a
              run: a campaign nobody has played still has to be startable from
@@ -1618,6 +1695,9 @@
         seed({ rrs1: rrsLog() }, "rrs1");
         boot("", function (frame, w, d) {
           f0 = w;
+          var markTroubleRrs = wordmarkReads(w, d);
+          log("the wordmark names this campaign and reads on its plate",
+            markTroubleRrs === null, markTroubleRrs);
           var card = d.querySelectorAll(".player-card")[0];
 
           var hero = card.querySelector(".text-input");
@@ -2044,6 +2124,9 @@
         seed({ mts1: mtsLog() }, "mts1");
         boot("", function (frame, w, d) {
           f0 = w;
+          var markTroubleMts = wordmarkReads(w, d);
+          log("the wordmark names this campaign and reads on its plate",
+            markTroubleMts === null, markTroubleMts);
           var card = d.querySelectorAll(".player-card")[0];
 
           log("identity is the only free-text field on the card",
@@ -2252,6 +2335,9 @@
         seed({ sm1: smLog() }, "sm1");
         boot("", function (frame, w, d) {
           f0 = w;
+          var markTroubleSm = wordmarkReads(w, d);
+          log("the wordmark names this campaign and reads on its plate",
+            markTroubleSm === null, markTroubleSm);
           var app = d.getElementById("campaign");
           var at = function (sel) { return app.querySelectorAll(sel); };
 
@@ -2727,6 +2813,9 @@
         seed({ mg1: mgLog() }, "mg1");
         boot("", function (frame, w, d) {
           f0 = w;
+          var markTroubleMg = wordmarkReads(w, d);
+          log("the wordmark names this campaign and reads on its plate",
+            markTroubleMg === null, markTroubleMg);
           var app = d.getElementById("campaign");
           var at = function (sel) { return app.querySelectorAll(sel); };
 
@@ -3326,6 +3415,9 @@
         seed({ ne1: neLog() }, "ne1");
         boot("", function (frame, w, d) {
           f0 = w;
+          var markTroubleNe = wordmarkReads(w, d);
+          log("the wordmark names this campaign and reads on its plate",
+            markTroubleNe === null, markTroubleNe);
           var app = d.getElementById("campaign");
           var at = function (sel) { return app.querySelectorAll(sel); };
 
@@ -3806,6 +3898,9 @@
         seed({ aoa1: aoaLog() }, "aoa1");
         boot("", function (frame, w, d) {
           f0 = w;
+          var markTroubleAoa = wordmarkReads(w, d);
+          log("the wordmark names this campaign and reads on its plate",
+            markTroubleAoa === null, markTroubleAoa);
           var app = d.getElementById("campaign");
           var at = function (sel) { return app.querySelectorAll(sel); };
 
@@ -4376,6 +4471,9 @@
         seed({ gmw1: gmwLog() }, "gmw1");
         boot("", function (frame, w, d) {
           f0 = w;
+          var markTroubleGmw = wordmarkReads(w, d);
+          log("the wordmark names this campaign and reads on its plate",
+            markTroubleGmw === null, markTroubleGmw);
           var app = d.getElementById("campaign");
           var at = function (sel) { return app.querySelectorAll(sel); };
 
@@ -5114,6 +5212,9 @@
         seed({ aos1: seeded }, "aos1");
         boot("", function (frame, w, d) {
           f0 = w;
+          var markTroubleAos = wordmarkReads(w, d);
+          log("the wordmark names this campaign and reads on its plate",
+            markTroubleAos === null, markTroubleAos);
           var app = d.getElementById("campaign");
           var at = function (sel) { return app.querySelectorAll(sel); };
 
