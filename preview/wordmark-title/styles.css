@@ -81,23 +81,23 @@
      They are also the ONLY tokens in this file declared ONCE per campaign
      instead of four times, and that is deliberate, not an unfinished job. The
      four-block rule exists because the other values differ per theme. These do
-     not: fill and plate are a self-contained pair out of a printed logo, and
-     print does not change colour when the lights go out. A declaration in the
+     not: fill, shadow and plate are one self-contained set out of a printed
+     logo, and print does not change colour when the lights go out. A declaration in the
      light [data-campaign] block therefore holds in all four states -- the dark
      media query and both [data-theme] blocks match the same :root and never
      name these three, so the cascade leaves them standing. Copying them into
      four blocks would add thirty-six places to keep in step and change nothing
      on screen.
 
-     Because fill and plate travel together, the pair carries its own contrast
-     (5.1 at worst, MC32) and does not depend on --page or --panel-1. What it
+     Because they travel together, fill against plate carries its own contrast
+     (4.50 at worst, MC32) and does not depend on --page or --panel-1. What it
      does depend on is being told apart FROM the panel, and that fails in one
      theme every time: a dark plate reaches 1.0-1.3 against the dark panel, a
      white one 1.0 against the white one. Hence the theme-aware outer hairline
      on .wordmark rather than a second measured colour. */
-  --logo-fill:  #bd2734;  /* MC60 wordmark: the crimson letters       */
-  --logo-plate: #ffffff;  /* … on the light ground they are printed on */
-  --logo-edge:  #2c2626;  /* … and their near-black keyline           */
+  --logo-fill:   #c62434;  /* MC60 wordmark: the crimson letters          */
+  --logo-plate:  #fde7dd;  /* … the pale sheet they are printed on        */
+  --logo-shadow: #2f2728;  /* … and the dark block they are extruded into */
 
   /* Comic geometry. */
   --rule: 2px;
@@ -231,11 +231,11 @@
   --zap-strong: #e3d81a;
   --input-settled: #c6d6c2;
   --backdrop: rgba(6, 16, 10, 0.55);
-  /* MC10 wordmark: lime letters in a black plate -- 13.3, and nothing like the
-     sage-and-green sheet around it. */
-  --logo-fill:  #d3de25;
-  --logo-plate: #0c0c0c;
-  --logo-edge:  #6c9a53;   /* the green the plate is bedded in */
+  /* MC10 wordmark: lime letters extruded into black, on the dark green the
+     logo is printed over -- 5.3. */
+  --logo-fill:   #cddd35;
+  --logo-plate:  #115d37;
+  --logo-shadow: #020201;
 }
 /* --accent, --panel-border and --ink-shadow are left alone on purpose: they
    are already defined as var(--bar) and follow it by themselves. */
@@ -360,10 +360,11 @@
   --zap-strong: #f7bd3a;
   --input-settled: #ded9ee;
   --backdrop: rgba(9, 10, 26, 0.55);
-  /* MC21 wordmark: ice-blue letters on the navy they are cut out of -- 11.8. */
-  --logo-fill:  #b6dbf1;
-  --logo-plate: #001945;
-  --logo-edge:  #627ead;   /* the steel blue between the two */
+  /* MC21 wordmark: ice-blue letters extruded into the deepest navy, over the
+     mid navy of the logo block -- 7.8. */
+  --logo-fill:   #a7d9f4;
+  --logo-plate:  #1d3766;
+  --logo-shadow: #001c4b;
 }
 /* --accent, --panel-border and --ink-shadow are left alone on purpose: they
    are already defined as var(--bar) and follow it by themselves. */
@@ -494,10 +495,11 @@
   --zap-strong: #fba2d6;
   --input-settled: #dcc3c6;
   --backdrop: rgba(20, 6, 16, 0.55);
-  /* MC27 wordmark: the white script on the dark violet plate -- 16.4. */
-  --logo-fill:  #ffffff;
-  --logo-plate: #2a1836;
-  --logo-edge:  #a2467d;   /* the magenta of MOTIVES, the second word */
+  /* MC27 wordmark: the white script of SINISTER, extruded into near-black, on
+     the purple the logo sits on -- 10.1. */
+  --logo-fill:   #ffffff;
+  --logo-plate:  #682570;
+  --logo-shadow: #2b1736;
 }
 /* --accent, --panel-border and --ink-shadow are left alone on purpose: they
    are already defined as var(--bar) and follow it by themselves. */
@@ -639,13 +641,13 @@
   --zap-strong: #e4da2a;
   --input-settled: #cfdde0;
   --backdrop: rgba(4, 20, 25, 0.55);
-  /* MC32 wordmark: red letters on the light ground they are printed on --
-     one of only two that read dark-on-light. Darkened from the measured
-     #e4243c, which lands on 4.55 and so on the edge; this is 5.1. Same
+  /* MC32 wordmark: red-orange letters extruded into near-black navy, on the
+     white keyline the logo carries -- one of only two that read dark-on-light.
+     Darkened from the measured #dc6049, which lands on 3.3; this is 4.50. Same
      licence --brick takes in MC10 and --page in MC21. */
-  --logo-fill:  #d81e33;
-  --logo-plate: #ffffff;
-  --logo-edge:  #24243c;   /* the navy the letters drop their shadow in */
+  --logo-fill:   #c94027;
+  --logo-plate:  #eff6f1;
+  --logo-shadow: #0b121a;
 }
 /* --accent, --panel-border and --ink-shadow are left alone on purpose: they
    are already defined as var(--bar) and follow it by themselves. */
@@ -810,10 +812,13 @@
   --zap-strong: #e4da2a;
   --input-settled: #cdbcbc;
   --backdrop: rgba(24, 6, 14, 0.55);
-  /* MC40 wordmark: orange letters on the navy behind them -- 8.2. */
-  --logo-fill:  #efa532;
-  --logo-plate: #0b1d30;
-  --logo-edge:  #680d34;   /* the dark red beneath the orange */
+  /* MC40 wordmark: gold letters extruded into dark maroon, on the crimson
+     badge they are printed in. Darkened from the measured #ac1348, which lands
+     on 4.0; this is 4.51. There is no navy here -- an earlier reading of this
+     logo had one, and it came from nowhere on the page. */
+  --logo-fill:   #f8b725;
+  --logo-plate:  #9e1142;
+  --logo-shadow: #5e0e2c;
 }
 /* --accent, --panel-border, --ink-shadow and --check-on are left alone on
    purpose: they are already defined as var(--bar) and follow it by themselves. */
@@ -1011,11 +1016,12 @@
   --zap-strong: #e4da2a;
   --input-settled: #c2d5da;
   --backdrop: rgba(6, 14, 22, 0.55);
-  /* MC45 wordmark: white letters on their navy ground -- 16.7. The sheet
-     inside the frame is cool throughout, and so is this. */
-  --logo-fill:  #ffffff;
-  --logo-plate: #141f2b;
-  --logo-edge:  #b9becd;   /* the pale steel the letters are edged with */
+  /* MC45 wordmark: white letters extruded into the deepest navy, on the mid
+     navy of the logo block -- 12.6. The sheet inside the frame is cool
+     throughout, and so is this. */
+  --logo-fill:   #f8fbfa;
+  --logo-plate:  #23323e;
+  --logo-shadow: #131b25;
 }
 /* --accent and --panel-border are left alone on purpose: they are already
    defined as var(--bar) and follow it by themselves. */
@@ -1215,10 +1221,13 @@
   --zap-strong: #e2d829;
   --input-settled: #ccd3e0;
   --backdrop: rgba(10, 8, 24, 0.55);
-  /* MC16 wordmark: gold letters on the violet that outlines them -- 6.5. */
-  --logo-fill:  #d8a553;
-  --logo-plate: #3a1c4b;
-  --logo-edge:  #6b2864;   /* the lighter violet of that outline */
+  /* MC16 wordmark: gold letters extruded into PURPLE, on the dark navy-violet
+     the logo is printed over -- 8.5. The purple is the whole character of this
+     mark and it belongs to the extrusion, not to the ground; an earlier reading
+     folded the two into one plum plate and the shadow disappeared. */
+  --logo-fill:   #e0c077;
+  --logo-plate:  #29214a;
+  --logo-shadow: #692761;
 }
 /* --accent and --panel-border are left alone on purpose: they are already
    defined as var(--bar) and follow it by themselves. */
@@ -1403,11 +1412,11 @@
   --zap-strong: #e6da1c;
   --input-settled: #d6c3c3;
   --backdrop: rgba(20, 10, 13, 0.55);
-  /* MC50 wordmark: white letters on the near-black ground of the
-     S.H.I.E.L.D. lettering -- 17.0, the strongest pair of the nine. */
-  --logo-fill:  #ffffff;
-  --logo-plate: #1d1c1c;
-  --logo-edge:  #7f7e7e;   /* the grey between letter and ground */
+  /* MC50 wordmark: white letters extruded into near-black, on the grey bar
+     the S.H.I.E.L.D. lettering is set across -- 5.7. */
+  --logo-fill:   #ffffff;
+  --logo-plate:  #63676a;
+  --logo-shadow: #252120;
 
   /* The nine evidence cards, as printed. */
   --ev-medical-records:    #feb57b;
@@ -1627,14 +1636,24 @@ a { color: var(--accent-2); }
 /* The campaign wordmark: the largest thing on the page, and the only element
    painted in the logo colours rather than the sheet palette.
 
-   No --title-shadow here, unlike the h1 above -- that is a sheet colour, and it
-   would set a stray palette tone against a logo one. The plate carries the
-   letters instead, and its two rings are both needed, for different reasons:
-   --logo-edge is the wordmark's own third colour and belongs to the logo, while
-   the outer ring is theme-aware, because a measured plate loses the panel behind
-   it in one theme every time (a dark plate reaches 1.0-1.3 against the dark
-   panel, a white one 1.0 against the white one). Without the outer ring the
-   plate stops reading as a plate for half the campaigns.
+   Every one of the nine printed logos is built the same way: letters in one
+   colour, extruded into a hard offset block in a second, over a ground that is
+   sometimes the logo's own and sometimes just the sheet. So the three tokens are
+   fill, shadow and plate, and the extrusion is drawn as a real text-shadow --
+   flattening it into the plate is what an earlier reading of these logos did,
+   and it cost MC16 the purple that gives that mark its whole character.
+
+   The shadow carries no contrast duty and is not measured for it: it separates
+   by HUE, not luminance, which is why MC16's purple on navy sits at 1.5 and is
+   still perfectly legible on paper. Only fill against plate has to clear 4.5,
+   and that pair travels together out of one logo, so it holds in both themes.
+
+   Not --title-shadow, unlike the h1 above -- that is a sheet colour, and it
+   would set a stray palette tone against a logo one. The outer ring is the one
+   theme-aware part, because a measured plate loses the panel behind it in one
+   theme every time (a dark plate reaches 1.0-1.3 against the dark panel, a white
+   one 1.0 against the white one). Without it the plate stops reading as a plate
+   for half the campaigns.
 
    The sheet's display face (Komika Title) is not redistributable; Exo 2 ExtraBold
    Italic stands in for it, and arrives with the h1/h2/h3 rule further up. */
@@ -1652,7 +1671,9 @@ a { color: var(--accent-2); }
   text-transform: uppercase;
   color: var(--logo-fill);
   background: var(--logo-plate);
-  border: var(--rule) solid var(--logo-edge);
+  /* The extrusion, down and to the right as every one of the nine prints it. */
+  text-shadow: 2px 2px 0 var(--logo-shadow);
+  border: var(--rule) solid var(--logo-shadow);
   border-radius: var(--radius);
   box-shadow: 0 0 0 var(--rule) var(--panel-border);
 }
@@ -2949,7 +2970,7 @@ body[class*="dnd-"] .entry-list { min-height: 2.2rem; outline: 1px dashed var(--
     --on-brick: #000; --on-page: #000; --on-zap: #fff;
     --on-danger: #fff; --tick: #fff; --title-shadow: transparent;
     --zap-strong: #000; --input-settled: #fff;
-    /* --logo-fill/-plate/-edge are missing on purpose, not by oversight: their
+    /* --logo-fill/-plate/-shadow are missing on purpose, not by oversight: their
        only consumer is .wordmark, which lives in .topbar, and the topbar is
        display: none below. Resetting them here would be three lines that can
        never reach paper. Give them a value the day something outside the topbar

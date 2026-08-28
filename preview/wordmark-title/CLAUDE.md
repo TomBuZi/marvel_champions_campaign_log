@@ -150,15 +150,27 @@ spezifischer als das bloße `:root` in der Dark-Media-Query und würde im
 Dunkelmodus die helle Palette malen.
 
 **Dazu die Wortmarke — drei Tokens, und die stehen nur einmal.** `--logo-fill`,
-`--logo-plate` und `--logo-edge` kommen nicht aus dem Bogen, sondern aus dem
+`--logo-plate` und `--logo-shadow` kommen nicht aus dem Bogen, sondern aus dem
 **Kampagnen-Logo oben links** auf Seite 1, und sie gehören in den *hellen*
 `[data-campaign]`-Block, sonst nirgends. Das ist die einzige Ausnahme von der
 Vier-Block-Regel und sie ist begründet: die Regel existiert, weil Werte je Theme
-verschieden sind, und diese sind es nicht — Füllung und Plakette sind ein
-geschlossenes Paar aus einem gedruckten Logo, das seinen Kontrast selbst trägt.
-Eine Deklaration im hellen Block gilt in allen vier Zuständen, weil die anderen
-drei Blöcke dasselbe `:root` treffen und diese Namen nie nennen. Im Print-Reset
-fehlen sie ebenfalls absichtlich; der Kommentar dort sagt, warum.
+verschieden sind, und diese sind es nicht — die drei sind ein geschlossener Satz
+aus einem gedruckten Logo, das seinen Kontrast selbst trägt. Eine Deklaration im
+hellen Block gilt in allen vier Zuständen, weil die anderen drei Blöcke dasselbe
+`:root` treffen und diese Namen nie nennen. Im Print-Reset fehlen sie ebenfalls
+absichtlich; der Kommentar dort sagt, warum.
+
+**Alle neun Logos sind gleich gebaut, und wer das übersieht, misst falsch:
+Buchstaben in einer Farbe, hart versetzt in einen Block einer zweiten Farbe, über
+einem Grund, der mal zum Logo gehört und mal einfach der Bogen ist.** Der Versatz
+ist der **Schatten** — bei MC16 lila, bei MC10 schwarz, bei MC40 dunkelrot — und
+er ist das Auffälligste an der Marke. Der erste Anlauf hatte nur Füllung und
+„Plakette“ und hat den Schatten mit dem Grund zu *einer* Fläche verrechnet: MC16
+wurde damit ein pflaumenfarbener Kasten ohne das Lila, das seine Marke ausmacht,
+MC10 bekam den Schatten als Plakette und den Grund gar nicht, und MC40 bekam ein
+Marineblau, das auf der Seite **nirgends vorkommt**. Aufgefallen ist es erst, als
+jemand Bogen und Bildschirm nebeneinander gehalten hat. Also: erst am gerenderten
+Logo entscheiden, welche der drei Rollen welche Farbe hat, dann messen.
 
 Das Logo ist ein **Rasterbild** mit eigenem Xref, keine Vektorfläche — gemessen
 wird per Median-Cut darüber, die Rollen dann **mit dem Auge** vergeben. Wortmarke
@@ -166,8 +178,17 @@ und Grund automatisch zu trennen scheitert: ein Flood-Fill leckt durch die
 antialiasierten Konturen und hat bei MC60 98 % der Marke mitgefressen. Und die
 Rollen kippen je Kampagne — sieben Marken sind helle Buchstaben auf dunklem
 Grund, MC32 und MC60 dunkle auf hellem. Wer das verwechselt, bekommt 1,0.
-Mindestens 4,5 zwischen Füllung und Plakette; `lint.js` verlangt die drei Tokens,
-der Browser-Test rechnet den Kontrast je Kampagne nach.
+
+**Kontrast nur zwischen Füllung und Plakette: mindestens 4,5.** Der Schatten wird
+*nicht* danach gemessen und darf es nicht werden — er trennt über den **Farbton**,
+nicht über die Helligkeit: MC16s Lila auf seinem Marineblau steht bei 1,5 und ist
+auf Papier völlig deutlich. Wer ihn auf 4,5 zwingt, erfindet eine Farbe, die das
+Logo nicht hat. `lint.js` verlangt die drei Tokens und dass der Schatten weder die
+Plakette noch die Füllung ist — gleicher Hexwert heißt, es wird nichts gezeichnet,
+und kaputt aussehen tut es auch nicht. Der Browser-Test rechnet den Kontrast je
+Kampagne nach und prüft zusätzlich, dass der Schatten überhaupt **gemalt** wird:
+ein undefiniertes `--logo-shadow` macht die ganze `text-shadow`-Deklaration
+ungültig, die Buchstaben werden still flach, und das sieht nach Absicht aus.
 
 **Der Dunkelmodus muss dieselben Farben tragen wie der Hellmodus**, nicht nur
 die dominante. Eine Kampagne, die hell aus Indigo, Rost, Creme und Gold besteht,
