@@ -619,11 +619,14 @@ gekostet haben.
    **vier** Blöcke, wie die Tokens darüber — ein einzelner `[data-campaign]`-Block ist
    spezifischer als das bloße `:root` in der Dark-Media-Query und würde im Dunkelmodus
    die helle Palette malen.
-5. Dazu `--logo-fill`, `--logo-plate` und `--logo-edge` in den *hellen* Block — und
+5. Dazu `--logo-fill`, `--logo-plate` und `--logo-shadow` in den *hellen* Block — und
    nur dorthin, siehe „Optik“ weiter unten. Sie kommen aus dem Kampagnen-Logo oben
    links auf dem Bogen, nicht aus der Bogenpalette, und `lint.js` verlangt sie: ohne
-   sie erbt die neue Kampagne stumm die Basisfarben. Füllung gegen Plakette
-   mindestens 4,5 — das prüft der Browser-Test je Kampagne.
+   sie erbt die neue Kampagne stumm die Basisfarben. Jedes dieser Logos ist gleich
+   gebaut — Buchstaben, hart versetzt in einen Block einer zweiten Farbe, über einem
+   Grund —, und die drei Tokens sind genau diese drei Rollen. Füllung gegen Plakette
+   mindestens 4,5 — das prüft der Browser-Test je Kampagne. Der Schatten wird nicht
+   auf Kontrast gemessen: er trennt über den Farbton.
 
 Als Vorlagen dienen die vorhandenen Module, und sie sind bewusst
 unterschiedlich: `campaigns/fear-no-evil.js` zeigt abgeleiteten Zustand, gegenseitige
@@ -752,11 +755,11 @@ sitzen — Gelb, Warnrot, die Seitenfläche —, haben eigene `--on-*`-Tokens, w
 Theme sonst hell und dunkel gegeneinander verdreht.
 
 Drei Tokens sind davon ausgenommen, und zwar mit Absicht:
-`--logo-fill`, `--logo-plate` und `--logo-edge` stehen **einmal** je Kampagne. Sie
+`--logo-fill`, `--logo-plate` und `--logo-shadow` stehen **einmal** je Kampagne. Sie
 kommen nicht aus der Bogenpalette, sondern aus dem Kampagnen-Logo oben links auf
 dem Bogen, und ein gedrucktes Logo wechselt die Farbe nicht, wenn das Licht
 ausgeht — Füllung und Plakette sind ein in sich geschlossenes Paar, das seinen
-Kontrast selbst trägt (5,1 im schlechtesten Fall, MC32). Eine Deklaration im
+Kontrast selbst trägt (4,50 im schlechtesten Fall, MC32). Eine Deklaration im
 hellen `[data-campaign]`-Block gilt in allen vier Zuständen: die Dark-Media-Query
 und die beiden `[data-theme]`-Blöcke treffen dasselbe `:root`, nennen diese drei
 Namen aber nie, also bleibt der Wert stehen. Im Print-Reset fehlen sie ebenfalls
@@ -778,10 +781,12 @@ der Print-Reset `[data-campaign][data-theme]` mitnennen, sonst druckt eine
 Dark-Mode-Sitzung die Kampagnenfarben statt Schwarz auf Weiß.
 
 Der Kampagnenname steht als **Wortmarke** in der Topbar — das größte Element der
-Seite, in den Logofarben statt in der Bogenpalette. Die Plakette umschließt nur
-den Text, wie das gedruckte Logo, und trägt zwei Ringe: den inneren in
-`--logo-edge`, der zum Logo gehört, und einen äußeren in `--panel-border`, der es
-nicht tut. Der äußere ist trotzdem nötig, denn eine gemessene Plakette verliert
+Seite, in den Logofarben statt in der Bogenpalette. Die Buchstaben werfen ihren
+gedruckten Versatzschatten in `--logo-shadow`: alle neun Logos sind so gebaut, und
+bei MC16 ist genau dieser Schatten das Lila, das die Marke ausmacht. Die Plakette
+umschließt nur den Text, wie das gedruckte Logo, und trägt zwei Ringe: den inneren
+in `--logo-shadow`, der zum Logo gehört, und einen äußeren in `--panel-border`, der
+es nicht tut. Der äußere ist trotzdem nötig, denn eine gemessene Plakette verliert
 das Panel hinter sich in genau *einem* Theme immer — eine dunkle erreicht gegen
 das dunkle Panel 1,0–1,3, eine weiße 1,0 gegen das weiße. Der App-Titel darüber
 ist deshalb die kleine Zeile, und der Untertitel nennt nur noch den Produktcode.

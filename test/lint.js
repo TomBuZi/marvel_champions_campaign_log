@@ -1586,7 +1586,8 @@ check("stylesheet exists", fs.existsSync(path.join(root, "styles.css")));
 
 /* The only check in this file that looks inside a palette, and it exists because
    the wordmark tokens are the one place where a missing declaration is INVISIBLE
-   rather than wrong: --logo-fill and --logo-plate are not inherited from the
+   rather than wrong: --logo-fill, --logo-plate and --logo-shadow are not
+   inherited from the
    base by accident but by design, so a campaign that forgets them silently
    paints MC60's crimson-on-white over its own sheet and nothing else complains.
    The theme-key check above catches a typo in the selector; this catches an
@@ -1615,7 +1616,22 @@ for (const def of campaigns) {
   }
   check(p + "declares --logo-fill", /--logo-fill:\s*#[0-9a-f]{6}/i.test(block));
   check(p + "declares --logo-plate", /--logo-plate:\s*#[0-9a-f]{6}/i.test(block));
-  check(p + "declares --logo-edge", /--logo-edge:\s*#[0-9a-f]{6}/i.test(block));
+  check(p + "declares --logo-shadow", /--logo-shadow:\s*#[0-9a-f]{6}/i.test(block));
+  /* A shadow equal to the plate is the failure this pair had once already: the
+     extrusion folded into the ground, and MC16 lost the purple that is the whole
+     point of its logo. Same hex means nothing is drawn, and nothing looks
+     broken. */
+  const fill = /--logo-fill:\s*(#[0-9a-f]{6})/i.exec(block);
+  const plate = /--logo-plate:\s*(#[0-9a-f]{6})/i.exec(block);
+  const shadow = /--logo-shadow:\s*(#[0-9a-f]{6})/i.exec(block);
+  if (plate && shadow) {
+    check(p + "extrusion is not the plate it sits on",
+      plate[1].toLowerCase() !== shadow[1].toLowerCase(), plate[1]);
+  }
+  if (fill && shadow) {
+    check(p + "extrusion is not the letters it comes off",
+      fill[1].toLowerCase() !== shadow[1].toLowerCase(), fill[1]);
+  }
 }
 
 /* applyLanguage() (core.js) translates by writing node.textContent, so a
