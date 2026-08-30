@@ -2390,6 +2390,18 @@ button:focus-visible {
    stays a shade rather than becoming a spinner. */
 .identity-field .text-input.is-resolving { opacity: 0.6; }
 
+/* A field whose hero comes from the linked deck. Same idiom as a checkbox the
+   sheet has closed and as .text-input:disabled above — dashed border, slight
+   fade, not-allowed cursor — because it says the same thing: what is written
+   here stays legible, it just is not yours to type. It is read-only rather
+   than disabled, so the styling has to be asked for by class; [readonly] alone
+   would also catch fields that are read-only for other reasons. */
+.identity-field .text-input.is-locked {
+  cursor: not-allowed;
+  border-style: dashed;
+  opacity: 0.8;
+}
+
 .deck-chip {
   display: flex;
   align-items: center;
