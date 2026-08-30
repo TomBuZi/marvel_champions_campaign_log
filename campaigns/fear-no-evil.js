@@ -140,7 +140,7 @@
          a sheet toggled by accident loses nothing. */
       expert: false,
       /* A fresh sheet starts with a single player; more are added as needed. */
-      players: [{ hero: "", hp: null }],
+      players: [{ hero: "", deck: "", hp: null }],
       scenarios: SCENARIOS.map(function (s) {
         return { slug: s.slug, completed: false, villain: "", progress: 0 };
       }),
@@ -167,6 +167,7 @@
       var p = (players[i] && typeof players[i] === "object") ? players[i] : {};
       out.players.push({
         hero: W.coerceText(p.hero, NAME_MAX),
+        deck: W.coerceDeck(p.deck),
         hp: W.clampNumber(p.hp === "" ? null : p.hp, 0, HP_MAX),
       });
     }
@@ -275,7 +276,7 @@
     addBtn.title = addBtn.disabled ? t("addPlayerFull") : t("addPlayer");
     addBtn.addEventListener("click", function () {
       if (state.players.length >= MAX_PLAYERS) return;
-      state.players.push({ hero: "", hp: null });
+      state.players.push({ hero: "", deck: "", hp: null });
       ctx.save();
       ctx.rerender();
     });
@@ -336,7 +337,8 @@
         disabled: last,
         lockReason: t("removePlayerLast"),
         onClick: function () {
-          var hasContent = !!player.hero.trim() || player.hp != null;
+          var hasContent = !!player.hero.trim() || !!player.deck ||
+            player.hp != null;
           if (hasContent && !window.confirm(t("confirmRemovePlayer"))) return;
           state.players.splice(i, 1);
           ctx.save();
@@ -351,14 +353,19 @@
       var idText = W.el("label", "field-label");
       idText.textContent = t("colIdentity");
       idRow.appendChild(idText);
-      var heroInput = W.textField({
+      var heroInput = W.identityField({
         value: player.hero,
+        deck: player.deck,
         label: caption + " – " + t("colIdentity"),
         placeholder: t("identityPlaceholder"),
         maxLength: NAME_MAX,
         listId: listId,
-        onChange: function (next) {
-          player.hero = next;
+        lang: lang,
+        t: t,
+        toast: ctx.toast,
+        onChange: function (nextHero, nextDeck) {
+          player.hero = nextHero;
+          player.deck = nextDeck;
           ctx.save();
           updateHpHint();
           markDuplicates();
@@ -675,7 +682,7 @@
     level.textContent = (state.expert ? "[x] " : "[ ] ") + t("lblExpert");
     players.appendChild(level);
     state.players.forEach(function (p, i) {
-      if (!p.hero && p.hp == null) return;
+      if (!p.hero && !p.deck && p.hp == null) return;
       var line = W.el("p", "print-line");
       /* The hidden field stays out of the printout too, so a standard sheet
          does not print a number it is not playing with. */
@@ -684,6 +691,14 @@
           ? " · " + t("colHp") + ": " + (p.hp == null ? "—" : String(p.hp))
           : "");
       players.appendChild(line);
+      /* Its own line rather than another "·" segment: the address is long,
+         and on paper it has to stay readable enough to type back in. */
+      if (p.deck) {
+        var deckLine = W.el("p", "print-line");
+        deckLine.textContent = "  " + t("deckPrint") + ": " +
+          global.MCDB.shortUrl(p.deck);
+        players.appendChild(deckLine);
+      }
     });
 
     var scen = printSection(root, t("secScenarios"));
@@ -745,10 +760,13 @@
     /* 2: players went from four fixed places to a list of one to four.
        3: standard or expert level, which decides whether the remaining hit
           points are asked for at all. */
-    stateVersion: 3,
+    stateVersion: 4,
 
     emptyState: emptyState,
     normalize: normalize,
+    /* Version 4 put the MarvelCDB deck id next to the hero and needs no step
+       of its own: normalize() gives an older sheet deck: "", and "no deck
+       linked" is what a sheet written before the field existed means. */
     migrate: migrate,
     render: render,
     renderPrint: renderPrint,

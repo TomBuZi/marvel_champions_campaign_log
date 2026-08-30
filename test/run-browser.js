@@ -35,7 +35,7 @@ const CASES = {
   import: 13, lock: 20, lockconflict: 4, random: 20, randomspread: 3,
   appearance: 19, players: 23, migrate: 13, round: 12, roundlast: 8,
   roundspread: 3, rrs: 25, rrsdialog: 33, rrsprint: 18, rrspools: 14,
-  rrsexpert: 13, expert: 10, mts: 16, mtsexpert: 10, mtsprint: 9,
+  rrsexpert: 13, expert: 10, mts: 16, mtsexpert: 10, mtsprint: 10, deck: 23,
   sm: 25, smrep: 21, smexpert: 12, smprint: 12,
   mg: 27, mgrole: 38, mgexpert: 12, mgprint: 16,
   ne: 24, neschemes: 14, neexpert: 12, neprint: 14,

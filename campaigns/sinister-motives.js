@@ -306,6 +306,7 @@
   function newPlayer() {
     return {
       hero: "",
+      deck: "",
       hp: null,
       /* The three "Reputation Track Reward" fields. They live ON the player
          rather than in three parallel lists, so adding or removing a player can
@@ -343,6 +344,7 @@
       var p = (players[i] && typeof players[i] === "object") ? players[i] : {};
       out.players.push({
         hero: W.coerceText(p.hero, NAME_MAX),
+        deck: W.coerceDeck(p.deck),
         hp: W.clampNumber(p.hp === "" ? null : p.hp, 0, HP_MAX),
         /* Kept whatever the reputation currently is: a rung that has not been
            reached closes the field on screen, it does not empty it. Lowering
@@ -428,15 +430,23 @@
     }
   }
 
-  /* No migrate(): stateVersion is 1, so there is no older shape in the wild
-     yet. The first change to the shape above has to bring one with it — see
-     the check in test/lint.js. */
+  /* Version 2 put the MarvelCDB deck id next to the hero. Nothing has to be
+     worked out for it: normalize() gives an older sheet deck: "", and for a
+     sheet written before the field existed "no deck linked" is simply true.
+     Unlike MC16's unit count there is no earlier place a deck could be hiding,
+     and unlike MC60's expert flag the default hides nothing that was already
+     written down — which is the question every future field has to answer
+     here, and the reason this function exists at all rather than being left
+     out. */
+  function migrate(raw, fromVersion) {
+    return (raw && typeof raw === "object") ? raw : {};
+  }
 
   /* Counts the expert-only field even at standard level, and a closed field
      even while it is closed: both are hidden or frozen, not gone, and removing
      a player would still throw them away. */
   function playerHasContent(player) {
-    return !!player.hero.trim() || player.hp != null || !!player.shieldTech ||
+    return !!player.hero.trim() || !!player.deck || player.hp != null || !!player.shieldTech ||
       !!player.aspectAdvantage.trim() || !!player.planningAhead.trim();
   }
 
@@ -677,14 +687,19 @@
       head.appendChild(del);
       card.appendChild(head);
 
-      var heroInput = W.textField({
+      var heroInput = W.identityField({
         value: player.hero,
+        deck: player.deck,
         label: caption + " – " + t("colIdentity"),
         placeholder: t("identityPlaceholder"),
         maxLength: NAME_MAX,
         listId: listId,
-        onChange: function (next) {
-          player.hero = next;
+        lang: lang,
+        t: t,
+        toast: ctx.toast,
+        onChange: function (nextHero, nextDeck) {
+          player.hero = nextHero;
+          player.deck = nextDeck;
           ctx.save();
           updateHpHint();
           markDuplicates();
@@ -1107,6 +1122,12 @@
         line += " · " + t("colHp") + ": " + (p.hp == null ? "—" : String(p.hp));
       }
       printLine(players, line);
+      /* Its own line rather than another "·" segment: the address is long,
+         and on paper it has to stay readable enough to type back in. */
+      if (p.deck) {
+        printLine(players, "  " + t("deckPrint") + ": " +
+          global.MCDB.shortUrl(p.deck));
+      }
       /* Whether a field is currently closed is not printed: the printout is a
          record of what was written down, and a closed field with something in
          it is exactly the case that must not go missing. */
@@ -1186,10 +1207,11 @@
        does throughout. */
     titleDe: "Sinister Motives",
     theme: "sm",
-    stateVersion: 1,
+    stateVersion: 2,
 
     emptyState: emptyState,
     normalize: normalize,
+    migrate: migrate,
     render: render,
     renderPrint: renderPrint,
 

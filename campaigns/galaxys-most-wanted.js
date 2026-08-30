@@ -323,7 +323,10 @@
        and never stored. `market` holds slugs out of MARKET, `collection` free
        text: the market is a printed pool of 28, while The Collection fills up
        with whatever cards the players happened to be holding. */
-    return { hero: "", hp: null, unitsEarned: null, market: [], collection: [] };
+    return {
+      hero: "", deck: "", hp: null, unitsEarned: null,
+      market: [], collection: [],
+    };
   }
 
   function emptyHeadhunter() {
@@ -352,6 +355,7 @@
       var p = (players[i] && typeof players[i] === "object") ? players[i] : {};
       out.players.push({
         hero: W.coerceText(p.hero, NAME_MAX),
+        deck: W.coerceDeck(p.deck),
         hp: W.clampNumber(p.hp === "" ? null : p.hp, 0, HP_MAX),
         unitsEarned: W.clampNumber(
           p.unitsEarned === "" ? null : p.unitsEarned, 0, UNITS_MAX),
@@ -486,7 +490,7 @@
      on screen, but what is written there is still on the sheet, so removing the
      card would still lose it. */
   function playerHasContent(player) {
-    return !!player.hero.trim() || player.hp != null ||
+    return !!player.hero.trim() || !!player.deck || player.hp != null ||
       player.unitsEarned != null ||
       player.market.length > 0 || player.collection.length > 0;
   }
@@ -760,14 +764,19 @@
       head.appendChild(del);
       card.appendChild(head);
 
-      var heroInput = W.textField({
+      var heroInput = W.identityField({
         value: player.hero,
+        deck: player.deck,
         label: caption + " – " + t("colIdentity"),
         placeholder: t("identityPlaceholder"),
         maxLength: NAME_MAX,
         listId: listId,
-        onChange: function (next) {
-          player.hero = next;
+        lang: lang,
+        t: t,
+        toast: ctx.toast,
+        onChange: function (nextHero, nextDeck) {
+          player.hero = nextHero;
+          player.deck = nextDeck;
           ctx.save();
           updateHpHint();
           markDuplicates();
@@ -1221,6 +1230,12 @@
       line += " · " + t("colUnits") + ": " +
         (leftOver == null ? "—" : String(leftOver));
       printLine(players, line);
+      /* Its own line rather than another "·" segment: the address is long,
+         and on paper it has to stay readable enough to type back in. */
+      if (p.deck) {
+        printLine(players, "  " + t("deckPrint") + ": " +
+          global.MCDB.shortUrl(p.deck));
+      }
     });
 
     /* Both card lists print one line per player, and only for players who have
@@ -1318,10 +1333,13 @@
        Kampagne The Galaxy's Most Wanted" wherever it names it. */
     titleDe: "The Galaxy's Most Wanted",
     theme: "gmw",
-    stateVersion: 2,
+    stateVersion: 3,
 
     emptyState: emptyState,
     normalize: normalize,
+    /* Version 3 put the MarvelCDB deck id next to the hero and needs no step
+       of its own: normalize() gives an older sheet deck: "", and "no deck
+       linked" is what a sheet written before the field existed means. */
     migrate: migrate,
     render: render,
     renderPrint: renderPrint,

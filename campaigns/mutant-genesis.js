@@ -298,6 +298,7 @@
   function newPlayer() {
     return {
       hero: "",
+      deck: "",
       hp: null,
       /* One of the four printed roles. The sheet prints "Role:" as a line to
          write on, but there are exactly four of them and each player must take
@@ -343,6 +344,7 @@
       var p = (players[i] && typeof players[i] === "object") ? players[i] : {};
       out.players.push({
         hero: W.coerceText(p.hero, NAME_MAX),
+        deck: W.coerceDeck(p.deck),
         hp: W.clampNumber(p.hp === "" ? null : p.hp, 0, HP_MAX),
         role: inPool(ROLES, p.role) ? p.role : "",
         /* Read against ALL twenty upgrades, NOT against the role above. Two
@@ -440,17 +442,23 @@
     }
   }
 
-  /* No migrate(): stateVersion is 1, so there is no older shape in the wild
-     yet. The first change to the shape above has to bring one with it — see
-     the check in test/lint.js. Note especially that anything added beside
-     `role` and `upgrades` has to decide what its default MEANS for sheets that
-     are already saved. */
+  /* Version 2 put the MarvelCDB deck id next to the hero. Nothing has to be
+     worked out for it: normalize() gives an older sheet deck: "", and for a
+     sheet written before the field existed "no deck linked" is simply true.
+     Unlike MC16's unit count there is no earlier place a deck could be hiding,
+     and unlike MC60's expert flag the default hides nothing that was already
+     written down — which is the question every future field has to answer
+     here, and the reason this function exists at all rather than being left
+     out. */
+  function migrate(raw, fromVersion) {
+    return (raw && typeof raw === "object") ? raw : {};
+  }
 
   /* Counts a hidden hit point value too: at standard level the field is not on
      screen, but what is written there is still on the sheet, so removing the
      card would still lose it. */
   function playerHasContent(player) {
-    return !!player.hero.trim() || player.hp != null ||
+    return !!player.hero.trim() || !!player.deck || player.hp != null ||
       !!player.role || player.upgrades.length > 0;
   }
 
@@ -669,14 +677,19 @@
       head.appendChild(del);
       card.appendChild(head);
 
-      var heroInput = W.textField({
+      var heroInput = W.identityField({
         value: player.hero,
+        deck: player.deck,
         label: caption + " – " + t("colIdentity"),
         placeholder: t("identityPlaceholder"),
         maxLength: NAME_MAX,
         listId: listId,
-        onChange: function (next) {
-          player.hero = next;
+        lang: lang,
+        t: t,
+        toast: ctx.toast,
+        onChange: function (nextHero, nextDeck) {
+          player.hero = nextHero;
+          player.deck = nextDeck;
           ctx.save();
           updateHpHint();
           markDuplicates();
@@ -1102,6 +1115,12 @@
         line += " · " + t("colHp") + ": " + (p.hp == null ? "—" : String(p.hp));
       }
       printLine(players, line);
+      /* Its own line rather than another "·" segment: the address is long,
+         and on paper it has to stay readable enough to type back in. */
+      if (p.deck) {
+        printLine(players, "  " + t("deckPrint") + ": " +
+          global.MCDB.shortUrl(p.deck));
+      }
       printLine(players, "  " + t("colRole") + ": " +
         (poolName(ROLES, p.role, lang) || "—"));
 
@@ -1209,10 +1228,11 @@
        does throughout. */
     titleDe: "Mutant Genesis",
     theme: "mg",
-    stateVersion: 1,
+    stateVersion: 2,
 
     emptyState: emptyState,
     normalize: normalize,
+    migrate: migrate,
     render: render,
     renderPrint: renderPrint,
 
