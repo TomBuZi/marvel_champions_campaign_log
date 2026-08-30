@@ -2328,11 +2328,22 @@
           function stored() {
             return JSON.parse(localStorage.getItem("mcclog:logs")).mts1.state.players[0];
           }
+          /* Only ever used on an unlocked field, the way a keyboard could:
+             assigning .value would sail straight past readOnly and the case
+             would then be testing something nobody can do. */
           function type(value) {
             var f = field();
             f.value = value;
             fire(f, "input");
             fire(f, "blur");
+          }
+          function press(key) {
+            field().dispatchEvent(
+              new w.KeyboardEvent("keydown", { key: key, bubbles: true }));
+          }
+          function unlink() {
+            var x = card().querySelector(".deck-clear");
+            if (x) x.click();
           }
 
           log("a card without a deck shows no chip", !chip());
@@ -2378,6 +2389,27 @@
               card().querySelector(".num-hint").textContent.trim() === "/ 9",
               JSON.stringify(card().querySelector(".num-hint").textContent));
 
+            /* A linked deck owns the identity, so the field stops taking input
+               and the suggestion list goes with it: a name typed over the top
+               would disagree with the link right under it. */
+            log("a linked deck locks the identity field", field().readOnly);
+            log("and detaches the suggestion list",
+              !field().hasAttribute("list"), field().getAttribute("list"));
+            log("and the lock is visible, not only enforced",
+              field().classList.contains("is-locked"), field().className);
+            var toastNode = d.getElementById("toast");
+            toastNode.textContent = "";
+            press("a");
+            log("typing into it says why instead of swallowing the key",
+              /Deck/.test(toastNode.textContent), toastNode.textContent.slice(0, 60));
+
+            // Only the × gives the field back.
+            unlink();
+            log("clearing the deck unlocks the field", !field().readOnly);
+            log("and hands the suggestion list back",
+              field().getAttribute("list") === "hero-suggestions",
+              field().getAttribute("list"));
+
             // A bare id: same result, no address to parse.
             type("1");
             log("a bare id is a deck reference too",
@@ -2386,19 +2418,20 @@
               chip().getAttribute("href") === "https://marvelcdb.com/deck/view/1",
               chip().getAttribute("href"));
 
-            /* A slow answer must not land on top of someone who went back to
-               the field and typed a name themselves. */
+            /* An answer can arrive after the link it belongs to is gone: paste
+               one, then change your mind and hit ×. It must not land — the
+               name would then belong to no deck on the sheet. */
             var late = null;
+            unlink();
             w.MCDB.lookup = function () {
               return new Promise(function (res) { late = res; });
             };
             type("1213577");
-            field().value = "Nova";
-            fire(field(), "input");
-            late("Echo");
+            unlink();
+            late("Nova");
             setTimeout(function () {
-              log("a late answer does not overwrite what was typed meanwhile",
-                field().value === "Nova", field().value);
+              log("an answer whose deck was dropped meanwhile does not land",
+                field().value === "Echo" && !chip(), field().value);
               w.MCDB.lookup = function (id, lang) {
                 calls.push(id + "/" + lang);
                 return Promise.resolve(answer);
@@ -2413,19 +2446,24 @@
             type("1213577");
             setTimeout(function () {
               log("a failed lookup keeps the hero that was already there",
-                field().value === "Nova", field().value);
+                field().value === "Echo", field().value);
               log("and keeps the link, which is still a link",
                 !!chip() && /1213577/.test(chip().getAttribute("href")),
                 chip() && chip().getAttribute("href"));
+              /* The lock does not depend on the lookup having worked: a deck is
+                 linked either way, and a field that were editable only after a
+                 failure would leave nobody able to tell where a name came
+                 from. */
+              log("and locks the field all the same", field().readOnly);
               var toast = d.getElementById("toast");
               log("and says so rather than failing silently",
                 !toast.hidden && /1213577/.test(toast.textContent),
                 toast.textContent.slice(0, 60));
 
               // Clearing the deck is not clearing the hero.
-              card().querySelector(".deck-clear").click();
+              unlink();
               log("the × drops the chip", !chip());
-              log("but leaves the identity alone", field().value === "Nova",
+              log("but leaves the identity alone", field().value === "Echo",
                 field().value);
 
               /* Free text longer than the sheet's own cap is still capped —

@@ -149,7 +149,14 @@
      Nothing typed is ever thrown away. Recognising a deck puts the field back
      to the hero it held before and lets the lookup overwrite it; a lookup that
      fails leaves that value standing and says so. The id and its link stay
-     either way — a deck link that cannot be read is still a deck link. */
+     either way — a deck link that cannot be read is still a deck link.
+
+     A linked deck locks the field: see syncLock() for why, and note that the
+     lock is unconditional. It holds even when the lookup failed and the name
+     is therefore not the deck's — because the alternative is a field that is
+     sometimes editable with a link attached, and then nobody can tell by
+     looking whether the name they see came from the deck or from a keyboard.
+     The × is one click away and gives the field back. */
   function identityField(cfg) {
     var t = cfg.t;
     var maxLength = cfg.maxLength || 0;
@@ -166,11 +173,42 @@
     var input = el("input", "text-input", {
       type: "text", "aria-label": cfg.label, title: cfg.label,
       placeholder: cfg.placeholder || null,
-      list: cfg.listId || null,
       autocomplete: "off", spellcheck: "false",
     });
     input.value = hero;
     wrap.appendChild(input);
+
+    /* While a deck is linked the hero comes FROM that deck, so the field stops
+       taking input and the suggestion list is detached — a name typed over the
+       top would quietly disagree with the link right under it, and the sheet
+       would assert two different heroes at once. The × is the way back: clear
+       the link and the field is free again.
+
+       Read-only rather than disabled on purpose: the value stays selectable,
+       copyable and in the accessibility tree, and a locked identity is still
+       something you want to be able to read out. */
+    function syncLock() {
+      var locked = !!deck;
+      input.readOnly = locked;
+      input.classList.toggle("is-locked", locked);
+      /* Detached, not merely ignored: a read-only input still pops its list in
+         some browsers, and an offer that cannot be accepted is worse than no
+         offer. */
+      if (locked || !cfg.listId) input.removeAttribute("list");
+      else input.setAttribute("list", cfg.listId);
+    }
+
+    /* Saying why, at the moment someone finds out. The reason cannot live in
+       the field's `title`: the campaign modules rewrite that on every change
+       to flag duplicate heroes, so it would be gone by the time anyone
+       hovered. A locked field that simply swallows keystrokes is the kind of
+       silence this project keeps deciding against. */
+    input.addEventListener("keydown", function (ev) {
+      if (!input.readOnly || !cfg.toast) return;
+      if (ev.ctrlKey || ev.metaKey || ev.altKey) return;   // copy, select all
+      if (ev.key.length !== 1 && ev.key !== "Backspace" && ev.key !== "Delete") return;
+      cfg.toast(t("deckLocksIdentity"));
+    });
 
     function isRef(raw) {
       return global.MCDB ? global.MCDB.parseRef(raw) : null;
@@ -211,6 +249,7 @@
     function setDeck(next) {
       deck = next || "";
       cfg.onChange(hero, deck);
+      syncLock();
       drawChip();
     }
 
@@ -220,11 +259,15 @@
       input.classList.add("is-resolving");
       global.MCDB.lookup(id, cfg.lang).then(function (name) {
         input.classList.remove("is-resolving");
-        /* The field may have moved on while the answer was in flight: a second
-           link pasted, the deck cleared, or someone clicking back in and
-           typing a name themselves. Overwriting any of those would be worse
-           than never filling the name in at all, so a late answer that no
-           longer fits is dropped. */
+        /* The deck may have been dropped while the answer was in flight —
+           paste a link, change your mind, hit the ×. Landing the name then
+           would leave a hero on the sheet belonging to no deck at all.
+
+           The second half is redundant today, because the field is locked for
+           as long as a deck is linked and so the hero cannot change underneath
+           a pending lookup. It stays as the guard it would have to be if that
+           lock were ever relaxed: a name someone typed themselves outranks one
+           that arrived late. */
         if (id !== deck || hero !== was) return;
         if (!name) {
           if (cfg.toast) cfg.toast(t("deckLookupFailed", id));
@@ -262,6 +305,7 @@
       wrap.appendChild(chip);
     }
 
+    syncLock();
     drawChip();
     return wrap;
   }

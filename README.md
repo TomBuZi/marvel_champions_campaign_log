@@ -389,8 +389,8 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   Helden ein, den er dort findet. Das ist der **einzige** Netzwerkzugriff der
   App, und es geht dabei die Deck-Kennung an marvelcdb.com, sonst nichts —
   insbesondere nichts vom Bogen. Ohne Netz, bei einem privaten Deck oder einer
-  falschen Kennung bleibt der Link trotzdem stehen; nur der Name muss dann
-  selbst getippt werden.
+  falschen Kennung bleibt der Link trotzdem stehen; den Namen trägt man dann
+  selbst ein, nachdem man die Verknüpfung gelöst hat.
 * **Export / Import** als JSON, und **Link teilen**: der komplette Bogen steckt
   komprimiert in der Adresse. Der Teilen-Knopf steht oben rechts in der Leiste und
   nicht im Menü — er ist die eine Handlung, die man mitten im Spiel braucht, und
@@ -470,10 +470,21 @@ den Bogen tragen kann. Darunter erscheint ein Chip, der das Deck in einem neuen
 Tab öffnet, mit einem × daneben — das nur die Verknüpfung löst und den
 Heldennamen stehen lässt.
 
+**Solange ein Deck verknüpft ist, ist das Feld gesperrt** und die Vorschlagsliste
+abgehängt: der Held kommt aus dem Deck, und ein daneben getippter Name würde dem
+Link direkt darunter widersprechen — der Bogen behauptete dann zwei Helden auf
+einmal. Gesperrt heißt `readonly`, nicht `disabled`: der Wert bleibt markierbar,
+kopierbar und für Vorlesewerkzeuge lesbar. Wer trotzdem tippt, bekommt einen
+Hinweis statt verschluckter Tasten. Die Sperre gilt **auch dann, wenn der
+Nachschlag gescheitert ist** — ein Feld, das nur nach einem Fehlschlag
+bearbeitbar wäre, ließe niemanden mehr ansehen, woher ein Name stammt. Der Weg
+zurück ist immer derselbe: das ×.
+
 Der Nachschlag ist **freiwillig und folgenlos, wenn er scheitert**: die Kennung
 und ihr Link bleiben, das Namensfeld behält, was darin stand, und ein Hinweis
-sagt, dass das Deck nicht zu lesen war. Ein Deck, das nicht abrufbar ist, ist
-schließlich immer noch ein Deck. Gelingt er, trägt er den Heldennamen in der
+sagt, dass das Deck nicht zu lesen war — und das Feld bleibt auch dann
+gesperrt, siehe unten. Ein Deck, das nicht abrufbar ist, ist schließlich immer
+noch ein Deck. Gelingt er, trägt er den Heldennamen in der
 Sprache der Oberfläche ein, und der Lebenspunkte-Hinweis folgt ihm — das ist der
 eigentliche Gewinn gegenüber dem bloßen Link.
 
@@ -694,7 +705,7 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (895 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (902 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   langpath | print | import | lock |
                                     #   lockconflict | random | randomspread |
