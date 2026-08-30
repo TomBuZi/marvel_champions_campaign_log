@@ -30,7 +30,7 @@ function eq(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
 const win = {};
 const campaigns = [];
 win.registerCampaign = function (def) { campaigns.push(def); };
-const SCRIPTS = ["i18n.js", "widgets.js", "heroes.js"]
+const SCRIPTS = ["i18n.js", "widgets.js", "heroes.js", "marvelcdb.js"]
   .concat(fs.readdirSync(path.join(root, "campaigns")).sort()
     .filter((f) => f.endsWith(".js")).map((f) => "campaigns/" + f));
 for (const rel of SCRIPTS) new Function("window", read(rel))(win);
@@ -143,8 +143,12 @@ for (const def of campaigns) {
   /* A deliberately filthy input: wrong types, unknown ids, out-of-range
      numbers, nulls and duplicate values in a column that must stay unique. */
   const dirty = {
-    players: [{ hero: "  Daredevil  ", hp: "500" }, { hero: 7, hp: -2 },
-              null, { hero: "x".repeat(500), hp: "nope" }, { hero: "fifth player" }],
+    players: [{ hero: "  Daredevil  ", hp: "500", deck: " 1213577 " },
+              { hero: 7, hp: -2, deck: 42 },
+              null,
+              { hero: "x".repeat(500), hp: "nope",
+                deck: "https://evil.example/deck/view/9" },
+              { hero: "fifth player", deck: "abc" }],
     scenarios: [
       { slug: "the-getaway", completed: "true", villain: "electro", progress: "99" },
       { slug: "protection-racket", completed: 1, villain: "electro", progress: -3 },
@@ -166,6 +170,18 @@ for (const def of campaigns) {
   check(p + "normalize never throws on a string", (() => {
     try { def.normalize("garbage"); return true; } catch (e) { return false; }
   })());
+
+  /* The deck field is the only one whose value ends up in an href, so it is
+     checked on every campaign rather than in one campaign's own block: an id
+     or nothing, never anything a link could be built out of that points
+     somewhere else. The fixture above hands it a padded id, a number, a
+     foreign address wearing MarvelCDB's path, and plain nonsense. */
+  check(p + "every deck is a bare id or empty",
+    once.players.every((pl) => /^(\d{1,12})?$/.test(pl.deck)),
+    JSON.stringify(once.players.map((pl) => pl.deck)));
+  check(p + "a padded id survives, a foreign address does not",
+    once.players[0].deck === "1213577" && once.players[3].deck === "",
+    JSON.stringify([once.players[0].deck, once.players[3].deck]));
 
   if (def.id === "fear-no-evil") {
     check(p + "row count fixed at 5", once.scenarios.length === 5);
@@ -362,9 +378,10 @@ for (const def of campaigns) {
     check(p + "player list capped at 4", once.players.length === 4, once.players.length);
     check(p + "an empty player list still yields one player",
       def.normalize({ players: [] }).players.length === 1);
-    /* The leanest player card of the three: a name and a number, nothing else. */
-    check(p + "a player carries nothing but a hero and hit points",
-      eq(Object.keys(once.players[0]).sort(), ["hero", "hp"]),
+    /* The leanest player card of them all: a name and a number, plus the
+       deck link every campaign now carries. */
+    check(p + "a player carries a hero, a deck and hit points, nothing else",
+      eq(Object.keys(once.players[0]).sort(), ["deck", "hero", "hp"]),
       JSON.stringify(Object.keys(once.players[0])));
 
     /* Nine boxes, every one present as a real boolean. A missing key would read
@@ -423,7 +440,7 @@ for (const def of campaigns) {
        entries out from under the names. */
     check(p + "a player carries the identity, the hit points and three rewards",
       eq(Object.keys(once.players[0]).sort(),
-        ["aspectAdvantage", "hero", "hp", "planningAhead", "shieldTech"]),
+        ["aspectAdvantage", "deck", "hero", "hp", "planningAhead", "shieldTech"]),
       JSON.stringify(Object.keys(once.players[0])));
     check(p + "hero trimmed, hp clamped",
       once.players[0].hero === "Daredevil" && once.players[0].hp === 99,
@@ -586,7 +603,8 @@ for (const def of campaigns) {
        parallel list keyed by index would shift every column up onto the wrong
        hero the moment a player is removed. */
     check(p + "a player carries the identity, the hit points, the role and its marks",
-      eq(Object.keys(once.players[0]).sort(), ["hero", "hp", "role", "upgrades"]),
+      eq(Object.keys(once.players[0]).sort(),
+        ["deck", "hero", "hp", "role", "upgrades"]),
       JSON.stringify(Object.keys(once.players[0])));
 
     /* The twenty role upgrades by SLUG, not by label. Deliberate: CLAUDE.md
@@ -785,9 +803,10 @@ for (const def of campaigns) {
     check(p + "a blank hit point field stays null",
       def.normalize({ players: [{ hp: "" }] }).players[0].hp === null);
     /* Nothing else hangs off a player here: no role, no upgrades, no
-       obligations. The sheet prints an identity and a number per player. */
-    check(p + "a player carries the identity and the hit points, nothing else",
-      eq(Object.keys(once.players[0]).sort(), ["hero", "hp"]),
+       obligations. The sheet prints an identity and a number per player; the
+       deck is the app's own addition and is on every campaign. */
+    check(p + "a player carries the identity, the deck and the hit points, nothing else",
+      eq(Object.keys(once.players[0]).sort(), ["deck", "hero", "hp"]),
       JSON.stringify(Object.keys(once.players[0])));
 
     /* The seven Marauder villains by SLUG, not by label: the slugs are the
@@ -954,8 +973,8 @@ for (const def of campaigns) {
         .players[0].hp === 7);
 
     check(p + "a fresh sheet has exactly one player", empty.players.length === 1);
-    check(p + "a player carries the identity and the hit points, nothing else",
-      eq(Object.keys(empty.players[0]).sort(), ["hero", "hp"]),
+    check(p + "a player carries the identity, the deck and the hit points, nothing else",
+      eq(Object.keys(empty.players[0]).sort(), ["deck", "hero", "hp"]),
       JSON.stringify(Object.keys(empty.players[0])));
 
     /* The table is rebuilt from the printed rows every time, so it always has
@@ -1098,9 +1117,9 @@ for (const def of campaigns) {
     check(p + "player list capped at 4", once.players.length === 4, once.players.length);
     check(p + "an empty player list still yields one player",
       def.normalize({ players: [] }).players.length === 1);
-    check(p + "a player carries exactly the five fields the sheet asks for",
+    check(p + "a player carries exactly the six fields the sheet asks for",
       eq(Object.keys(empty.players[0]).sort(),
-        ["collection", "hero", "hp", "market", "unitsEarned"]),
+        ["collection", "deck", "hero", "hp", "market", "unitsEarned"]),
       JSON.stringify(Object.keys(empty.players[0])));
     check(p + "units earned are clamped like hit points",
       def.normalize({ players: [{ unitsEarned: "500" }, { unitsEarned: -4 },
@@ -1344,8 +1363,8 @@ for (const def of campaigns) {
         .players[0].hp === 7);
 
     check(p + "a fresh sheet has exactly one player", empty.players.length === 1);
-    check(p + "a player carries the identity and the hit points, nothing else",
-      eq(Object.keys(empty.players[0]).sort(), ["hero", "hp"]),
+    check(p + "a player carries the identity, the deck and the hit points, nothing else",
+      eq(Object.keys(empty.players[0]).sort(), ["deck", "hero", "hp"]),
       JSON.stringify(Object.keys(empty.players[0])));
 
     /* The counter table, pinned BY SLUG and BY LENGTH: three printed rows in
@@ -1563,6 +1582,54 @@ check("health is a number or null",
   heroes.every((h) => h.health === null || Number.isInteger(h.health)),
   heroes.filter((h) => !(h.health === null || Number.isInteger(h.health))).map((h) => h.en).join(","));
 
+// ----------------------------------------------------------------- marvelcdb
+/* What counts as a deck reference, and what does not. The second half matters
+   more than the first: whatever survives here is put into an href, so a path
+   that merely looks like MarvelCDB's on somebody else's host has to come back
+   null. The lookup itself is not exercised — it talks to the network, and CI
+   has none. */
+section("MarvelCDB deck references");
+const MCDB = win.MCDB;
+const refs = [
+  ["1213577", "1213577", "a bare id"],
+  ["  1213577  ", "1213577", "an id with whitespace"],
+  ["0001213577", "1213577", "leading zeros dropped"],
+  ["https://marvelcdb.com/deck/view/1213577?deck_name=Bonkers%20is%20my%20Name...Name",
+    "1213577", "the link the site hands out"],
+  ["https://marvelcdb.com/deck/view/1213577", "1213577", "a bare deck link"],
+  ["marvelcdb.com/deck/view/1213577", "1213577", "without a scheme"],
+  ["http://www.marvelcdb.com/deck/view/1213577", "1213577", "http and www"],
+  ["https://marvelcdb.com/decklist/view/1/black-panther", "1", "a published decklist"],
+  ["https://marvelcdb.com/deck/edit/1213577", "1213577", "an edit link"],
+  ["Spider-Man", null, "a hero name"],
+  ["", null, "nothing"],
+  [null, null, "null"],
+  ["0", null, "there is no deck 0"],
+  ["12345678901234", null, "far too many digits"],
+  ["https://evil.example/deck/view/1213577", null, "a foreign host"],
+  ["https://marvelcdb.com.evil.example/deck/view/1", null, "a host that only starts right"],
+  ["https://marvelcdb.com/user/profile/1213577", null, "a marvelcdb link that is not a deck"],
+];
+for (const [input, want, what] of refs) {
+  const got = MCDB.parseRef(input);
+  check("parseRef: " + what, got === want, JSON.stringify(got) + " for " + JSON.stringify(input));
+}
+check("deckUrl builds the site's own address",
+  MCDB.deckUrl("1213577") === "https://marvelcdb.com/deck/view/1213577",
+  MCDB.deckUrl("1213577"));
+check("shortUrl drops the scheme for the printout",
+  MCDB.shortUrl("1213577") === "marvelcdb.com/deck/view/1213577",
+  MCDB.shortUrl("1213577"));
+/* Round trip: whatever the link builders produce has to be recognised again,
+   or a copied link out of the sheet would stop working. */
+check("the link it builds is a link it accepts",
+  MCDB.parseRef(MCDB.deckUrl("1213577")) === "1213577" &&
+  MCDB.parseRef(MCDB.shortUrl("1213577")) === "1213577");
+check("coerceDeck reduces anything else to nothing",
+  win.W.coerceDeck("https://evil.example/deck/view/1") === "" &&
+  win.W.coerceDeck(undefined) === "" &&
+  win.W.coerceDeck(" 1213577 ") === "1213577");
+
 // ------------------------------------------------------------------- packaging
 section("Packaging");
 const html = read("index.html");
@@ -1583,6 +1650,11 @@ for (const def of campaigns) {
     html.includes('<script src="campaigns/' + def.id + '.js"'));
 }
 check("stylesheet exists", fs.existsSync(path.join(root, "styles.css")));
+/* Same trap as the campaigns above: lint loads marvelcdb.js by name, the
+   browser only runs what index.html asks for. Without it the identity fields
+   would quietly stop recognising deck links and nothing would say so. */
+check("index.html loads marvelcdb.js",
+  html.includes('<script src="marvelcdb.js"'));
 
 /* The only check in this file that looks inside a palette, and it exists because
    the wordmark tokens are the one place where a missing declaration is INVISIBLE

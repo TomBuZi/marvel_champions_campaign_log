@@ -133,6 +133,183 @@
     return dl;
   }
 
+  // ---- Identity field -----------------------------------------------------
+  /* The hero, plus the MarvelCDB deck they were built in. cfg:
+       { value, deck, label, placeholder?, maxLength?, listId?, lang, t,
+         toast?, onChange(hero, deck) }
+
+     One field, three ways to fill it: a hero off the suggestion list, any free
+     text, or a MarvelCDB deck — a bare id ("1213577") or a full link to one.
+     A deck reference is reduced to its id, the id is what gets stored, and the
+     hero behind it is fetched so the name need not be typed twice.
+
+     Only the id is kept, never the pasted address: the link is rebuilt from it
+     (marvelcdb.js), so no imported sheet can smuggle a link to somewhere else.
+
+     Nothing typed is ever thrown away. Recognising a deck puts the field back
+     to the hero it held before and lets the lookup overwrite it; a lookup that
+     fails leaves that value standing and says so. The id and its link stay
+     either way — a deck link that cannot be read is still a deck link.
+
+     A linked deck locks the field: see syncLock() for why, and note that the
+     lock is unconditional. It holds even when the lookup failed and the name
+     is therefore not the deck's — because the alternative is a field that is
+     sometimes editable with a link attached, and then nobody can tell by
+     looking whether the name they see came from the deck or from a keyboard.
+     The × is one click away and gives the field back. */
+  function identityField(cfg) {
+    var t = cfg.t;
+    var maxLength = cfg.maxLength || 0;
+    var hero = cfg.value == null ? "" : String(cfg.value);
+    var deck = cfg.deck ? String(cfg.deck) : "";
+    var chip = null;
+
+    var wrap = el("div", "identity-field");
+    /* No `maxlength` on the element, unlike textField: a pasted deck link runs
+       to about ninety characters and the browser would cut it before anyone
+       got to look at it — the paste would fail to be recognised and the reason
+       would be invisible. Free text is capped on commit instead, which lands
+       on the same length normalize() uses. */
+    var input = el("input", "text-input", {
+      type: "text", "aria-label": cfg.label, title: cfg.label,
+      placeholder: cfg.placeholder || null,
+      autocomplete: "off", spellcheck: "false",
+    });
+    input.value = hero;
+    wrap.appendChild(input);
+
+    /* While a deck is linked the hero comes FROM that deck, so the field stops
+       taking input and the suggestion list is detached — a name typed over the
+       top would quietly disagree with the link right under it, and the sheet
+       would assert two different heroes at once. The × is the way back: clear
+       the link and the field is free again.
+
+       Read-only rather than disabled on purpose: the value stays selectable,
+       copyable and in the accessibility tree, and a locked identity is still
+       something you want to be able to read out. */
+    function syncLock() {
+      var locked = !!deck;
+      input.readOnly = locked;
+      input.classList.toggle("is-locked", locked);
+      /* Detached, not merely ignored: a read-only input still pops its list in
+         some browsers, and an offer that cannot be accepted is worse than no
+         offer. */
+      if (locked || !cfg.listId) input.removeAttribute("list");
+      else input.setAttribute("list", cfg.listId);
+    }
+
+    /* Saying why, at the moment someone finds out. The reason cannot live in
+       the field's `title`: the campaign modules rewrite that on every change
+       to flag duplicate heroes, so it would be gone by the time anyone
+       hovered. A locked field that simply swallows keystrokes is the kind of
+       silence this project keeps deciding against. */
+    input.addEventListener("keydown", function (ev) {
+      if (!input.readOnly || !cfg.toast) return;
+      if (ev.ctrlKey || ev.metaKey || ev.altKey) return;   // copy, select all
+      if (ev.key.length !== 1 && ev.key !== "Backspace" && ev.key !== "Delete") return;
+      cfg.toast(t("deckLocksIdentity"));
+    });
+
+    function isRef(raw) {
+      return global.MCDB ? global.MCDB.parseRef(raw) : null;
+    }
+
+    /* While a deck reference is sitting in the field it is not a hero's name,
+       so it is not committed as one — the sheet would otherwise carry half a
+       URL as an identity until the field is left. */
+    input.addEventListener("input", function () {
+      if (isRef(input.value)) return;
+      /* Capped but not trimmed: trimming on every keystroke eats the space
+         someone is typing between two words. Blur does the full clean-up. */
+      hero = maxLength ? input.value.slice(0, maxLength) : input.value;
+      cfg.onChange(hero, deck);
+    });
+    input.addEventListener("blur", settle);
+    /* Enter settles the field without waiting for the focus to move, which is
+       what someone who just pasted a link expects. */
+    input.addEventListener("keydown", function (ev) {
+      if (ev.key !== "Enter") return;
+      ev.preventDefault();
+      settle();
+    });
+
+    function settle() {
+      var id = isRef(input.value);
+      if (id) {
+        input.value = hero;
+        setDeck(id);
+        lookUp(id);
+        return;
+      }
+      hero = coerceText(input.value, maxLength);
+      input.value = hero;
+      cfg.onChange(hero, deck);
+    }
+
+    function setDeck(next) {
+      deck = next || "";
+      cfg.onChange(hero, deck);
+      syncLock();
+      drawChip();
+    }
+
+    function lookUp(id) {
+      if (!global.MCDB) return;
+      var was = hero;
+      input.classList.add("is-resolving");
+      global.MCDB.lookup(id, cfg.lang).then(function (name) {
+        input.classList.remove("is-resolving");
+        /* The deck may have been dropped while the answer was in flight —
+           paste a link, change your mind, hit the ×. Landing the name then
+           would leave a hero on the sheet belonging to no deck at all.
+
+           The second half is redundant today, because the field is locked for
+           as long as a deck is linked and so the hero cannot change underneath
+           a pending lookup. It stays as the guard it would have to be if that
+           lock were ever relaxed: a name someone typed themselves outranks one
+           that arrived late. */
+        if (id !== deck || hero !== was) return;
+        if (!name) {
+          if (cfg.toast) cfg.toast(t("deckLookupFailed", id));
+          return;
+        }
+        hero = name;
+        input.value = name;
+        cfg.onChange(hero, deck);
+      });
+    }
+
+    /* Redrawn in place rather than by re-rendering the panel: the lookup lands
+       asynchronously, possibly while another field is being typed in, and a
+       re-render would take the focus out of it. */
+    function drawChip() {
+      if (chip) { wrap.removeChild(chip); chip = null; }
+      if (!deck || !global.MCDB) return;
+      chip = el("div", "deck-chip");
+      var link = el("a", "deck-link", {
+        href: global.MCDB.deckUrl(deck),
+        target: "_blank", rel: "noopener noreferrer",
+        title: t("deckOpen", deck),
+      });
+      link.textContent = t("deckChip", deck);
+      /* Clearing the deck keeps the hero: the name was typed or looked up, and
+         losing it because the link went is not what the × promises. */
+      var clear = iconButton({
+        glyph: "×",
+        label: t("deckClear", deck),
+        onClick: function () { setDeck(""); },
+      });
+      clear.classList.add("deck-clear");
+      chip.appendChild(link);
+      chip.appendChild(clear);
+      wrap.appendChild(chip);
+    }
+
+    syncLock();
+    drawChip();
+    return wrap;
+  }
+
   // ---- Select with mutual exclusion ---------------------------------------
   /* One <select> out of a fixed pool. cfg:
        { value, options: [{value,label,lang?,group?}], placeholder, label,
@@ -639,6 +816,18 @@
     return v === true || v === 1 || v === "true";
   }
 
+  /* A MarvelCDB deck id, or "" for none. Whatever arrives — a bare id, a
+     pasted address, a number out of a hand-edited export — is reduced to the
+     id inside it, and anything that is not one becomes "". What the sheet
+     stores can therefore only ever build a link to marvelcdb.com: an imported
+     file or a shared link cannot smuggle in a pointer to somewhere else.
+     The 4 KB cap is for the regexes' sake, not the id's — twelve digits are
+     the most that can survive this anyway. */
+  function coerceDeck(v) {
+    var ref = global.MCDB ? global.MCDB.parseRef(coerceText(v, 4096)) : null;
+    return ref || "";
+  }
+
   /* Free text, cleaned: control characters out (they are invisible and break
      the print view), optionally length-capped, trimmed. */
   function coerceText(v, maxLength) {
@@ -656,6 +845,7 @@
     clampNumber: clampNumber,
     textField: textField,
     dataList: dataList,
+    identityField: identityField,
     poolSelect: poolSelect,
     syncUnique: syncUnique,
     iconButton: iconButton,
@@ -667,6 +857,7 @@
     coerceStringList: coerceStringList,
     coerceBool: coerceBool,
     coerceText: coerceText,
+    coerceDeck: coerceDeck,
     /* core.js installs the persistence hook here once, so widgets stay
        independent of how (or whether) anything is stored. */
     setCommitHandler: function (fn) { onCommit = fn || function () {}; },

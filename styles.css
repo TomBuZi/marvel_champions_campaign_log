@@ -2377,6 +2377,81 @@ button:focus-visible {
 
 .text-input { width: 100%; }
 
+/* ---------- Identity field with a MarvelCDB deck ---------- */
+/* The name and, under it, the deck it was built in. A grid rather than a bare
+   input because the chip appears and disappears with the deck; the gap only
+   costs anything when there is something to separate. */
+.identity-field {
+  display: grid;
+  gap: 0.35rem;
+}
+/* Dimmed while the deck is being fetched, so a slow answer looks like waiting
+   rather than like nothing happening. The lookup is short and may fail, so it
+   stays a shade rather than becoming a spinner. */
+.identity-field .text-input.is-resolving { opacity: 0.6; }
+
+/* A field whose hero comes from the linked deck. Same idiom as a checkbox the
+   sheet has closed and as .text-input:disabled above — dashed border, slight
+   fade, not-allowed cursor — because it says the same thing: what is written
+   here stays legible, it just is not yours to type. It is read-only rather
+   than disabled, so the styling has to be asked for by class; [readonly] alone
+   would also catch fields that are read-only for other reasons. */
+.identity-field .text-input.is-locked {
+  cursor: not-allowed;
+  border-style: dashed;
+  opacity: 0.8;
+}
+
+.deck-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+/* Same shape as the footer chips, one size down: this one sits inside a card
+   and must not compete with the identity above it. It also sits inside a
+   .field-label, whose uppercase small-caps styling is meant for the caption
+   and not for a link — hence the same reset .units-line needs, and for the
+   same reason: an address in small caps stops looking like an address. */
+.deck-link {
+  flex: 0 1 auto;
+  min-width: 0;
+  text-transform: none;
+  letter-spacing: normal;
+  padding: 0.1rem 0.55rem;
+  background: var(--panel-1);
+  color: var(--accent-2);
+  border: var(--rule) solid var(--bar);
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.72rem;
+  /* Player cards get narrow at four players; the id is the part worth keeping
+     whole, so the chip clips rather than widening the card. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.deck-link:hover,
+.deck-link:focus-visible { background: var(--pill); }
+.deck-link:focus-visible { outline: 3px solid var(--zap); outline-offset: 2px; }
+
+/* As quiet as .player-remove, and for the same reason: dropping the link is
+   not something to invite. */
+.deck-clear {
+  width: 1.3rem;
+  height: 1.3rem;
+  background: none;
+  border-color: transparent;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+.deck-clear:hover:not(:disabled) {
+  background: none;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
 .num-field {
   display: inline-flex;
   align-items: baseline;

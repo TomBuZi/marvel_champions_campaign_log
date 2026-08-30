@@ -1321,7 +1321,7 @@
           setTimeout(function () {
             var stored = JSON.parse(localStorage.getItem("mcclog:logs"))["old-1"];
             log("an edit carries the stored sheet up to the current version",
-              stored.stateVersion === 3, stored.stateVersion);
+              stored.stateVersion === 4, stored.stateVersion);
             log("and stores two players, not four",
               stored.state.players.length === 2, JSON.stringify(stored.state.players));
             log("the edit itself landed", stored.state.players[0].hp === 6, stored.state.players[0].hp);
@@ -2265,7 +2265,7 @@
       function caseMtsPrint() {
         var seeded = mtsLog();
         seeded.state.players = [
-          { hero: "Gamora", hp: 8 },
+          { hero: "Gamora", hp: 8, deck: "1213577" },
           { hero: "Drax", hp: 11 },
         ];
         seeded.state.flags = { cosmo: true, towerDamaged: true, odin: true };
@@ -2291,7 +2291,203 @@
           log("print ticks the tower trait", /\[x\] Avengers Tower/.test(text));
           log("print leaves the side scheme unticked",
             /\[ \] .{0,3}Die Infinitysteine 1B/.test(text));
+          /* Short enough to type off paper, and only for the player who has
+             one — the second player's line must not grow an empty address. */
+          log("print carries the one deck link there is",
+            (text.match(/Deck: marvelcdb\.com\/deck\/view\/1213577/g) || []).length === 1,
+            text);
           finish();
+        });
+      }
+
+      // ----------------------------------------------------------- deck link
+      /* The identity field takes a MarvelCDB deck as well as a name. This is
+         shell behaviour, not MC21's — the widget is shared by all nine — but a
+         case needs a sheet to stand on, and MC21's is the leanest.
+
+         The lookup is the app's only network call, so the case replaces it
+         before touching anything. A run that reached the real site would be
+         flaky and would fail outright in CI, which has no network; worse, it
+         would pass locally and look fine. The stub counts its calls, so an
+         accidentally real lookup shows up as a count that never moved. */
+      function caseDeck() {
+        var deckUrl = "https://marvelcdb.com/deck/view/1213577" +
+          "?deck_name=Bonkers%20is%20my%20Name...Name";
+        seed({ mts1: mtsLog() }, "mts1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var calls = [];
+          var answer = "Echo";
+          w.MCDB.lookup = function (id, lang) {
+            calls.push(id + "/" + lang);
+            return Promise.resolve(answer);
+          };
+          function card() { return d.querySelectorAll(".player-card")[0]; }
+          function field() { return card().querySelector(".text-input"); }
+          function chip() { return card().querySelector(".deck-link"); }
+          function stored() {
+            return JSON.parse(localStorage.getItem("mcclog:logs")).mts1.state.players[0];
+          }
+          /* Only ever used on an unlocked field, the way a keyboard could:
+             assigning .value would sail straight past readOnly and the case
+             would then be testing something nobody can do. */
+          function type(value) {
+            var f = field();
+            f.value = value;
+            fire(f, "input");
+            fire(f, "blur");
+          }
+          function press(key) {
+            field().dispatchEvent(
+              new w.KeyboardEvent("keydown", { key: key, bubbles: true }));
+          }
+          function unlink() {
+            var x = card().querySelector(".deck-clear");
+            if (x) x.click();
+          }
+
+          log("a card without a deck shows no chip", !chip());
+          /* The chip is a link, not an input, so the older assertion that the
+             identity is the only free-text field on the card still holds. */
+          log("the identity is still the only text field on the card",
+            card().querySelectorAll(".text-input").length === 1,
+            card().querySelectorAll(".text-input").length);
+          /* No maxlength on the element on purpose: a pasted deck link runs to
+             about ninety characters and the browser would cut it before the
+             field ever saw it. */
+          log("the field does not cap what can be pasted into it",
+            !field().hasAttribute("maxlength"));
+
+          // A hero name still behaves exactly as it always did.
+          type("Gamora");
+          log("a hero name is not mistaken for a deck",
+            !chip() && calls.length === 0, calls.join(","));
+
+          // A pasted link: the id is kept, the address is not.
+          type(deckUrl);
+          log("a pasted link is looked up once",
+            calls.length === 1, calls.join(","));
+          log("and in the language of the interface",
+            calls[0] === "1213577/de", calls[0]);
+          log("the address does not stay in the field", field().value !== deckUrl,
+            field().value);
+          log("a chip appears, pointing at the deck",
+            !!chip() && chip().getAttribute("href") ===
+              "https://marvelcdb.com/deck/view/1213577",
+            chip() && chip().getAttribute("href"));
+          log("the chip opens in a new tab, safely",
+            chip().getAttribute("target") === "_blank" &&
+            /noopener/.test(chip().getAttribute("rel")),
+            chip().getAttribute("rel"));
+
+          setTimeout(function () {
+            log("the looked-up hero lands in the field",
+              field().value === "Echo", field().value);
+            /* The hint is the point of looking the hero up at all: it is what
+               the sheet knows that the deck link alone does not say. */
+            log("and the hit point hint follows it",
+              card().querySelector(".num-hint").textContent.trim() === "/ 9",
+              JSON.stringify(card().querySelector(".num-hint").textContent));
+
+            /* A linked deck owns the identity, so the field stops taking input
+               and the suggestion list goes with it: a name typed over the top
+               would disagree with the link right under it. */
+            log("a linked deck locks the identity field", field().readOnly);
+            log("and detaches the suggestion list",
+              !field().hasAttribute("list"), field().getAttribute("list"));
+            log("and the lock is visible, not only enforced",
+              field().classList.contains("is-locked"), field().className);
+            var toastNode = d.getElementById("toast");
+            toastNode.textContent = "";
+            press("a");
+            log("typing into it says why instead of swallowing the key",
+              /Deck/.test(toastNode.textContent), toastNode.textContent.slice(0, 60));
+
+            // Only the × gives the field back.
+            unlink();
+            log("clearing the deck unlocks the field", !field().readOnly);
+            log("and hands the suggestion list back",
+              field().getAttribute("list") === "hero-suggestions",
+              field().getAttribute("list"));
+
+            // A bare id: same result, no address to parse.
+            type("1");
+            log("a bare id is a deck reference too",
+              calls.length === 2 && calls[1] === "1/de", calls.join(","));
+            log("and the chip follows it",
+              chip().getAttribute("href") === "https://marvelcdb.com/deck/view/1",
+              chip().getAttribute("href"));
+
+            /* An answer can arrive after the link it belongs to is gone: paste
+               one, then change your mind and hit ×. It must not land — the
+               name would then belong to no deck on the sheet. */
+            var late = null;
+            unlink();
+            w.MCDB.lookup = function () {
+              return new Promise(function (res) { late = res; });
+            };
+            type("1213577");
+            unlink();
+            late("Nova");
+            setTimeout(function () {
+              log("an answer whose deck was dropped meanwhile does not land",
+                field().value === "Echo" && !chip(), field().value);
+              w.MCDB.lookup = function (id, lang) {
+                calls.push(id + "/" + lang);
+                return Promise.resolve(answer);
+              };
+              afterLate();
+            }, 0);
+          }, 0);
+
+          function afterLate() {
+            // A lookup that comes back empty must cost nothing that was typed.
+            answer = null;
+            type("1213577");
+            setTimeout(function () {
+              log("a failed lookup keeps the hero that was already there",
+                field().value === "Echo", field().value);
+              log("and keeps the link, which is still a link",
+                !!chip() && /1213577/.test(chip().getAttribute("href")),
+                chip() && chip().getAttribute("href"));
+              /* The lock does not depend on the lookup having worked: a deck is
+                 linked either way, and a field that were editable only after a
+                 failure would leave nobody able to tell where a name came
+                 from. */
+              log("and locks the field all the same", field().readOnly);
+              var toast = d.getElementById("toast");
+              log("and says so rather than failing silently",
+                !toast.hidden && /1213577/.test(toast.textContent),
+                toast.textContent.slice(0, 60));
+
+              // Clearing the deck is not clearing the hero.
+              unlink();
+              log("the × drops the chip", !chip());
+              log("but leaves the identity alone", field().value === "Echo",
+                field().value);
+
+              /* Free text longer than the sheet's own cap is still capped —
+                 the element no longer does it, so the widget has to. */
+              type("x".repeat(200));
+              log("over-long free text is cut back on commit",
+                field().value.length === 60, field().value.length);
+
+              w.dispatchEvent(new w.Event("pagehide"));
+              setTimeout(function () {
+                var p = stored();
+                log("the stored sheet keeps the identity",
+                  p.hero.length === 60, p.hero.length);
+                log("and no longer keeps a deck", p.deck === "", p.deck);
+                log("a deck typed again is stored as the bare id, not a link",
+                  (function () {
+                    type(deckUrl);
+                    w.dispatchEvent(new w.Event("pagehide"));
+                    return stored().deck === "1213577";
+                  })(), stored().deck);
+                finish();
+              }, 0);
+            }, 0);
+          }
         });
       }
 
@@ -5775,7 +5971,7 @@
         });
       }
 
-      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint, mg: caseMg, mgrole: caseMgRole, mgexpert: caseMgExpert, mgprint: caseMgPrint, ne: caseNe, neschemes: caseNeSchemes, neexpert: caseNeExpert, neprint: caseNePrint, aoa: caseAoa, aoamissions: caseAoaMissions, aoaexpert: caseAoaExpert, aoaprint: caseAoaPrint, gmw: caseGmw, gmwmarket: caseGmwMarket, gmwunits: caseGmwUnits, gmwexpert: caseGmwExpert, gmwprint: caseGmwPrint,
+      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, deck: caseDeck, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint, mg: caseMg, mgrole: caseMgRole, mgexpert: caseMgExpert, mgprint: caseMgPrint, ne: caseNe, neschemes: caseNeSchemes, neexpert: caseNeExpert, neprint: caseNePrint, aoa: caseAoa, aoamissions: caseAoaMissions, aoaexpert: caseAoaExpert, aoaprint: caseAoaPrint, gmw: caseGmw, gmwmarket: caseGmwMarket, gmwunits: caseGmwUnits, gmwexpert: caseGmwExpert, gmwprint: caseGmwPrint,
         aos: caseAos, aosevidence: caseAosEvidence,
         aosexpert: caseAosExpert, aosprint: caseAosPrint, sharebtn: caseShareButton };
       (cases[CASE] || caseBasic)();

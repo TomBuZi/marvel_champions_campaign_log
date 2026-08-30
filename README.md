@@ -381,7 +381,16 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   angerichtet; die Auswahl springt vorher schon auf den Bogen zurück, der
   wirklich offen ist.
 * **Automatisch gespeichert** im Speicher des Browsers — kein Server, kein Konto,
-  keine Übertragung irgendwohin.
+  keine Übertragung irgendwohin. Der Bogen verlässt das Gerät nur, wenn man ihn
+  exportiert oder teilt.
+* **Deck von MarvelCDB verknüpfen**: ins Identitätsfeld darf statt eines
+  Heldennamens auch eine Deck-Kennung (`1213577`) oder der ganze Link. Der Bogen
+  merkt sich die Kennung, zeigt darunter einen Link auf das Deck und trägt den
+  Helden ein, den er dort findet. Das ist der **einzige** Netzwerkzugriff der
+  App, und es geht dabei die Deck-Kennung an marvelcdb.com, sonst nichts —
+  insbesondere nichts vom Bogen. Ohne Netz, bei einem privaten Deck oder einer
+  falschen Kennung bleibt der Link trotzdem stehen; den Namen trägt man dann
+  selbst ein, nachdem man die Verknüpfung gelöst hat.
 * **Export / Import** als JSON, und **Link teilen**: der komplette Bogen steckt
   komprimiert in der Adresse. Der Teilen-Knopf steht oben rechts in der Leiste und
   nicht im Menü — er ist die eine Handlung, die man mitten im Spiel braucht, und
@@ -404,7 +413,9 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
 * **Druckansicht** als reine Textfassung in Schwarzweiß, damit nichts abgeschnitten wird.
 * **Deutsch und Englisch**, hell und dunkel, beides umschaltbar und gespeichert —
   die Sprache lässt sich auch über die Adresse vorgeben (`…/de/`, `…/en/`).
-* Läuft auch offline und direkt von der Festplatte (`file://`).
+* Läuft auch offline und direkt von der Festplatte (`file://`) — bis auf das
+  Nachschlagen eines verknüpften Decks, das ohne Netz einfach nichts findet und
+  sonst nichts ändert.
 
 ### Fortschritt, „1“, „2“, „Gescheitert“
 
@@ -448,6 +459,34 @@ die verbleibenden Karten neu durchnummeriert.
 
 Das Identitätsfeld ist Freitext mit Vorschlagsliste aus `heroes.js`; passt der Name auf
 einen bekannten Helden, erscheint daneben dessen aufgedruckter Startwert als Erinnerung.
+
+Dasselbe Feld nimmt auch ein **Deck von MarvelCDB** an — die Kennung allein
+(`1213577`) oder den ganzen Link, wie ihn die Seite herausgibt. Erkannt wird
+beides beim Verlassen des Feldes, nicht bei jedem Tastendruck; sonst löste jede
+Zwischenstufe einer getippten Zahl eine Anfrage aus. Gespeichert wird nur die
+**Kennung**, nie die eingefügte Adresse: der Link wird immer aus ihr gebaut,
+damit weder eine importierte Datei noch ein geteilter Link ein fremdes Ziel in
+den Bogen tragen kann. Darunter erscheint ein Chip, der das Deck in einem neuen
+Tab öffnet, mit einem × daneben — das nur die Verknüpfung löst und den
+Heldennamen stehen lässt.
+
+**Solange ein Deck verknüpft ist, ist das Feld gesperrt** und die Vorschlagsliste
+abgehängt: der Held kommt aus dem Deck, und ein daneben getippter Name würde dem
+Link direkt darunter widersprechen — der Bogen behauptete dann zwei Helden auf
+einmal. Gesperrt heißt `readonly`, nicht `disabled`: der Wert bleibt markierbar,
+kopierbar und für Vorlesewerkzeuge lesbar. Wer trotzdem tippt, bekommt einen
+Hinweis statt verschluckter Tasten. Die Sperre gilt **auch dann, wenn der
+Nachschlag gescheitert ist** — ein Feld, das nur nach einem Fehlschlag
+bearbeitbar wäre, ließe niemanden mehr ansehen, woher ein Name stammt. Der Weg
+zurück ist immer derselbe: das ×.
+
+Der Nachschlag ist **freiwillig und folgenlos, wenn er scheitert**: die Kennung
+und ihr Link bleiben, das Namensfeld behält, was darin stand, und ein Hinweis
+sagt, dass das Deck nicht zu lesen war — und das Feld bleibt auch dann
+gesperrt, siehe unten. Ein Deck, das nicht abrufbar ist, ist schließlich immer
+noch ein Deck. Gelingt er, trägt er den Heldennamen in der
+Sprache der Oberfläche ein, und der Lebenspunkte-Hinweis folgt ihm — das ist der
+eigentliche Gewinn gegenüber dem bloßen Link.
 
 Das Spielerraster richtet sich nach der **Spielerzahl**, nicht nach der freien Breite:
 vier Spieler stehen in einer Reihe, solange dafür Platz ist, und darunter als 2 + 2 —
@@ -556,9 +595,10 @@ auch über `file://` und direkt aus dem Repo-Root über GitHub Pages.
 | `de/index.html`, `en/index.html` | die Adressen `…/de/` und `…/en/`: keine Kopie der App, nur eine Weiterleitung auf `../index.html?lang=…` |
 | `styles.css` | Design-Tokens (hell / dunkel / Druck), Comic-Optik, Tabelle samt Schmalvariante, Listen, Menü, Dialoge |
 | `core.js` | Speichern, mehrere Bögen, Quarantäne, Export/Import, Share-Link, Druck, Sprache, Theme, Kampagnen-Registry |
-| `widgets.js` | wiederverwendbare Bausteine: Checkbox, Zahlenfeld, Textfeld, Auswahl mit Ausschluss, Fortschrittszähler, Icon-Button, String-Liste mit Drag&Drop — jeweils mit optionalem gesperrten Zustand |
+| `widgets.js` | wiederverwendbare Bausteine: Checkbox, Zahlenfeld, Textfeld, Identitätsfeld mit Deck-Verknüpfung, Auswahl mit Ausschluss, Fortschrittszähler, Icon-Button, String-Liste mit Drag&Drop — jeweils mit optionalem gesperrten Zustand |
 | `i18n.js` | `window.I18N = { de, en }` — nur Strings des Rahmens |
 | `heroes.js` | 68 Helden (Name, Lebenspunkte) als Vorschlagsliste für die Identitätsfelder |
+| `marvelcdb.js` | Deck-Verweise von MarvelCDB: Kennung erkennen, Link bauen, Helden nachschlagen — der einzige Netzwerkzugriff der App |
 | `campaigns/fear-no-evil.js` | die Kampagne MC60: eigenes Datenmodell, eigenes Rendering, eigene Strings |
 | `campaigns/rise-of-red-skull.js` | die Kampagne MC10: feste Kartenpools mit ihren Eindeutigkeitsregeln und drei Szenariofelder; bewusst ohne Szenario-Tabelle |
 | `campaigns/mad-titans-shadow.js` | die Kampagne MC21: Spieler und neun benannte Kästchen in vier Szenario-Abschnitten; das schlankeste der Module |
@@ -665,7 +705,7 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (871 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (902 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   langpath | print | import | lock |
                                     #   lockconflict | random | randomspread |
@@ -673,6 +713,7 @@ node test/run-browser.js print      # nur ein Fall: basic | quarantine | share |
                                     #   round | roundlast | roundspread |
                                     #   rrs | rrsdialog | rrsprint | rrspools |
                                     #   rrsexpert | mts | mtsexpert | mtsprint |
+                                    #   deck |
                                     #   sm | smrep | smexpert | smprint |
                                     #   mg | mgrole | mgexpert | mgprint |
                                     #   ne | neschemes | neexpert | neprint |
@@ -905,6 +946,12 @@ im Footer der Seite. Der Ko-fi-Link öffnet in einem neuen Tab und trägt
   „Spider-Man * Peter Parker“ und „Spider-Man * Miles Morales“, „Black Panther *
   T'Challa“ und „Black Panther * Shuri“. Die Kartendaten führen sie unter einem Namen,
   die Lebenspunkte unterscheiden sich aber.
+  Genau diese vier sind auch der Grund, warum `marvelcdb.js` eine kleine Tabelle
+  nach `hero_code` führt: die API meldet nur den gedruckten Namen, also für Peter
+  Parker und Miles Morales beide Male „Spider-Man“. Wer sich auf den Namen
+  verlässt, trägt einen plausiblen Helden mit den Lebenspunkten des anderen ein —
+  und das fällt niemandem auf. Alle übrigen Helden werden über den Namen
+  gefunden, weil Liste und API aus derselben Quelle stammen.
 * **Das Identitätsfeld ist Freitext**, `heroes.js` liefert nur Vorschläge. Ein Umbenennen
   in der Liste ändert also nie einen bestehenden Bogen — dort bleibt der eingetippte
   Name stehen, höchstens der Lebenspunkte-Hinweis daneben findet keine Entsprechung
