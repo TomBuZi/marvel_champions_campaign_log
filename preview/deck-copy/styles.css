@@ -2335,15 +2335,19 @@ button:focus-visible {
 }
 
 /* ---------- Icon button (the base for the die, the × and the ⧉) ---------- */
-/* This block has to stay ABOVE its quiet variants — .player-remove just below,
-   .deck-copy and .deck-clear further down. They are single-class selectors
-   just as .icon-btn is, so nothing but source order decides, and while this
-   block sat lower in the file it overrode all three: every one of them drew
-   the filled, bordered die despite asking for no background and no border, and
-   at 1.9rem despite asking to be smaller. Three comments in this stylesheet
-   promised a quiet button and none of them was telling the truth. Nothing
-   caught it — a stylesheet has no tests — and it only turned up because
-   somebody looked at a screenshot. A fourth variant goes below here too.
+/* Every icon button on the sheet is this pill: the villain die, the × that
+   removes a player, and the × and ⧉ under a deck link. The variants below
+   change its COLOURS and nothing else, on purpose.
+
+   This block has to stay ABOVE them. They are single-class selectors just as
+   .icon-btn is, so nothing but source order decides, and while this block sat
+   lower in the file it silently overrode all three: each of them also asked
+   for no background, no border and a smaller edge, and got none of it. Three
+   comments promised a quiet button and none was telling the truth — a
+   stylesheet has no tests, and it took somebody looking at a screenshot. The
+   pill turned out to be the wanted look all along, so those declarations are
+   gone rather than honoured; what is left is what is drawn. A fourth variant
+   goes below here too.
 
    MC60's villain cell has no rule of its own: the field and its die sit in a
    .with-die wrapper inside it, and the cell stays a plain table cell. It used to
@@ -2371,20 +2375,15 @@ button:focus-visible {
   opacity: 0.4;
 }
 
-/* Quieter than the die: removing a player is not something to invite. */
-.player-remove {
-  width: 1.6rem;
-  height: 1.6rem;
-  background: none;
-  border-color: transparent;
-  color: var(--danger);
-  font-size: 1.05rem;
-}
-.player-remove:hover:not(:disabled) {
-  background: none;
-  border-color: var(--danger);
-}
-.player-remove:disabled { border-color: transparent; opacity: 0.25; }
+/* The die's shape, the danger colour: removing a player is not something to
+   invite, and colour is the whole of the warning — the glyph carries it at
+   rest, the border joins in on hover. */
+.player-remove { color: var(--danger); }
+.player-remove:hover:not(:disabled) { border-color: var(--danger); }
+/* The last player's × is disabled — removing it would leave a sheet with
+   nobody on it. The dashed edge .icon-btn:disabled draws reads as a control
+   waiting to open; this one never will, so the fade says it alone. */
+.player-remove:disabled { border-color: transparent; }
 
 .player-card {
   background: var(--bg-input);
@@ -2474,28 +2473,18 @@ button:focus-visible {
 .deck-link:focus-visible { background: var(--pill); }
 .deck-link:focus-visible { outline: 3px solid var(--zap); outline-offset: 2px; }
 
-/* Both as quiet as .player-remove, and for the same reason: neither dropping
-   the link nor reaching for the clipboard is something to interrupt the sheet
-   over. They part company on hover — see below. */
+/* Both are the die's pill, dimmed at rest so the id beside them stays the
+   loudest thing in the chip. */
 .deck-copy,
-.deck-clear {
-  width: 1.3rem;
-  height: 1.3rem;
-  background: none;
-  border-color: transparent;
-  color: var(--text-dim);
-  font-size: 0.9rem;
-}
-/* Copying an id costs nothing and undoes itself by not being pasted, so this
-   one may invite; dropping the link throws something away, so that one may
-   not. Hence the accent here and the danger colour there. */
+.deck-clear { color: var(--text-dim); }
+/* They part company on hover. Copying an id costs nothing and undoes itself by
+   not being pasted, so that one may invite; dropping the link throws something
+   away, so that one may not. Hence the accent here and the danger there. */
 .deck-copy:hover:not(:disabled) {
-  background: none;
   border-color: var(--accent-2);
   color: var(--accent-2);
 }
 .deck-clear:hover:not(:disabled) {
-  background: none;
   border-color: var(--danger);
   color: var(--danger);
 }
