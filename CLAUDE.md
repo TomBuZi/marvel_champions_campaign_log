@@ -382,6 +382,21 @@ nichts übrig ist.
   Spielerspalten sind `.player-grid`). Nur in der
   Breitansicht sinnvoll: die Schmalvariante macht jede Zelle absichtlich zum
   Block und legt den Rahmen auf die Zeile.
+* **Eine Basisklasse unter ihren Varianten schlägt sie alle.** `.icon-btn` stand
+  in `styles.css` rund dreihundert Zeilen *unter* `.player-remove`,
+  `.deck-clear` und `.deck-copy`. Alle vier sind Ein-Klassen-Selektoren, also
+  entscheidet nur die Reihenfolge — und die Basis gewann. Die drei „leisen"
+  Varianten baten um `background: none`, um `border-color: transparent` und um
+  eine kleinere Kantenlänge und bekamen nichts davon: gezeichnet wurde jedes Mal
+  der gefüllte, gerahmte Würfelknopf. Drei Kommentare im Stylesheet behaupteten
+  einen stillen Knopf, keiner stimmte. **Ein Stylesheet hat keine Tests** — es
+  fiel erst auf, als jemand einen Screenshot ansah. Die Basis steht jetzt
+  oberhalb ihrer Varianten und sagt dort, dass sie dort bleiben muss. Und die
+  Auflösung ist die zweite Hälfte der Lehre: die Pill **war** die gewollte Form,
+  die stillen Deklarationen sind deshalb *gestrichen* statt in Kraft gesetzt.
+  Was von einer Variante übrig bleibt, sind ihre Farben — also genau das, was
+  auch gezeichnet wird. Eine Regel, die nichts tut, ist kein harmloser Rest: sie
+  liest sich als Absicht.
 * **Ein eigenes `display` hebelt das `hidden`-Attribut aus.** `[hidden]` ist
   eine Regel des UA-Stylesheets, und jede Autorenregel mit `display` schlägt
   sie. Die Wortmarke hatte `display: inline-flex` und stand deshalb als leere

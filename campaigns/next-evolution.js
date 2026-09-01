@@ -930,7 +930,7 @@
         colScenario: "Szenario %s",
         /* "%s" = die gedruckte Zeilennummer 1 bis 3. */
         slotRow: "%s.",
-        identityPlaceholder: "Held …",
+        identityPlaceholder: "Held oder Deck-ID …",
         villainPlaceholder: "— Schurke wählen —",
         scenarioPlaceholder: "— Szenario wählen —",
         lblExpert: "Expertenmodus",
@@ -964,7 +964,7 @@
         colHp: "Remaining hit points",
         colScenario: "Scenario %s",
         slotRow: "%s.",
-        identityPlaceholder: "Hero …",
+        identityPlaceholder: "Hero or deck ID …",
         villainPlaceholder: "— Choose a villain —",
         scenarioPlaceholder: "— Choose a scenario —",
         lblExpert: "Expert level",

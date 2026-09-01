@@ -417,10 +417,9 @@
   }
 
   async function copyLink(url, long) {
-    try {
-      await navigator.clipboard.writeText(url);
+    if (await W.copyText(url)) {
       showToast(long ? tr().linkCopiedLong : tr().linkCopied, long ? 7000 : 0);
-    } catch (e) {
+    } else {
       /* No clipboard permission, or no clipboard at all: show the link so it
          can still be copied by hand rather than failing silently. */
       window.prompt(tr().linkCopyManual, url);

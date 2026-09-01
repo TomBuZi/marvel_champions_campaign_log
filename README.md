@@ -386,8 +386,9 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
 * **Deck von MarvelCDB verknüpfen**: ins Identitätsfeld darf statt eines
   Heldennamens auch eine Deck-Kennung (`1213577`) oder der ganze Link. Der Bogen
   merkt sich die Kennung, zeigt darunter einen Link auf das Deck und trägt den
-  Helden ein, den er dort findet. Das ist der **einzige** Netzwerkzugriff der
-  App, und es geht dabei die Deck-Kennung an marvelcdb.com, sonst nichts —
+  Helden ein, den er dort findet; das ⧉ daneben legt die Kennung in die
+  Zwischenablage. Das ist der **einzige** Netzwerkzugriff der App, und es geht
+  dabei die Deck-Kennung an marvelcdb.com, sonst nichts —
   insbesondere nichts vom Bogen. Ohne Netz, bei einem privaten Deck oder einer
   falschen Kennung bleibt der Link trotzdem stehen; den Namen trägt man dann
   selbst ein, nachdem man die Verknüpfung gelöst hat.
@@ -467,8 +468,20 @@ Zwischenstufe einer getippten Zahl eine Anfrage aus. Gespeichert wird nur die
 **Kennung**, nie die eingefügte Adresse: der Link wird immer aus ihr gebaut,
 damit weder eine importierte Datei noch ein geteilter Link ein fremdes Ziel in
 den Bogen tragen kann. Darunter erscheint ein Chip, der das Deck in einem neuen
-Tab öffnet, mit einem × daneben — das nur die Verknüpfung löst und den
+Tab öffnet, mit zwei Knöpfen daneben: dem ⧉, das die Kennung in die
+Zwischenablage legt, und dem ×, das nur die Verknüpfung löst und den
 Heldennamen stehen lässt.
+
+Kopiert wird die **Kennung**, nicht die Adresse — die steht schon als Link
+daneben, und die Kennung ist das, was dieses Feld auf dem nächsten Bogen und die
+Suche auf MarvelCDB annehmen. Beide sind dieselbe Pill wie der Würfelknopf und
+trennen sich erst beim Überfahren: das ⧉ leuchtet im Akzent, das × in der
+Warnfarbe. Eine Kennung zu kopieren kostet nichts und macht sich dadurch
+rückgängig, dass man sie nicht einfügt; eine Verknüpfung zu lösen nicht. Ist
+keine Zwischenablage erreichbar — keine Berechtigung, oder ein Kontext, dem der
+Browser nicht traut —, wird die Kennung zum Kopieren von Hand angeboten, wie es
+der Teilen-Knopf mit seinem Link auch tut; beide gehen inzwischen durch
+denselben Helfer `W.copyText()`.
 
 **Solange ein Deck verknüpft ist, ist das Feld gesperrt** und die Vorschlagsliste
 abgehängt: der Held kommt aus dem Deck, und ein daneben getippter Name würde dem
@@ -595,7 +608,7 @@ auch über `file://` und direkt aus dem Repo-Root über GitHub Pages.
 | `de/index.html`, `en/index.html` | die Adressen `…/de/` und `…/en/`: keine Kopie der App, nur eine Weiterleitung auf `../index.html?lang=…` |
 | `styles.css` | Design-Tokens (hell / dunkel / Druck), Comic-Optik, Tabelle samt Schmalvariante, Listen, Menü, Dialoge |
 | `core.js` | Speichern, mehrere Bögen, Quarantäne, Export/Import, Share-Link, Druck, Sprache, Theme, Kampagnen-Registry |
-| `widgets.js` | wiederverwendbare Bausteine: Checkbox, Zahlenfeld, Textfeld, Identitätsfeld mit Deck-Verknüpfung, Auswahl mit Ausschluss, Fortschrittszähler, Icon-Button, String-Liste mit Drag&Drop — jeweils mit optionalem gesperrten Zustand |
+| `widgets.js` | wiederverwendbare Bausteine: Checkbox, Zahlenfeld, Textfeld, Identitätsfeld mit Deck-Verknüpfung, Auswahl mit Ausschluss, Fortschrittszähler, Icon-Button, String-Liste mit Drag&Drop — jeweils mit optionalem gesperrten Zustand; dazu `copyText()`, die Zwischenablage-Anbindung der ganzen App |
 | `i18n.js` | `window.I18N = { de, en }` — nur Strings des Rahmens |
 | `heroes.js` | 68 Helden (Name, Lebenspunkte) als Vorschlagsliste für die Identitätsfelder |
 | `marvelcdb.js` | Deck-Verweise von MarvelCDB: Kennung erkennen, Link bauen, Helden nachschlagen — der einzige Netzwerkzugriff der App |

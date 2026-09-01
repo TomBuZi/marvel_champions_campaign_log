@@ -1273,7 +1273,7 @@
         colCard: "Karte",
         /* "%s" = Szenarionummer. */
         colScenario: "Szenario %s",
-        identityPlaceholder: "Held …",
+        identityPlaceholder: "Held oder Deck-ID …",
         rolePlaceholder: "— Rolle wählen —",
         cardNamePlaceholder: "Kartenname …",
         lblExpert: "Expertenmodus",
@@ -1318,7 +1318,7 @@
         colRole: "Role",
         colCard: "Card",
         colScenario: "Scenario %s",
-        identityPlaceholder: "Hero …",
+        identityPlaceholder: "Hero or deck ID …",
         rolePlaceholder: "— Choose a role —",
         cardNamePlaceholder: "Card name …",
         lblExpert: "Expert level",
