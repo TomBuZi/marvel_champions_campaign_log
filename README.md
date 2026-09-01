@@ -8,7 +8,7 @@ Eintippen statt ausdrucken: automatisch gespeichert, zweisprachig, teilbar, druc
 Umgesetzt sind die Kampagnen **Fear No Evil (MC60)**,
 **The Rise of Red Skull (MC10)**, **The Galaxy's Most Wanted (MC16)**,
 **The Mad Titan's Shadow (MC21)**, **Sinister Motives (MC27)**,
-**Mutant Genesis (MC32)**, **NeXt Evolution (MC40)**,
+**Mutant Genesis (MC32)**, **MojoMania (MC39)**, **NeXt Evolution (MC40)**,
 **Age of Apocalypse (MC45)** und **Agents of S.H.I.E.L.D. (MC50)**.
 Die Kampagne wird beim Anlegen eines Bogens gewählt
 und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
@@ -43,6 +43,13 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     Szenario 5: Ronan der Ankläger kommt auf dem gedruckten Bogen kein einziges
     Mal vor, die Kästchen tragen die Unterzeile „Sieg-Anweisung für Szenarien
     #1 – 4“, und im Finale gibt es nichts festzuhalten außer dem Sieg.
+  * *MojoMania (MC39)* — die einzige Kampagne ohne eigenen Bogen im Handel:
+    ihr Kampagnenlogbuch steht auf der **Rückseite des Regelhefts**, in beiden
+    Ausgaben. Je Spieler Identität, Lebenspunkte und zwei numerierte
+    Freitextzeilen für einen Vorteil oder ein Upgrade — die Nummer sagt, aus
+    welchem Szenario die Karte stammt. Dazu zwei Longshot-Kästchen und die
+    sechs modularen Begegnungssets. Die beiden Drucke ordnen diese sechs
+    verschieden an, deshalb folgt die Anzeige je Sprache ihrem eigenen Druck.
   * *The Mad Titan's Shadow (MC21)* — der schlankeste von allen: je Spieler
     Identität und Lebenspunkte, dazu neun benannte Kästchen in vier
     Szenario-Abschnitten. Sieben von ihnen sagen auf Papier denselben Satz
@@ -159,6 +166,11 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
   * *Mutant Genesis (MC32)* — die verbleibenden Lebenspunkte, und nur die: der
     gedruckte Bogen setzt „(expert)“ unter dieses eine Feld. Rolle und
     Rollenverbesserungen bleiben auf beiden Stufen stehen.
+  * *MojoMania (MC39)* — die verbleibenden Lebenspunkte. Wie bei MC40 kennzeichnet
+    der gedruckte Bogen sie **nicht**, das Regelheft aber schon, unter
+    „Bleibender Schaden“. Die beiden Vorteil/Upgrade-Zeilen bleiben auf beiden
+    Stufen stehen: sie werden nach jedem gewonnenen Szenario notiert, ganz
+    unabhängig von der Stufe.
   * *NeXt Evolution (MC40)* — die verbleibenden Lebenspunkte. Hier kennzeichnet
     der gedruckte Bogen sie **nicht**, das Regelheft aber schon, unter
     „Bleibender Schaden“: „Während einer Experten-Kampagne von NeXt Evolution
@@ -619,6 +631,8 @@ auch über `file://` und direkt aus dem Repo-Root über GitHub Pages.
 | `campaigns/mutant-genesis.js` | die Kampagne MC32: benannte Kästchen über fünf gedruckten Kartensätzen, ein Gitter aus Kartensatz × Szenario, und Beschriftungen, die aus der gewählten Rolle eines Spielers fallen |
 | `campaigns/next-evolution.js` | die Kampagne MC40: drei numerierte Auswahlfelder aus einem gedruckten Schurkensatz, zwei freie Zahlen, und ein Gitter, dessen drei gedruckte Spalten nur gelesen werden |
 | `campaigns/age-of-apocalypse.js` | die Kampagne MC45: eine Tabelle, deren zwei gedruckte Ergebnisspalten je ein Kästchen tragen, das das andere ausschließt und den Zeilennamen durchstreicht, dazu eine Überschrift über fünf benannten Kästchen; das schlankeste Datenmodell aller Module |
+| `campaigns/galaxys-most-wanted.js` | die Kampagne MC16: Units als Währung, gruppenweit eindeutige Marktkarten, Bezahlbarkeitssperre, abgeleitete Zeilen |
+| `campaigns/mojomania.js` | die Kampagne MC39: der kleinste Bogen, und der einzige, der auf der Rückseite eines Regelhefts steht |
 | `campaigns/agents-of-shield.js` | die Kampagne MC50: eine Zählertabelle aus gedruckten Zeilen mal gedruckten Spalten, vier Szenariokästen, und ein Block aus 27 gedruckten Kombinationen, der nicht eingetragen, sondern aus neun Kästchen gerechnet wird — samt neun gezeichneten Symbolen, die ihren Kartennamen tragen |
 | `test/lint.js` | Prüfungen ohne Browser: Wörterbücher, Kampagnendefinition, Datenmodell, Paketierung |
 | `test/selftest.html`, `test/run-browser.js` | Selbsttest, der die echte Seite in einem iframe fernsteuert |
@@ -693,6 +707,10 @@ unterschiedlich: `campaigns/fear-no-evil.js` zeigt abgeleiteten Zustand, gegense
 Sperren, eine Auslosung und ein `migrate()`; `campaigns/rise-of-red-skull.js` ist das
 schlanke Gegenstück — reine Eingabefelder, kein `migrate()`, keine erfundenen Felder;
 `campaigns/mad-titans-shadow.js` ist das kürzeste — Spieler plus benannte Kästchen;
+`campaigns/mojomania.js` ist der Fall ohne eigenen Bogen im Handel — er steht auf der
+Rückseite des Regelhefts — und zeigt numerierte Freitextzeilen, deren Position die
+Eintragung mitträgt, sowie eine Anzeigereihenfolge, die je Sprache dem eigenen Druck
+folgt;
 `campaigns/sinister-motives.js` zeigt feste Kartensätze in Zellgittern, in denen die
 *Position* Teil der Eintragung ist, und einen abgeleiteten Zustand, der aus einer
 einzigen Zahl fällt; `campaigns/mutant-genesis.js` zeigt Beschriftungen, die aus einer
@@ -725,7 +743,7 @@ Bogen auffallen.
 ```bash
 python -m http.server 8137          # dann http://127.0.0.1:8137/
 node test/lint.js                   # Prüfungen ohne Browser
-node test/run-browser.js            # Selbsttest im echten Browser (902 Assertions)
+node test/run-browser.js            # Selbsttest im echten Browser (964 Assertions)
 node test/run-browser.js print      # nur ein Fall: basic | quarantine | share | lang |
                                     #   langpath | print | import | lock |
                                     #   lockconflict | random | randomspread |
@@ -733,9 +751,10 @@ node test/run-browser.js print      # nur ein Fall: basic | quarantine | share |
                                     #   round | roundlast | roundspread |
                                     #   rrs | rrsdialog | rrsprint | rrspools |
                                     #   rrsexpert | mts | mtsexpert | mtsprint |
-                                    #   deck |
+                                    #   deck | help |
                                     #   sm | smrep | smexpert | smprint |
                                     #   mg | mgrole | mgexpert | mgprint |
+                                    #   mojo | mojoexpert | mojoprint |
                                     #   ne | neschemes | neexpert | neprint |
                                     #   aoa | aoamissions | aoaexpert | aoaprint |
                                     #   gmw | gmwmarket | gmwunits | gmwexpert |
@@ -748,7 +767,8 @@ BROWSER_LANG=de-DE node test/run-browser.js   # unter einer anderen Browser-Spra
 `test/seed.html` legt einen ausgefüllten Beispielbogen an und springt in die App —
 praktisch für Screenshots und für den Druckvergleich. `?c=mc10` nimmt den MC10-Bogen,
 `?c=mc16` den MC16-Bogen, `?c=mc21` den MC21-Bogen, `?c=mc27` den MC27-Bogen,
-`?c=mc32` den MC32-Bogen, `?c=mc40` den MC40-Bogen, `?c=mc45` den MC45-Bogen und
+`?c=mc32` den MC32-Bogen, `?c=mc39` den MC39-Bogen, `?c=mc40` den MC40-Bogen,
+`?c=mc45` den MC45-Bogen und
 `?c=mc50` den MC50-Bogen statt MC60, `?expert=0` stellt
 den Bogen auf
 Standardstufe, und `?theme=dark` nagelt das
@@ -837,7 +857,8 @@ ist im Druck `display: none`.
 `[data-campaign]` am `<html>`: MC60 ist comic-orange auf Dunkelrot, MC10 salbeigrün
 auf Tiefgrün mit Senfgelb, MC21 Indigo und Lavendel auf Rostorange mit Gold, MC27
 Karminrot und Altrosa auf Violett mit Pink, MC32 Teal und Minze auf Tiefteal mit
-Gold — alle fünf aus dem jeweiligen Bogen-PDF gemessen. Bei MC32 reichte die reine
+Gold, MC39 Schiefer und Rosa mit Magenta — jede aus dem Bogen der eigenen
+Kampagne gemessen. Bei MC32 reichte die reine
 Vektormessung nicht: die orange Comic-Schraffur seines Randes ist ein Rasterbild und
 kommt in keiner Vektorfläche vor, sie lebt hier deshalb im Halbtonraster und in der
 Schraffur — was sie auf dem Bogen auch ist. Ein
@@ -849,7 +870,7 @@ Dark-Mode-Sitzung die Kampagnenfarben statt Schwarz auf Weiß.
 
 Der Kampagnenname steht als **Wortmarke** in der Topbar — das größte Element der
 Seite, in den Logofarben statt in der Bogenpalette. Die Buchstaben werfen ihren
-gedruckten Versatzschatten in `--logo-shadow`: alle neun Logos sind so gebaut, und
+gedruckten Versatzschatten in `--logo-shadow`: alle zehn Logos sind so gebaut, und
 bei MC16 ist genau dieser Schatten das Lila, das die Marke ausmacht. Die Plakette
 umschließt nur den Text, wie das gedruckte Logo, und trägt zwei Ringe: den inneren
 in `--logo-shadow`, der zum Logo gehört, und einen äußeren in `--panel-border`, der

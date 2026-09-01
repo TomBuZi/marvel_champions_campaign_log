@@ -1587,6 +1587,63 @@ for (const def of campaigns) {
       a1.evidence.money === false,
       JSON.stringify(a1.evidence));
   }
+
+  if (def.id === "mojomania") {
+    /* The generic fixture feeds MC60's `scenarios` and MC21's `flags`, neither
+       of which is a thing on this sheet. None of it may land. */
+    check(p + "no scenarios key on this sheet", once.scenarios === undefined);
+    check(p + "no flags key on this sheet", once.flags === undefined);
+    check(p + "a notes field is not part of this sheet",
+      def.normalize({ notes: "anything" }).notes === undefined);
+
+    check(p + "the level defaults to standard", empty.expert === false);
+    check(p + "a tolerant truthy level reads as expert",
+      def.normalize({ expert: "true" }).expert === true);
+    check(p + "a standard sheet keeps its hidden hit points",
+      def.normalize({ expert: false, players: [{ hero: "Gamora", hp: 6 }] })
+        .players[0].hp === 6);
+
+    check(p + "player list capped at 4", once.players.length === 4, once.players.length);
+    check(p + "an empty player list still yields one player",
+      def.normalize({ players: [] }).players.length === 1);
+
+    /* The two boon lines are per player and free text: the card comes out of
+       the player's own deck, so there is no set to check it against — only the
+       same trimming and capping every name field here gets. */
+    const boons = def.normalize({
+      players: [{ boon1: "  Enhanced Reflexes  ", boon2: "x".repeat(200) }],
+    }).players[0];
+    check(p + "a boon line is trimmed free text",
+      boons.boon1 === "Enhanced Reflexes", JSON.stringify(boons.boon1));
+    check(p + "and capped like every other name field",
+      boons.boon2.length === 60, boons.boon2.length);
+    check(p + "both boon lines exist on a fresh player",
+      empty.players[0].boon1 === "" && empty.players[0].boon2 === "");
+
+    /* Longshot is asked about after scenarios 1 and 2 only: scenario 3 has no
+       scenario after it to read the answer, so the sheet prints no third box
+       and neither do we. */
+    check(p + "Longshot is two boxes, one per scenario that is asked",
+      eq(Object.keys(once.longshot), ["s1", "s2"]),
+      JSON.stringify(Object.keys(once.longshot)));
+    check(p + "a Longshot box is a real boolean",
+      def.normalize({ longshot: { s1: 1, s2: "no" } }).longshot.s1 === true &&
+      def.normalize({ longshot: { s1: 1, s2: "no" } }).longshot.s2 === false);
+    check(p + "an unknown Longshot key falls away",
+      def.normalize({ longshot: { s3: true } }).longshot.s3 === undefined);
+
+    /* The six modular sets, keyed by their marvelsdb set codes. Both printed
+       editions name them, so there is no card table here at all. */
+    check(p + "the six modular sets are all there, by set code",
+      eq(Object.keys(once.sets).sort(),
+        ["crime", "fantasy", "horror", "sci-fi", "sitcom", "western"]),
+      JSON.stringify(Object.keys(once.sets)));
+    check(p + "a set box survives as a real boolean",
+      def.normalize({ sets: { crime: "true", horror: 0 } }).sets.crime === true &&
+      def.normalize({ sets: { crime: "true", horror: 0 } }).sets.horror === false);
+    check(p + "an unknown set falls away",
+      def.normalize({ sets: { "reality-tv": true } }).sets["reality-tv"] === undefined);
+  }
 }
 
 // ------------------------------------------------------------------- roster
