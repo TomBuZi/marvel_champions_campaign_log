@@ -2549,6 +2549,121 @@
         });
       }
 
+      // ---------------------------------------------------------------- help
+      /* The help dialog is cut in two: everything that is the same on every
+         sheet stands in the shell dictionary as static data-i18n markup, and
+         the campaign section holds only what depends on THIS sheet. It used to
+         be cut the other way round — the campaign block sat above the general
+         one, and all nine repeated the shell's own explanations of expert mode,
+         of hiding versus clearing, of one-sided locks.
+
+         Nothing here reads a written-out label, and nothing counts paragraphs
+         against a fixed number: the sections are found by their data-i18n keys
+         and the campaign title comes from the wordmark, so renaming a heading
+         or rewriting a help text cannot quietly turn these into assertions
+         about nothing. */
+      function caseHelp() {
+        seed({ mts1: mtsLog(), fne1: {
+          schemaVersion: 1, id: "fne1", campaignId: "fear-no-evil", stateVersion: 3,
+          title: "Fear No Evil",
+          createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-02T00:00:00.000Z",
+          state: {},
+        } }, "mts1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var dlg = d.getElementById("help-dialog");
+          var slot = d.getElementById("help-campaign");
+
+          function sectionFor(key) {
+            var h = d.querySelector('[data-i18n="' + key + '"]');
+            return h && h.closest("section");
+          }
+          /* Document order, which is the order a reader meets them in.
+             compareDocumentPosition answers with a bitmask; 4 is FOLLOWING. */
+          function comesAfter(a, b) {
+            return !!(a.compareDocumentPosition(b) & 4);
+          }
+          function paras() { return slot.querySelectorAll("p"); }
+          function heading() { return slot.querySelector("h3").textContent.trim(); }
+          function campaignName() {
+            return d.getElementById("wordmark").textContent.trim();
+          }
+
+          d.getElementById("btn-help").click();
+          log("the help dialog opens from the menu", dlg.open);
+
+          /* The two topics that lived only inside the campaign texts before,
+             nine times over. */
+          log("the general block explains the player area", !!sectionFor("helpPlayersH"));
+          log("and expert mode", !!sectionFor("helpExpertH"));
+          log("no empty labels anywhere in the dialog",
+            Array.prototype.every.call(dlg.querySelectorAll("[data-i18n]"),
+              function (n) { return n.textContent.trim().length > 0; }));
+
+          log("the campaign section comes after the general operating block",
+            comesAfter(sectionFor("helpPrintH"), slot));
+          log("and before the sections that are not about operating a sheet",
+            comesAfter(slot, sectionFor("helpLangThemeH")));
+
+          log("the campaign section is headed by the campaign itself",
+            heading() === campaignName(), heading() + " / " + campaignName());
+          /* Several <p>, not one wall of text: the whole campaign help used to
+             arrive as a single paragraph, and the longest ran to some eight
+             hundred words that way. */
+          log("its help is several paragraphs rather than one block",
+            paras().length > 1, paras().length);
+          log("and none of them is empty",
+            Array.prototype.every.call(paras(),
+              function (n) { return n.textContent.trim().length > 0; }));
+
+          /* The language switch has to reach this section too — it is the one
+             part of the dialog applyLanguage() does not touch. */
+          var germanFirst = paras()[0].textContent;
+          var germanCount = paras().length;
+          d.getElementById("btn-lang").click();
+          log("switching language rewrites the campaign help",
+            paras()[0].textContent !== germanFirst,
+            paras()[0].textContent.slice(0, 40));
+          log("and says the same number of things in the other language",
+            paras().length === germanCount, paras().length + "/" + germanCount);
+          d.getElementById("btn-lang").click();
+          log("and back again", paras()[0].textContent === germanFirst);
+
+          // Switching sheets switches the campaign section with it.
+          var sel = d.getElementById("log-select");
+          sel.value = "fne1";
+          fire(sel, "change");
+          log("switching the sheet swaps the campaign help",
+            heading() === campaignName() && heading() !== "The Mad Titan's Shadow",
+            heading());
+          log("for the other campaign's own paragraphs",
+            paras().length > 1 && paras()[0].textContent !== germanFirst,
+            paras()[0].textContent.slice(0, 40));
+
+          /* A quarantined sheet has no campaign this build can explain, but the
+             general block is about the app and stands regardless — the dialog
+             must not go half-empty on the one sheet somebody is stuck on. */
+          seed({ bbb: {
+            schemaVersion: 1, id: "bbb", campaignId: "no-such-campaign",
+            stateVersion: 1, title: "Unknown campaign",
+            createdAt: "2026-01-01T00:00:00.000Z",
+            updatedAt: "2026-01-02T00:00:00.000Z", state: {},
+          } }, "bbb");
+          boot("", function (frameQ, wQ, dQ) {
+            var slotQ = dQ.getElementById("help-campaign");
+            dQ.getElementById("btn-help").click();
+            log("a quarantined sheet contributes no campaign section",
+              slotQ.children.length === 0, slotQ.innerHTML.slice(0, 40));
+            log("but the general block still stands",
+              dQ.querySelector('[data-i18n="helpPlayersH"]').textContent.trim().length > 0);
+            dQ.getElementById("btn-help-close").click();
+            log("and the dialog closes again",
+              !dQ.getElementById("help-dialog").open);
+            finish();
+          });
+        });
+      }
+
       // ----------------------------------------------------------- MC27
       /* MC27 has no printed checkbox on it at all, so where the sheet's blank
          lines mean cards, the module supplies the set — as boxes where the
@@ -6029,7 +6144,7 @@
         });
       }
 
-      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, deck: caseDeck, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint, mg: caseMg, mgrole: caseMgRole, mgexpert: caseMgExpert, mgprint: caseMgPrint, ne: caseNe, neschemes: caseNeSchemes, neexpert: caseNeExpert, neprint: caseNePrint, aoa: caseAoa, aoamissions: caseAoaMissions, aoaexpert: caseAoaExpert, aoaprint: caseAoaPrint, gmw: caseGmw, gmwmarket: caseGmwMarket, gmwunits: caseGmwUnits, gmwexpert: caseGmwExpert, gmwprint: caseGmwPrint,
+      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, deck: caseDeck, help: caseHelp, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint, mg: caseMg, mgrole: caseMgRole, mgexpert: caseMgExpert, mgprint: caseMgPrint, ne: caseNe, neschemes: caseNeSchemes, neexpert: caseNeExpert, neprint: caseNePrint, aoa: caseAoa, aoamissions: caseAoaMissions, aoaexpert: caseAoaExpert, aoaprint: caseAoaPrint, gmw: caseGmw, gmwmarket: caseGmwMarket, gmwunits: caseGmwUnits, gmwexpert: caseGmwExpert, gmwprint: caseGmwPrint,
         aos: caseAos, aosevidence: caseAosEvidence,
         aosexpert: caseAosExpert, aosprint: caseAosPrint, sharebtn: caseShareButton };
       (cases[CASE] || caseBasic)();

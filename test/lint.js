@@ -119,7 +119,22 @@ for (const def of campaigns) {
   for (const fn of ["emptyState", "normalize", "render", "renderPrint"]) {
     check(p + fn + "() is a function", typeof def[fn] === "function");
   }
-  check(p + "help text in both languages", !!def.helpDe && !!def.helpEn);
+  /* Help is an array of paragraphs, one <p> each. Checked as a shape rather
+     than for truthiness, because an empty array is truthy and would have sailed
+     through the old check as a campaign section that renders nothing at all.
+     Equal paragraph counts because the English is a full translation of the
+     German: a paragraph dropped on one side is otherwise nobody's to notice. */
+  for (const lang of ["De", "En"]) {
+    const paras = def["help" + lang];
+    check(p + "help" + lang + " is a non-empty array of paragraphs",
+      Array.isArray(paras) && paras.length > 0 &&
+      paras.every((x) => typeof x === "string" && x.trim().length > 0),
+      JSON.stringify(paras).slice(0, 60));
+  }
+  check(p + "help says the same number of things in both languages",
+    Array.isArray(def.helpDe) && Array.isArray(def.helpEn) &&
+    def.helpDe.length === def.helpEn.length,
+    (def.helpDe || []).length + " de / " + (def.helpEn || []).length + " en");
   /* migrate() is only optional while stateVersion is 1: from version 2 on
      there is an older shape in the wild that has to be carried forward. */
   check(p + "migrate() present once stateVersion > 1",

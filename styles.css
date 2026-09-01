@@ -2872,6 +2872,11 @@ body[class*="dnd-"] .entry-list { min-height: 2.2rem; outline: 1px dashed var(--
 }
 /* Help texts may carry line breaks from a translation. */
 .help-body p { margin: 0; white-space: pre-line; }
+/* The campaign section is the only one that runs to several paragraphs, and
+   without this they close ranks into exactly the wall of text that splitting
+   them was meant to end. Every other section holds a single <p>, so the
+   sibling selector leaves them untouched. */
+.help-body p + p { margin-top: 0.6rem; }
 
 /* ---------- Toast ---------- */
 .toast {

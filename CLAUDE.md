@@ -231,6 +231,17 @@ Harte Punkte:
 * Ein englisch angezeigter Name trägt `lang="en"`, ein übersetzter nicht.
 * Expertenmodus, falls die Kampagne einen hat: **Ausblenden ist nicht Löschen.**
 * Alle Beschriftungen über `i18n`, in beiden Sprachen, dazu `helpDe`/`helpEn`.
+* **Der Hilfetext trägt nur Abhängigkeiten** — Sperren, abgeleitete Werte,
+  Eindeutigkeitsregeln, Gitter, Ausschlüsse, Freischaltungen. Was auf jedem
+  Bogen gleich ist, steht im Rahmen (`i18n.js`, `help*`): Speichern, Spieler,
+  Identität und Deck, Expertenmodus, Listen, Durchstreichen, Export, Druck.
+  Das war einmal anders, und es ist teuer geworden: der Absatz über den
+  Expertenmodus und der Satz „Ausblenden heißt nicht löschen“ standen in
+  **allen neun** Modulen einzeln, „es gibt hier bewusst keine Szenario-Tabelle“
+  in sieben, die Begründung einseitiger Sperren in fünf, und ein Modul
+  wiederholte wörtlich einen Absatz des Rahmens. Zusammen war das die Hälfte
+  des Textes. `helpDe`/`helpEn` sind **Arrays von Absätzen**, gleich lang in
+  beiden Sprachen — `lint.js` prüft beides.
 * **Symbole im Regeltext.** Setzt der Bogen ein Zeichen aus der Icon-Schrift des
   Herausgebers (`MarvelLCGIcons`, z. B. `` = „pro Spieler"), wird es
   **gezeichnet**, nicht eingebettet — die Schrift ist nicht unsere. Im
