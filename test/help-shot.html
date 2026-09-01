@@ -1,0 +1,55 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Hilfedialog ansehen</title>
+<!-- Screenshot helper, not a test: seeds a sheet, opens the app and clicks the
+     help entry, so the dialog can be photographed headlessly. "?c=" picks the
+     campaign, "&lang=" and "&theme=" go through to the app.
+
+     Deliberately not part of test/seed.html: that one is about the sheet, and
+     a page that clicks a menu item on load would get in the way of every
+     screenshot taken with it. -->
+<style>html,body{margin:0;height:100%}iframe{border:0;width:100vw;height:100vh}</style>
+<script>
+  var q = new URLSearchParams(location.search);
+  var CAMPAIGNS = {
+    mc10: "rise-of-red-skull", mc16: "galaxys-most-wanted",
+    mc21: "mad-titans-shadow", mc27: "sinister-motives",
+    mc32: "mutant-genesis", mc40: "next-evolution",
+    mc45: "age-of-apocalypse", mc50: "agents-of-shield",
+    mc60: "fear-no-evil",
+  };
+  var code = q.get("c") || "mc21";
+  var id = CAMPAIGNS[code] || CAMPAIGNS.mc21;
+  var log = {
+    schemaVersion: 1, id: "shot", campaignId: id, stateVersion: 1,
+    title: code.toUpperCase(),
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+    state: {},
+  };
+  localStorage.clear();
+  localStorage.setItem("mcclog:logs", JSON.stringify({ shot: log }));
+  localStorage.setItem("mcclog:activeId", "shot");
+  localStorage.setItem("mcclog:lang", q.get("lang") || "de");
+  if (q.get("theme")) localStorage.setItem("mcclog:theme", q.get("theme"));
+
+  var f = document.createElement("iframe");
+  f.src = "../index.html";
+  f.onload = function () {
+    /* After the app has rendered, not with it: the dialog is opened by the
+       same click a reader would use. */
+    setTimeout(function () {
+      var d = f.contentDocument;
+      d.getElementById("btn-help").click();
+      /* "&scroll=1" photographs the far end of the dialog, where the campaign
+         section sits — the body is taller than any window worth rendering. */
+      if (q.get("scroll")) {
+        /* Which element actually scrolls is a styling detail, so both are
+           pushed to the end and whichever one it is obeys. */
+        [d.getElementById("help-dialog"), d.querySelector(".help-body")]
+          .forEach(function (n) { if (n) n.scrollTop = n.scrollHeight; });
+      }
+    }, 200);
+  };
+  addEventListener("DOMContentLoaded", function () { document.body.appendChild(f); });
+</script>

@@ -162,8 +162,6 @@
       </div>
       <div class="help-body">
         <p class="help-intro" data-i18n="helpIntro"></p>
-        <!-- The active campaign's own explanation, appended by core.js. -->
-        <section id="help-campaign"></section>
         <section>
           <h3 data-i18n="helpStoreH"></h3>
           <p data-i18n="helpStoreP"></p>
@@ -175,6 +173,14 @@
         <section>
           <h3 data-i18n="helpSheetH"></h3>
           <p data-i18n="helpSheetP"></p>
+        </section>
+        <section>
+          <h3 data-i18n="helpPlayersH"></h3>
+          <p data-i18n="helpPlayersP"></p>
+        </section>
+        <section>
+          <h3 data-i18n="helpExpertH"></h3>
+          <p data-i18n="helpExpertP"></p>
         </section>
         <section>
           <h3 data-i18n="helpDeckH"></h3>
@@ -196,6 +202,13 @@
           <h3 data-i18n="helpPrintH"></h3>
           <p data-i18n="helpPrintP"></p>
         </section>
+        <!-- The active campaign's own explanation, appended by core.js. It
+             sits here, after everything that is the same on every sheet and
+             before the two sections that are not about operating one at all:
+             somebody opening this dialog for the first time needs to know how
+             to make a sheet before they can care what is special about this
+             one. -->
+        <section id="help-campaign"></section>
         <section>
           <h3 data-i18n="helpLangThemeH"></h3>
           <p data-i18n="helpLangThemeP"></p>

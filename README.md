@@ -659,9 +659,16 @@ gekostet haben.
      render: function (root, ctx) {…},
      renderPrint: function (root, ctx) {…},
      i18n: { de: {…}, en: {…} },
-     helpDe: "…", helpEn: "…",
+     helpDe: ["…", "…"], helpEn: ["…", "…"],   // je Eintrag ein Absatz
    });
    ```
+
+   In `helpDe`/`helpEn` steht **nur, was von diesem Bogen abhängt**: Sperren,
+   abgeleitete Werte, Eindeutigkeitsregeln, Gitter, gegenseitige Ausschlüsse,
+   Freischaltungen. Alles, was auf jedem Bogen gleich ist — Speichern, Spieler,
+   Identität und Deck, Expertenmodus, Listen, Durchstreichen, Export, Druck —
+   steht im Rahmen (`i18n.js`, Abschnitte `help*`) und gehört nicht ins Modul.
+   Der Dialog zeigt zuerst den allgemeinen Teil und darunter diesen hier.
 
 2. Das Skript in `index.html` **nach** `core.js` einhängen. Die Reihenfolge der
    Skripte ist die Reihenfolge in der Bogen-Auswahl und im Dialog „Neuer Bogen“.
@@ -747,6 +754,12 @@ den Bogen auf
 Standardstufe, und `?theme=dark` nagelt das
 Theme fest; letzteres braucht man, um zu prüfen, dass der Druck auch aus einer
 Dark-Mode-Sitzung schwarz auf weiß bleibt.
+
+`test/help-shot.html` macht dasselbe für den **Hilfedialog**: es legt einen Bogen an
+und klickt den Menüpunkt, damit der Dialog sich headless fotografieren lässt. `?c=`
+wählt die Kampagne wie oben, `&lang=` und `&theme=` gehen an die App durch, und
+`&scroll=1` springt ans Ende — dort steht der kampagnenspezifische Teil, und der
+Dialog ist länger als jedes sinnvolle Fenster.
 
 Der Selbsttest sucht Edge oder Chrome selbst; mit `BROWSER=/pfad/zum/chrome` lässt sich
 das überschreiben. Findet er keinen, bricht er mit Code 2 ab und sagt ausdrücklich,

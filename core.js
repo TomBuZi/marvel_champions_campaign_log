@@ -786,20 +786,29 @@
     setMenuRow(document.getElementById("btn-lang"), d.langSwitchTitle, d.langSwitch);
   }
 
-  /* The campaign help section is appended by us, since it depends on the
-     active log; everything above it in the dialog is static data-i18n. */
+  /* The campaign help section is the one part of the dialog we build
+     ourselves, since it depends on the active log; every other section is
+     static data-i18n markup.
+
+     The module hands over an ARRAY of paragraphs, one <p> each. It used to be
+     a single string in a single <p>, and the longest campaign ran to some
+     eight hundred words that way — a wall nobody reads to the end of. Text,
+     never innerHTML: these are prose, and a door for markup here would only be
+     one more thing to get wrong. */
   function renderHelpCampaign() {
     var slot = document.getElementById("help-campaign");
     slot.innerHTML = "";
     var def = activeCampaign();
-    var text = def && (lang === "de" ? def.helpDe : def.helpEn);
-    if (!text) return;
+    var paras = def && (lang === "de" ? def.helpDe : def.helpEn);
+    if (!paras || !paras.length) return;
     var h = el("h3");
     h.textContent = campaignTitle(def);
-    var p = el("p");
-    p.textContent = text;
     slot.appendChild(h);
-    slot.appendChild(p);
+    paras.forEach(function (text) {
+      var p = el("p");
+      p.textContent = text;
+      slot.appendChild(p);
+    });
   }
 
   function renderAll() {

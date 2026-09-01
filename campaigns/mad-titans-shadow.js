@@ -544,8 +544,14 @@
     render: render,
     renderPrint: renderPrint,
 
-    helpDe: "Der MC21-Bogen ist der schlankeste von allen und folgt dem gedruckten Original: oben die Spieler, darunter neun Kästchen, verteilt auf vier Szenario-Abschnitte. Mehr hält die Kampagne nicht fest — es gibt hier bewusst keine Szenario-Tabelle, kein „Abgeschlossen“, keinen Fortschrittszähler und keinen Würfel. Oben im Spielerbereich steht der Haken „Expertenmodus“: die verbleibenden Lebenspunkte gehen nur auf Expertenstufe von einem Szenario ins nächste mit, und auf Standardstufe blendet der Bogen das Feld aus, statt danach zu fragen. Ausblenden heißt nicht löschen — wer versehentlich umschaltet, verliert nichts. Sieben der neun Kästchen sagen auf Papier denselben Satz („Check here if … was added to campaign pool“), deshalb stehen sie hier als eine Überschrift über benannten Kästchen: das Häkchen selbst ist das „check here“. Die zwei übrigen sagen etwas anderes und behalten ihren eigenen Wortlaut — dass der Avengers Tower das Merkmal „Damaged“ trägt, und dass „The Infinity Stones 1B“ abgeschlossen wurde. Das fünfte Szenario gegen Loki fehlt nicht, es steht auch auf dem gedruckten Bogen nicht: im Finale gibt es nichts festzuhalten.",
-    helpEn: "The MC21 sheet is the leanest of them all and follows the printed original: players at the top, and below them nine checkboxes spread over four scenario sections. The campaign records nothing else — there is deliberately no scenario table, no “completed”, no progress counter and no die. At the top of the player area sits the “Expert level” box: the remaining hit points carry from one scenario to the next only at expert level, and at standard level the sheet hides that field rather than asking for it. Hiding is not clearing — switching by accident loses nothing. Seven of the nine boxes say the same sentence on paper (“Check here if … was added to campaign pool”), so here they are one caption over named boxes: the checkbox itself is the “check here”. The remaining two say something else and keep their own wording — that Avengers Tower carries the Damaged trait, and that “The Infinity Stones 1B” was completed. The fifth scenario against Loki is not missing; it is not on the printed sheet either, because the finale has nothing to record.",
+    helpDe: [
+      "Sieben der neun Kästchen sagen auf dem gedruckten Bogen denselben Satz — „Check here if … was added to campaign pool“. Deshalb stehen sie hier als eine Überschrift über benannten Kästchen: das Häkchen selbst ist das „check here“.",
+      "Die zwei übrigen sagen etwas anderes und behalten ihren eigenen Wortlaut: dass der Avengers Tower das Merkmal „Damaged“ trägt, und dass „The Infinity Stones 1B“ abgeschlossen wurde.",
+    ],
+    helpEn: [
+      "Seven of the nine boxes say the same sentence on the printed sheet — “Check here if … was added to campaign pool”. So they stand here as one heading over named boxes: the tick itself is the “check here”.",
+      "The other two say something else and keep their own wording: that the Avengers Tower has gained the Damaged trait, and that “The Infinity Stones 1B” has been completed.",
+    ],
 
     /* Deutsche Feldnamen: gegen die deutsche Ausgabe abgeglichen. Ändert sich
        eine, migriert nichts — persistiert werden nur Feldschlüssel, nie
