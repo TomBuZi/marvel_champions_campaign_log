@@ -60,9 +60,15 @@ for (const def of campaigns) comparePair(def.id, def.i18n);
 section("i18n keys used in code exist");
 const shellKeys = new Set(Object.keys(win.I18N.de));
 const usedInShell = new Set();
+/* Three shapes, because the shell reaches its dictionary in three ways:
+   core.js says tr().key or d.key, and a widget handed a campaign's t() says
+   t("key") — the identity field's deck labels are all of that third kind and
+   went unchecked until one of them was added. The \b keeps `closest("…")` and
+   its kin out of the third pattern. */
 for (const rel of ["core.js", "widgets.js"]) {
-  for (const m of read(rel).matchAll(/\btr\(\)\.([A-Za-z]+)|\bd\.([A-Za-z]+)/g)) {
-    usedInShell.add(m[1] || m[2]);
+  for (const m of read(rel)
+    .matchAll(/\btr\(\)\.([A-Za-z]+)|\bd\.([A-Za-z]+)|\bt\("([A-Za-z]+)"/g)) {
+    usedInShell.add(m[1] || m[2] || m[3]);
   }
 }
 const missingShell = [...usedInShell].filter((k) => !shellKeys.has(k));

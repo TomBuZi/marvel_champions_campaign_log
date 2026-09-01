@@ -2333,6 +2333,44 @@ button:focus-visible {
   justify-content: space-between;
   gap: 0.5rem;
 }
+
+/* ---------- Icon button (the base for the die, the × and the ⧉) ---------- */
+/* This block has to stay ABOVE its quiet variants — .player-remove just below,
+   .deck-copy and .deck-clear further down. They are single-class selectors
+   just as .icon-btn is, so nothing but source order decides, and while this
+   block sat lower in the file it overrode all three: every one of them drew
+   the filled, bordered die despite asking for no background and no border, and
+   at 1.9rem despite asking to be smaller. Three comments in this stylesheet
+   promised a quiet button and none of them was telling the truth. Nothing
+   caught it — a stylesheet has no tests — and it only turned up because
+   somebody looked at a screenshot. A fourth variant goes below here too.
+
+   MC60's villain cell has no rule of its own: the field and its die sit in a
+   .with-die wrapper inside it, and the cell stays a plain table cell. It used to
+   be display:flex itself, which cost it its table-cell box — border-collapse
+   then could not merge its border with the neighbouring cells', so that one
+   column drew a doubled, heavier line all the way down while every other column
+   drew a single one. A layout that needs a flex container inside a table gets a
+   wrapper, never the <td>. */
+.icon-btn {
+  flex: 0 0 auto;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  background: var(--pill);
+  border: var(--rule) solid var(--bar);
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.icon-btn:hover:not(:disabled) { background: var(--zap-strong); }
+.icon-btn:disabled {
+  cursor: not-allowed;
+  border-style: dashed;
+  opacity: 0.4;
+}
+
 /* Quieter than the die: removing a player is not something to invite. */
 .player-remove {
   width: 1.6rem;
@@ -2436,8 +2474,10 @@ button:focus-visible {
 .deck-link:focus-visible { background: var(--pill); }
 .deck-link:focus-visible { outline: 3px solid var(--zap); outline-offset: 2px; }
 
-/* As quiet as .player-remove, and for the same reason: dropping the link is
-   not something to invite. */
+/* Both as quiet as .player-remove, and for the same reason: neither dropping
+   the link nor reaching for the clipboard is something to interrupt the sheet
+   over. They part company on hover — see below. */
+.deck-copy,
 .deck-clear {
   width: 1.3rem;
   height: 1.3rem;
@@ -2445,6 +2485,14 @@ button:focus-visible {
   border-color: transparent;
   color: var(--text-dim);
   font-size: 0.9rem;
+}
+/* Copying an id costs nothing and undoes itself by not being pasted, so this
+   one may invite; dropping the link throws something away, so that one may
+   not. Hence the accent here and the danger colour there. */
+.deck-copy:hover:not(:disabled) {
+  background: none;
+  border-color: var(--accent-2);
+  color: var(--accent-2);
 }
 .deck-clear:hover:not(:disabled) {
   background: none;
@@ -2617,33 +2665,6 @@ button:focus-visible {
   background: var(--danger);
   color: var(--on-danger);
   box-shadow: inset 0 0 0 1px var(--bar);
-}
-
-/* ---------- Icon button (the villain randomiser) ---------- */
-/* MC60's villain cell has no rule of its own: the field and its die sit in a
-   .with-die wrapper inside it, and the cell stays a plain table cell. It used to
-   be display:flex itself, which cost it its table-cell box — border-collapse
-   then could not merge its border with the neighbouring cells', so that one
-   column drew a doubled, heavier line all the way down while every other column
-   drew a single one. A layout that needs a flex container inside a table gets a
-   wrapper, never the <td>. */
-.icon-btn {
-  flex: 0 0 auto;
-  width: 1.9rem;
-  height: 1.9rem;
-  padding: 0;
-  background: var(--pill);
-  border: var(--rule) solid var(--bar);
-  border-radius: var(--radius);
-  font-size: 0.95rem;
-  line-height: 1;
-  cursor: pointer;
-}
-.icon-btn:hover:not(:disabled) { background: var(--zap-strong); }
-.icon-btn:disabled {
-  cursor: not-allowed;
-  border-style: dashed;
-  opacity: 0.4;
 }
 
 /* ---------- Villain chips ---------- */

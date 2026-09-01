@@ -2322,9 +2322,29 @@
             calls.push(id + "/" + lang);
             return Promise.resolve(answer);
           };
+          /* The clipboard is stubbed for the same reason the lookup is: the
+             real one needs a permission and a focused window, and a case that
+             asked for it would be flaky rather than wrong. Stubbed the way
+             `sharebtn` does it, because navigator.clipboard is a getter and
+             plain assignment would quietly do nothing. */
+          var copied = [];
+          var prompted = [];
+          var clipboardFails = false;
+          Object.defineProperty(w.navigator, "clipboard", {
+            configurable: true,
+            value: {
+              writeText: function (text) {
+                if (clipboardFails) return Promise.reject(new Error("denied"));
+                copied.push(text);
+                return Promise.resolve();
+              },
+            },
+          });
+          w.prompt = function (message, value) { prompted.push(value); return null; };
           function card() { return d.querySelectorAll(".player-card")[0]; }
           function field() { return card().querySelector(".text-input"); }
           function chip() { return card().querySelector(".deck-link"); }
+          function copyBtn() { return card().querySelector(".deck-copy"); }
           function stored() {
             return JSON.parse(localStorage.getItem("mcclog:logs")).mts1.state.players[0];
           }
@@ -2347,6 +2367,12 @@
           }
 
           log("a card without a deck shows no chip", !chip());
+          log("and no id to copy either", !copyBtn());
+          /* The field is the only place on screen that says a deck may go in
+             here — the help text is a click away, and nobody clicks it to
+             find out what a field they are already looking at accepts. */
+          log("the placeholder offers the deck beside the hero",
+            /deck/i.test(field().placeholder), field().placeholder);
           /* The chip is a link, not an input, so the older assertion that the
              identity is the only free-text field on the card still holds. */
           log("the identity is still the only text field on the card",
@@ -2460,32 +2486,64 @@
                 !toast.hidden && /1213577/.test(toast.textContent),
                 toast.textContent.slice(0, 60));
 
-              // Clearing the deck is not clearing the hero.
-              unlink();
-              log("the × drops the chip", !chip());
-              log("but leaves the identity alone", field().value === "Echo",
-                field().value);
-
-              /* Free text longer than the sheet's own cap is still capped —
-                 the element no longer does it, so the widget has to. */
-              type("x".repeat(200));
-              log("over-long free text is cut back on commit",
-                field().value.length === 60, field().value.length);
-
-              w.dispatchEvent(new w.Event("pagehide"));
+              /* The id back out again. It is what this same field takes on the
+                 next sheet and what MarvelCDB's own search takes, so the chip
+                 hands it over rather than leaving it to be read off the
+                 screen; the address is the link's job, right beside it. */
+              var clear = card().querySelector(".deck-clear");
+              log("the chip offers the id for copying, between link and ×",
+                !!copyBtn() && copyBtn().previousSibling === chip() &&
+                copyBtn().nextSibling === clear);
+              copyBtn().click();
               setTimeout(function () {
-                var p = stored();
-                log("the stored sheet keeps the identity",
-                  p.hero.length === 60, p.hero.length);
-                log("and no longer keeps a deck", p.deck === "", p.deck);
-                log("a deck typed again is stored as the bare id, not a link",
-                  (function () {
-                    type(deckUrl);
-                    w.dispatchEvent(new w.Event("pagehide"));
-                    return stored().deck === "1213577";
-                  })(), stored().deck);
-                finish();
+                log("copying puts the bare id on the clipboard, not the address",
+                  copied.length === 1 && copied[0] === "1213577",
+                  copied.join(","));
+                log("and says what landed there",
+                  !toast.hidden && /1213577/.test(toast.textContent),
+                  toast.textContent.slice(0, 60));
+                /* A clipboard that cannot be written to — no permission, or a
+                   context the browser does not trust — must not swallow the
+                   click. The id is offered for copying by hand instead. */
+                clipboardFails = true;
+                copyBtn().click();
+                setTimeout(function () {
+                  log("an unreachable clipboard offers the id by hand instead",
+                    prompted.length === 1 && prompted[0] === "1213577",
+                    prompted.join(","));
+                  clipboardFails = false;
+                  afterCopy();
+                }, 0);
               }, 0);
+            }, 0);
+          }
+
+          function afterCopy() {
+            // Clearing the deck is not clearing the hero.
+            unlink();
+            log("the × drops the chip", !chip());
+            log("but leaves the identity alone", field().value === "Echo",
+              field().value);
+
+            /* Free text longer than the sheet's own cap is still capped —
+               the element no longer does it, so the widget has to. */
+            type("x".repeat(200));
+            log("over-long free text is cut back on commit",
+              field().value.length === 60, field().value.length);
+
+            w.dispatchEvent(new w.Event("pagehide"));
+            setTimeout(function () {
+              var p = stored();
+              log("the stored sheet keeps the identity",
+                p.hero.length === 60, p.hero.length);
+              log("and no longer keeps a deck", p.deck === "", p.deck);
+              log("a deck typed again is stored as the bare id, not a link",
+                (function () {
+                  type(deckUrl);
+                  w.dispatchEvent(new w.Event("pagehide"));
+                  return stored().deck === "1213577";
+                })(), stored().deck);
+              finish();
             }, 0);
           }
         });

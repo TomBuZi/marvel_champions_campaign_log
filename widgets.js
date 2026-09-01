@@ -292,6 +292,22 @@
         title: t("deckOpen", deck),
       });
       link.textContent = t("deckChip", deck);
+      /* The bare id, not the address: the id is what this very field takes on
+         the next sheet and what MarvelCDB's own search takes, and the address
+         is already one click away on the link beside it. */
+      var copy = iconButton({
+        glyph: "⧉",
+        label: t("deckCopy", deck),
+        onClick: function () {
+          copyText(deck).then(function (ok) {
+            if (ok) { if (cfg.toast) cfg.toast(t("deckCopied", deck)); return; }
+            /* No clipboard to write to: show the id so it can still be copied
+               by hand rather than letting the click end in nothing. */
+            global.prompt(t("deckCopyManual"), deck);
+          });
+        },
+      });
+      copy.classList.add("deck-copy");
       /* Clearing the deck keeps the hero: the name was typed or looked up, and
          losing it because the link went is not what the × promises. */
       var clear = iconButton({
@@ -301,6 +317,7 @@
       });
       clear.classList.add("deck-clear");
       chip.appendChild(link);
+      chip.appendChild(copy);
       chip.appendChild(clear);
       wrap.appendChild(chip);
     }
@@ -792,6 +809,23 @@
     return field;
   }
 
+  // ---- Clipboard ----------------------------------------------------------
+  /* Text onto the clipboard; false if it did not get there. Reporting rather
+     than reacting, because the two callers say different things afterwards —
+     the share link and a deck id are not the same news — and both want to
+     offer what failed for copying by hand. A missing `navigator.clipboard`
+     (an old browser, a context the browser does not consider secure) is not
+     an error either, it is the same answer: no. */
+  function copyText(text) {
+    try {
+      return global.navigator.clipboard.writeText(String(text)).then(
+        function () { return true; },
+        function () { return false; });
+    } catch (e) {
+      return Promise.resolve(false);
+    }
+  }
+
   // ---- Value coercion (shared with the campaign modules' normalize) --------
   /* Normalise a value into a clean array of non-empty strings.
      opts.split: split a legacy string on newlines (else wrap it as one entry).
@@ -858,6 +892,7 @@
     coerceBool: coerceBool,
     coerceText: coerceText,
     coerceDeck: coerceDeck,
+    copyText: copyText,
     /* core.js installs the persistence hook here once, so widgets stay
        independent of how (or whether) anything is stored. */
     setCommitHandler: function (fn) { onCommit = fn || function () {}; },
