@@ -1541,6 +1541,152 @@
   color-scheme: dark;
 }
 
+/* ---------- Campaign skin: MC39, MojoMania ----------
+   Sampled from the log page the way the others were, but this sheet is not a
+   sheet of its own: it is the back cover of the rules insert, so the page it
+   sits on is the insert's orange comic border. That border is raster art, it is
+   a frame AROUND the sheet rather than part of it, and it is left out here for
+   exactly the reason MC45's is -- which is also why no orange appears in
+   --halftone or --hatch.
+
+   The English page hands the sheet over cleanly in vectors: white 67.6%, and
+   the two ends of the panel gradient at 16.2% each -- pink #e3bec6 and steel
+   #a9cad3. Those two are used here as what they printed as, the panel gradient
+   and the heading pill. The German page measures as 98% #6a6e8f instead,
+   because its panels are raster and only the title bar is vector; that slate is
+   the bar, darkened here to carry text.
+
+   The sheet prints no accent colour at all -- no badge, no second ink, the
+   checkboxes are white. So --zap comes from the pack's wordmark instead, the
+   magenta MojoMania is known by, darkened until white holds 5.7 on it. It is
+   named as a borrowing rather than a measurement on purpose.
+
+   MC45 shares this publisher template and lands on the same steel #a9cad3, so
+   the two campaigns cannot be told apart by that one. They are told apart by
+   what carries it: MC45 is navy and mint, this is slate and pink.
+
+   Dark mode keeps all of the sheet's colours rather than only the slate -- the
+   panels end on a plum the way the light ones end on pink, and the magenta
+   stays the accent. An all-slate dark mode reads as a different campaign than
+   its own light mode.
+
+   Four blocks, mirroring the ones above, and for the reason spelled out there:
+   a single [data-campaign] block outranks the bare :root inside the dark media
+   query and would paint the light palette in dark mode. */
+:root[data-campaign="mojo"] {
+  --page:      #4b4f72;   /* slate page field -- the printed title bar
+                             #6a6e8f, darkened to carry text            */
+  --bar:       #3b3f5e;   /* deeper slate: bars, borders, ink outlines  */
+  --brick:     #5a5f85;   /* mid slate, table body -- derived between
+                             --page and --bar, text on it holds 5.7     */
+  --panel-1:   #fdf4f6;   /* panel gradient, top -- the printed white
+                             with the pink of the panels in it          */
+  --panel-2:   #e3bec6;   /* ... bottom: the printed pink, as measured  */
+  --pill:      #a9cad3;   /* heading pill: the other printed gradient
+                             stop, the sheet's steel blue               */
+  --check:     #ffffff;   /* empty checkbox -- printed white            */
+  --zap:       #c4165f;   /* accent magenta, borrowed from the wordmark
+                             because the sheet prints no accent at all  */
+  --ink:       #201c26;   /* near-black text                            */
+
+  --bg-input: #fffbfc;
+  --text-dim: #4e4661;
+  --accent-strong: #2a2e49;
+  --accent-2: #7d5f92;
+  /* Stays red: here the colour carries meaning, not identity. */
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(196, 22, 95, 0.45);
+  --halftone: rgba(59, 63, 94, 0.16);
+  --hatch: rgba(59, 63, 94, 0.10);
+  --on-brick: #fdf4f6;
+  --on-page: #fdf4f6;
+  --on-zap: #ffffff;
+  --on-danger: #fff4ef;
+  --tick: #c4165f;
+  --title-shadow: #fdf4f6;
+  --zap-strong: #e0327a;
+  --input-settled: #ecdfe4;
+  --backdrop: rgba(20, 16, 28, 0.55);
+  /* MC39 wordmark: the logo's yellow letters over its own magenta, extruded
+     into the black the printed mark is offset into -- 4.7. The magenta is
+     darkened from the printed #ed1b7b, which the yellow cannot hold 4.5
+     against at any lightness. The letters carry a magenta-to-yellow gradient on
+     paper; a single token has to choose, and the yellow is the half that can
+     be read. */
+  --logo-fill:   #f9ed15;
+  --logo-plate:  #c4165f;
+  --logo-shadow: #0a0a0a;
+}
+/* --accent, --panel-border and --ink-shadow are left alone on purpose: they
+   are already defined as var(--bar) and follow it by themselves. */
+@media (prefers-color-scheme: dark) {
+  :root[data-campaign="mojo"] {
+    --page: #150f1c; --bar: #c3b3e0; --brick: #33294a;
+    --panel-1: #221a2e; --panel-2: #2c1c28; --pill: #3a3050;
+    --check: #241d33; --zap: #ff5ea8; --ink: #f3e9ee; --check-on: #ff5ea8;
+    --bg-input: #1a1424; --panel-border: #453a5e; --text-dim: #c0aebb;
+    --accent: #c3b3e0; --accent-strong: #ded2f2; --accent-2: #d79ac0;
+    --danger: #ff6b5c;
+    --glow: 0 0 0 3px rgba(255, 94, 168, 0.40);
+    --halftone: rgba(255, 255, 255, 0.06);
+    --hatch: rgba(255, 255, 255, 0.05);
+    --ink-shadow: 4px 4px 0 0 #0b0710;
+    --on-brick: #f3e9ee;
+    --on-page: #f3e9ee;
+    --on-zap: #1a0f16;
+    --on-danger: #2b0a07;
+    --tick: #1a0f16;
+    --title-shadow: #0b0710;
+    --zap-strong: #ff85be;
+    --input-settled: #120d1a;
+    --backdrop: rgba(11, 7, 16, 0.6);
+  }
+}
+:root[data-campaign="mojo"][data-theme="light"] {
+  --page: #4b4f72; --bar: #3b3f5e; --brick: #5a5f85;
+  --panel-1: #fdf4f6; --panel-2: #e3bec6; --pill: #a9cad3;
+  --check: #ffffff; --zap: #c4165f; --ink: #201c26;
+  --bg-input: #fffbfc; --panel-border: var(--bar); --text-dim: #4e4661;
+  --accent: var(--bar); --accent-strong: #2a2e49; --accent-2: #7d5f92;
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(196, 22, 95, 0.45);
+  --halftone: rgba(59, 63, 94, 0.16);
+  --hatch: rgba(59, 63, 94, 0.10);
+  --ink-shadow: 4px 4px 0 0 var(--bar);
+  --on-brick: #fdf4f6;
+  --on-page: #fdf4f6;
+  --on-zap: #ffffff;
+  --on-danger: #fff4ef;
+  --tick: #c4165f;
+  --title-shadow: #fdf4f6;
+  --zap-strong: #e0327a;
+  --input-settled: #ecdfe4;
+  --backdrop: rgba(20, 16, 28, 0.55);
+  color-scheme: light;
+}
+:root[data-campaign="mojo"][data-theme="dark"] {
+  --page: #150f1c; --bar: #c3b3e0; --brick: #33294a;
+  --panel-1: #221a2e; --panel-2: #2c1c28; --pill: #3a3050;
+  --check: #241d33; --zap: #ff5ea8; --ink: #f3e9ee; --check-on: #ff5ea8;
+  --bg-input: #1a1424; --panel-border: #453a5e; --text-dim: #c0aebb;
+  --accent: #c3b3e0; --accent-strong: #ded2f2; --accent-2: #d79ac0;
+  --danger: #ff6b5c;
+  --glow: 0 0 0 3px rgba(255, 94, 168, 0.40);
+  --halftone: rgba(255, 255, 255, 0.06);
+  --hatch: rgba(255, 255, 255, 0.05);
+  --ink-shadow: 4px 4px 0 0 #0b0710;
+  --on-brick: #f3e9ee;
+  --on-page: #f3e9ee;
+  --on-zap: #1a0f16;
+  --on-danger: #2b0a07;
+  --tick: #1a0f16;
+  --title-shadow: #0b0710;
+  --zap-strong: #ff85be;
+  --input-settled: #120d1a;
+  --backdrop: rgba(11, 7, 16, 0.6);
+  color-scheme: dark;
+}
+
 /* ---------- Base ---------- */
 * { box-sizing: border-box; }
 

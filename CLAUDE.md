@@ -160,7 +160,7 @@ hellen Block gilt in allen vier Zuständen, weil die anderen drei Blöcke dassel
 `:root` treffen und diese Namen nie nennen. Im Print-Reset fehlen sie ebenfalls
 absichtlich; der Kommentar dort sagt, warum.
 
-**Alle neun Logos sind gleich gebaut, und wer das übersieht, misst falsch:
+**Alle zehn Logos sind gleich gebaut, und wer das übersieht, misst falsch:
 Buchstaben in einer Farbe, hart versetzt in einen Block einer zweiten Farbe, über
 einem Grund, der mal zum Logo gehört und mal einfach der Bogen ist.** Der Versatz
 ist der **Schatten** — bei MC16 lila, bei MC10 schwarz, bei MC40 dunkelrot — und
@@ -208,6 +208,7 @@ Vorlagen, bewusst verschieden:
 | `campaigns/mad-titans-shadow.js` | das schlankeste: Spieler plus benannte Kästchen |
 | `campaigns/sinister-motives.js` | eine Zahl, aus der zwei abgeleitete Zustände fallen: erreichte Stufen und freigeschaltete Felder; dazu eine Liste, in der die Position Teil der Eintragung ist |
 | `campaigns/mutant-genesis.js` | Beschriftungen, die aus einer Wahl abgeleitet werden, ohne dass die Wahl entscheidet, was gespeichert bleibt; ein Gitter aus Kartensatz × Szenario; und die Grenze zwischen einer Sperre und einem Hinweis |
+| `campaigns/mojomania.js` | der kleinste Bogen, und der einzige, der gar nicht als Bogen verkauft wird: er steht auf der **Rückseite des Regelhefts**. Numerierte Freitextzeilen, deren Position die Eintragung mitträgt, und eine Anzeigereihenfolge, die je Sprache dem eigenen Druck folgt, weil die beiden Ausgaben dieselben sechs Kästchen verschieden anordnen |
 | `campaigns/next-evolution.js` | eine Tabelle, deren Zeile eine gedruckte Karte ist und deren gedruckte Spalten nur gelesen werden; eine Auswahl mit Eindeutigkeit über die Zeilen hinweg; und ein Feld, das erst mit dieser Auswahl aufgeht |
 | `campaigns/galaxys-most-wanted.js` | eine **wachsende** Auswahlliste aus einem festen Pool, deren Eindeutigkeit über alle Spieler hinweg gilt; ein gedrucktes Feld, das nicht abgefragt, sondern gerechnet wird — samt `migrate()`, die den alten Kontostand *exakt* umrechnet statt einen Standardwert zu raten; ein Feld, das per Index auf einen Spieler zeigt statt auf seinen Namen; und zwei Zahlen, aus denen der nächste Spielaufbau abgeleitet wird |
 | `campaigns/age-of-apocalypse.js` | sehr schlank: zwei Wahrheitswerte je gedruckter Zeile, die sich gegenseitig ausschließen und gemeinsam den Zeilennamen durchstreichen — dazu ein Bogen, dessen deutscher Druck vorlag, also nichts als Platzhalter stehen ließ |
@@ -237,7 +238,7 @@ Harte Punkte:
   Identität und Deck, Expertenmodus, Listen, Durchstreichen, Export, Druck.
   Das war einmal anders, und es ist teuer geworden: der Absatz über den
   Expertenmodus und der Satz „Ausblenden heißt nicht löschen“ standen in
-  **allen neun** Modulen einzeln, „es gibt hier bewusst keine Szenario-Tabelle“
+  **allen neun** Modulen einzeln (heute sind es zehn), „es gibt hier bewusst keine Szenario-Tabelle“
   in sieben, die Begründung einseitiger Sperren in fünf, und ein Modul
   wiederholte wörtlich einen Absatz des Rahmens. Zusammen war das die Hälfte
   des Textes. `helpDe`/`helpEn` sind **Arrays von Absätzen**, gleich lang in
@@ -389,7 +390,7 @@ nichts übrig ist.
   `cellsAreCells()` in `test/selftest.html` liest für jede Zelle jeder
   `.sheet-table` das berechnete `display` und verlangt `table-cell`. Aufgerufen
   wird es in `basic`, `smrep`, `mg`, `ne`, `aoa` und `aos` — also einmal je Kampagne,
-  die überhaupt eine Tabelle druckt (MC10, MC16 und MC21 haben keine, ihre
+  die überhaupt eine Tabelle druckt (MC10, MC16, MC21 und MC39 haben keine, ihre
   Spielerspalten sind `.player-grid`). Nur in der
   Breitansicht sinnvoll: die Schmalvariante macht jede Zelle absichtlich zum
   Block und legt den Rahmen auf die Zeile.
@@ -418,6 +419,18 @@ nichts übrig ist.
   **Eigenschaft war die ganze Zeit `true`**. Grün, während es auf dem Schirm
   stand. Sichtbarkeit prüft man am berechneten `display`, nie am Attribut —
   gefunden hat es nur ein Blick auf einen Screenshot.
+* **Ein Bogen muss kein eigenes PDF sein.** Bei MC39 gibt es keinen
+  Kampagnenbogen zum Herunterladen, und der erste Eindruck war deshalb „diese
+  Kampagne hat keinen Bogen“ — sie hat einen, auf der **Rückseite des
+  Regelhefts**, in beiden Ausgaben, mit der üblichen Kopiererlaubnis. Vor
+  diesem Schluss gehört ein Blick auf die letzte Seite jedes Regelhefts. Und
+  der Unterschied ist groß: mit Bogen ist es der übliche feldtreue Weg, ohne
+  müsste man etwas erfinden, was dieses Projekt nirgends tut.
+* **Zwei Drucke, zwei Anordnungen.** MC39 druckt dieselben sechs Kästchen
+  deutsch und englisch an verschiedenen Plätzen. Feldtreue heißt dann: je
+  Sprache dem eigenen Druck folgen, nicht einen der beiden zum Original
+  erklären. Die gespeicherten Schlüssel bleiben davon unberührt — sie sind
+  die Set-Codes aus `marvelsdb-json-data`, und nur die Anzeige dreht sich.
 * **Terminologie über alle Kampagnen hinweg.** Dasselbe Feld heißt überall
   gleich („Verbleibende Lebenspunkte"). Eine Umbenennung in einer Kampagne ist
   keine halbe Arbeit: README, Hilfetexte und Tests gehören dazu.

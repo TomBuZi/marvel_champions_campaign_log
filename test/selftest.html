@@ -2664,6 +2664,239 @@
         });
       }
 
+      // ----------------------------------------------------------- MC39
+      /* MojoMania's log is the back cover of the rules insert rather than a
+         sheet of its own, and it is correspondingly small: players with two
+         numbered free-text lines each, two Longshot boxes, six named modular
+         sets. These cases are about those being the ones the paper has — and
+         about the two orders, because the German and English editions print the
+         six sets in different places and each language follows its own. */
+      function mojoLog() {
+        return {
+          schemaVersion: 1, id: "mojo1", campaignId: "mojomania", stateVersion: 1,
+          title: "MojoMania",
+          createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-02T00:00:00.000Z",
+          state: {
+            /* Expert, because the hit points only exist there. caseMojoExpert
+               is the one that starts at standard. */
+            expert: true,
+            players: [{ hero: "", hp: null }],
+            /* Deliberately empty: normalize() has to read all eight boxes and
+               both boon lines out of a state that mentions none of them. */
+            longshot: {},
+            sets: {},
+          },
+        };
+      }
+
+      function caseMojo() {
+        seed({ mojo1: mojoLog() }, "mojo1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var markTroubleMojo = wordmarkReads(w, d);
+          log("the wordmark names this campaign and reads on its plate",
+            markTroubleMojo === null, markTroubleMojo);
+
+          var card = d.querySelectorAll(".player-card")[0];
+          /* Identity plus the two boon lines: three free-text fields on a card,
+             where every other campaign's card has one. */
+          log("the card carries the identity and both boon lines",
+            card.querySelectorAll(".text-input").length === 3,
+            card.querySelectorAll(".text-input").length);
+
+          var hero = card.querySelector(".text-input");
+          hero.value = "Rogue";
+          fire(hero, "input");
+          log("the hit point hint follows the hero",
+            /\d/.test(card.querySelector(".num-hint").textContent),
+            card.querySelector(".num-hint").textContent);
+
+          var hp = card.querySelector(".num-input");
+          hp.value = "9";
+          fire(hp, "input");
+          fire(hp, "blur");
+
+          /* The boon lines are numbered on paper and the number is the entry:
+             #1 was recorded after scenario 1, #2 after scenario 2. So they are
+             filled by position here, not by name. */
+          var boons = card.querySelectorAll(".text-input");
+          boons[1].value = "Enhanced Reflexes";
+          fire(boons[1], "input");
+          fire(boons[1], "blur");
+          boons[2].value = "Combat Training";
+          fire(boons[2], "input");
+          fire(boons[2], "blur");
+
+          /* Two blocks, because the paper prints two. Nothing else is on it —
+             no scenario sections, which is what every other campaign has. */
+          log("Longshot is its own block", !!d.querySelector("[data-section=longshot]"));
+          log("and the modular sets are theirs",
+            !!d.querySelector("[data-section=sets]"));
+          log("and there are no scenario sections at all",
+            d.querySelectorAll('[data-section^="scenario-"]').length === 0);
+
+          var ls = d.querySelectorAll("[data-section=longshot] .sheet-check");
+          log("Longshot is asked twice, once per scenario that asks",
+            ls.length === 2, ls.length);
+          log("and both scenarios are named",
+            /MaGog/.test(d.querySelector("[data-section=longshot]").textContent) &&
+            /Spiral/.test(d.querySelector("[data-section=longshot]").textContent));
+          /* Scenario 3 has no scenario after it to read the answer, so the
+             paper prints no third box and neither does this. */
+          log("scenario 3 is not asked about",
+            !/Mojo/.test(d.querySelector("[data-section=longshot]").textContent),
+            d.querySelector("[data-section=longshot]").textContent);
+
+          var sets = d.querySelectorAll("[data-section=sets] .sheet-check");
+          log("six modular sets", sets.length === 6, sets.length);
+          /* In the order the GERMAN sheet prints them, because the app is in
+             German here. Read off the rendered labels rather than asserted one
+             by one, so a renamed set does not turn this into an assertion about
+             nothing. */
+          var names = Array.prototype.map.call(
+            d.querySelectorAll("[data-section=sets] .flag > span"),
+            function (n) { return n.textContent; }).join();
+          log("in the order the German sheet prints them",
+            names === "Fantasy,Sci-Fi,Krimi,Sitcom,Horror,Western", names);
+
+          tick(ls[0]);                      // Longshot survived scenario 1
+          tick(sets[2]);                    // Krimi
+          tick(sets[4]);                    // Horror
+
+          d.querySelector(".btn-add").click();
+          log("a second player can be added",
+            d.querySelectorAll(".player-card").length === 2,
+            d.querySelectorAll(".player-card").length);
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).mojo1.state;
+            log("the hero and hit points were stored",
+              st.players[0].hero === "Rogue" && st.players[0].hp === 9,
+              st.players[0].hero + "/" + st.players[0].hp);
+            log("both boon lines were stored, in their own places",
+              st.players[0].boon1 === "Enhanced Reflexes" &&
+              st.players[0].boon2 === "Combat Training",
+              JSON.stringify([st.players[0].boon1, st.players[0].boon2]));
+            log("the Longshot answer was stored against its scenario",
+              st.longshot.s1 === true && st.longshot.s2 === false,
+              JSON.stringify(st.longshot));
+            /* Stored by set code, whatever order they were shown in — the
+               display follows the printed page, the state does not. */
+            log("the two ticked sets were stored by their set codes",
+              st.sets.crime === true && st.sets.horror === true,
+              JSON.stringify(st.sets));
+            log("and the four untouched ones are false, not missing",
+              st.sets.fantasy === false && st.sets["sci-fi"] === false &&
+              st.sets.sitcom === false && st.sets.western === false,
+              JSON.stringify(st.sets));
+            finish();
+          }, 500);
+        });
+      }
+
+      function caseMojoExpert() {
+        var seeded = mojoLog();
+        seeded.state.expert = false;
+        /* Filled in, but not visible at standard level — exactly the state that
+           would lose data if hiding were clearing. */
+        seeded.state.players = [{ hero: "Rogue", hp: 6, boon1: "Enhanced Reflexes" }];
+        seed({ mojo1: seeded }, "mojo1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var card = function () { return d.querySelector(".player-card"); };
+          var toggle = function () {
+            return d.querySelector("[data-section=players] .panel-head .flag .sheet-check");
+          };
+
+          log("the switch is in the player panel head", !!toggle());
+          log("it starts unticked", toggle().checked === false);
+          log("standard hides the hit points", !card().querySelector(".num-input"));
+          /* The level governs the hit points and nothing else: the boon lines
+             are recorded at both levels, so they stay. */
+          log("the boon lines are not hidden with them",
+            card().querySelectorAll(".text-input").length === 3,
+            card().querySelectorAll(".text-input").length);
+          log("standard leaves all eight boxes",
+            d.querySelectorAll("[data-section=longshot] .sheet-check").length +
+            d.querySelectorAll("[data-section=sets] .sheet-check").length === 8);
+
+          toggle().checked = true;
+          fire(toggle(), "change");
+
+          log("expert reveals the hit points", !!card().querySelector(".num-input"));
+          log("and the value was still there",
+            card().querySelector(".num-input").value === "6",
+            card().querySelector(".num-input").value);
+
+          toggle().checked = false;
+          fire(toggle(), "change");
+          log("switching back hides them again", !card().querySelector(".num-input"));
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).mojo1.state;
+            log("the sheet is back at standard", st.expert === false);
+            log("but the hidden hit points survived", st.players[0].hp === 6,
+              st.players[0].hp);
+            log("and the boon line was never at risk",
+              st.players[0].boon1 === "Enhanced Reflexes", st.players[0].boon1);
+            finish();
+          }, 500);
+        });
+      }
+
+      function caseMojoPrint() {
+        var seeded = mojoLog();
+        seeded.state.players = [
+          { hero: "Rogue", hp: 9, deck: "1213577", boon1: "Enhanced Reflexes", boon2: "Combat Training" },
+          /* Only #1 filled: the number is the entry, so a blank #2 beside a
+             filled #1 has to stay readable as that on paper too. */
+          { hero: "Gambit", hp: 6, boon1: "Skilled Investigator" },
+        ];
+        seeded.state.longshot = { s1: true };
+        seeded.state.sets = { crime: true, horror: true };
+        seed({ mojo1: seeded }, "mojo1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          w.dispatchEvent(new w.Event("beforeprint"));
+          var pv = d.getElementById("print-view");
+          var text = pv.textContent;
+          log("print view built", pv.children.length > 0, pv.children.length);
+          log("print names the campaign", /MojoMania \(MC39\)/.test(text));
+          log("print carries both heroes",
+            /Rogue/.test(text) && /Gambit/.test(text));
+          log("print says which level was played",
+            /\[x\] Expertenmodus/.test(text), text.slice(0, 120));
+          /* Named, not just the bare number: textContent runs the lines
+             together, so a digit on its own proves nothing about where it sat. */
+          log("print carries the hit points",
+            /Lebenspunkte: 9/.test(text) && /Lebenspunkte: 6/.test(text));
+          log("print carries the boon lines by their number",
+            /Vorteil\/Upgrade #1: Enhanced Reflexes/.test(text) &&
+            /Vorteil\/Upgrade #2: Combat Training/.test(text), text);
+          /* An empty numbered line prints as empty rather than vanishing: which
+             scenario a card came from is the whole point of the number. */
+          log("and prints an empty one as empty",
+            /Vorteil\/Upgrade #2: —/.test(text), text);
+          log("print records the Longshot answer for both scenarios",
+            /\[x\] Szenario 1: MaGog/.test(text) &&
+            /\[ \] Szenario 2: Spiral/.test(text), text);
+          /* Which sets were NOT used matters as much as which were — that is
+             exactly what the next scenario's setup asks — so all six print. */
+          log("print ticks the used sets", /\[x\] Krimi/.test(text) &&
+            /\[x\] Horror/.test(text));
+          log("print leaves the unused ones unticked",
+            /\[ \] Fantasy/.test(text) && /\[ \] Western/.test(text));
+          /* Short enough to type off paper, and only for the player who has
+             one — the second player's line must not grow an empty address. */
+          log("print carries the one deck link there is",
+            (text.match(/Deck: marvelcdb\.com\/deck\/view\/1213577/g) || []).length === 1,
+            text);
+          finish();
+        });
+      }
+
       // ----------------------------------------------------------- MC27
       /* MC27 has no printed checkbox on it at all, so where the sheet's blank
          lines mean cards, the module supplies the set — as boxes where the
@@ -6144,7 +6377,7 @@
         });
       }
 
-      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, deck: caseDeck, help: caseHelp, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint, mg: caseMg, mgrole: caseMgRole, mgexpert: caseMgExpert, mgprint: caseMgPrint, ne: caseNe, neschemes: caseNeSchemes, neexpert: caseNeExpert, neprint: caseNePrint, aoa: caseAoa, aoamissions: caseAoaMissions, aoaexpert: caseAoaExpert, aoaprint: caseAoaPrint, gmw: caseGmw, gmwmarket: caseGmwMarket, gmwunits: caseGmwUnits, gmwexpert: caseGmwExpert, gmwprint: caseGmwPrint,
+      var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, mojo: caseMojo, mojoexpert: caseMojoExpert, mojoprint: caseMojoPrint, deck: caseDeck, help: caseHelp, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint, mg: caseMg, mgrole: caseMgRole, mgexpert: caseMgExpert, mgprint: caseMgPrint, ne: caseNe, neschemes: caseNeSchemes, neexpert: caseNeExpert, neprint: caseNePrint, aoa: caseAoa, aoamissions: caseAoaMissions, aoaexpert: caseAoaExpert, aoaprint: caseAoaPrint, gmw: caseGmw, gmwmarket: caseGmwMarket, gmwunits: caseGmwUnits, gmwexpert: caseGmwExpert, gmwprint: caseGmwPrint,
         aos: caseAos, aosevidence: caseAosEvidence,
         aosexpert: caseAosExpert, aosprint: caseAosPrint, sharebtn: caseShareButton };
       (cases[CASE] || caseBasic)();
