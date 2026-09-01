@@ -474,8 +474,8 @@ Heldennamen stehen lässt.
 
 Kopiert wird die **Kennung**, nicht die Adresse — die steht schon als Link
 daneben, und die Kennung ist das, was dieses Feld auf dem nächsten Bogen und die
-Suche auf MarvelCDB annehmen. Die beiden Knöpfe sind gleich still gebaut,
-trennen sich aber beim Überfahren: das ⧉ leuchtet im Akzent, das × in der
+Suche auf MarvelCDB annehmen. Beide sind dieselbe Pill wie der Würfelknopf und
+trennen sich erst beim Überfahren: das ⧉ leuchtet im Akzent, das × in der
 Warnfarbe. Eine Kennung zu kopieren kostet nichts und macht sich dadurch
 rückgängig, dass man sie nicht einfügt; eine Verknüpfung zu lösen nicht. Ist
 keine Zwischenablage erreichbar — keine Berechtigung, oder ein Kontext, dem der
