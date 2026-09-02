@@ -406,6 +406,7 @@
   --on-page: #fffaf4;
   --on-zap: #231f20;
   --on-danger: #fff4ef;
+  --check-on: var(--bar);
   --tick: #e9ab21;
   --title-shadow: #fffaf4;
   --zap-strong: #f7bd3a;
@@ -541,6 +542,7 @@
   --on-page: #f7e5e6;
   --on-zap: #26171e;
   --on-danger: #fff4ef;
+  --check-on: var(--bar);
   --tick: #f9f2f0;
   --title-shadow: #f7e5e6;
   --zap-strong: #fba2d6;
@@ -1657,6 +1659,7 @@
   --on-page: #fdf4f6;
   --on-zap: #ffffff;
   --on-danger: #fff4ef;
+  --check-on: var(--bar);
   --tick: #c4165f;
   --title-shadow: #fdf4f6;
   --zap-strong: #e0327a;
@@ -1684,6 +1687,176 @@
   --zap-strong: #ff85be;
   --input-settled: #120d1a;
   --backdrop: rgba(11, 7, 16, 0.6);
+  color-scheme: dark;
+}
+
+/* ---------- Campaign skin: Core Set Campaign (MC01) ----------
+   Sampled from Grundspiel_Kampagne_DE.pdf the same way as the palettes above:
+   the fill colours of the vector areas in the page content stream, weighted by
+   area. This sheet is a Word document rather than publisher artwork, and that
+   makes the measurement unusually clean -- the log page carries exactly one
+   raster (the wordmark, and it is a stencil MASK with no colour of its own), so
+   nothing is hiding under an image the way MC32's, MC40's and MC45's borders
+   are. The numbers are the whole sheet: #DAEEF3 fills 95.9% of it, every rule
+   and outline strokes #4BACC6, the text is #365F91, the headings on the prose
+   pages are #4F81BD, and the paper is white.
+
+   Which is the problem this palette has to solve: the sheet has no page field.
+   MC45 taught that the first question is which area even IS the sheet; here the
+   answer is "white paper with pale blue boxes on it", and a white --page would
+   swallow the panels, which are also nearly white. So --page and --bar are
+   derived from the two blues the sheet prints as TEXT -- the heading blue
+   lifted to carry text at 4.8, the body blue deepened for rules and outlines --
+   and the measured #DAEEF3 becomes the panel it actually is.
+
+   There is likewise no accent: this sheet is blue and nothing else. The one
+   saturated tone in the document is the #4BACC6 of every outline and of the
+   wordmark's keyline, so that is --zap. It is a measurement, not a borrowing
+   (MC39 had to borrow) -- but it is a REASSIGNMENT, and worth naming as one:
+   on paper that colour draws lines, here it also carries focus rings and ticks.
+
+   And there are no printed checkboxes at all -- the sheet is four blocks of
+   fill-in lines. --check, --check-on and --tick are therefore derived rather
+   than sampled: white paper for the empty box, the deep blue for a ticked one,
+   the pale blue as the mark. Nothing on the sheet contradicts them because the
+   sheet says nothing about them.
+
+   Kept apart from the two campaigns it could be confused with. MC45 is the
+   other cool, white, teal-outlined sheet: it is navy and MINT with a gold
+   accent, this is mid-blue and CYAN with no gold anywhere, and where MC45's
+   --pill is the steel #a9cad3 it shares with MC39, this one's comes off its own
+   aqua. MC39 is slate and pink.
+
+   Dark mode keeps all four of the sheet's colours rather than only the darkest
+   -- the panels end on a muted cyan the way the light ones end on #daeef3, and
+   the aqua stays both the rule colour and the accent, including the ticked
+   checkbox. An all-navy dark mode would read as a different campaign than its
+   own light mode.
+
+   Four blocks, mirroring the ones above, and for the reason spelled out there:
+   a single [data-campaign] block outranks the bare :root inside the dark media
+   query and would paint the light palette in dark mode. */
+:root[data-campaign="csc"] {
+  --page:      #3f6f9e;   /* page field -- the printed heading blue
+                             #4F81BD, lifted so text holds on it        */
+  --bar:       #2b5580;   /* deeper blue: bars, borders, ink outlines --
+                             the printed body blue #365F91, darkened    */
+  --brick:     #35618d;   /* mid blue, table body -- derived between
+                             --page and --bar, text on it holds 5.8     */
+  --panel-1:   #f4fbfd;   /* panel gradient, top -- the printed box with
+                             the white of the paper in it               */
+  --panel-2:   #daeef3;   /* ... bottom: the printed box, as measured   */
+  --pill:      #a8dbe8;   /* heading pill, table header row -- between
+                             the printed box and its aqua outline       */
+  --check:     #ffffff;   /* empty checkbox -- the paper, derived: this
+                             sheet prints no checkbox to measure        */
+  --zap:       #4bacc6;   /* accent aqua: the colour of every rule on
+                             the sheet and of the wordmark's keyline,
+                             and the only saturated tone it prints      */
+  --ink:       #1b2430;   /* near-black text                            */
+
+  --bg-input: #fbfeff;
+  --text-dim: #41577a;
+  --accent-strong: #1c3d5f;
+  --accent-2: #2f8ba6;
+  /* Stays red: here the colour carries meaning, not identity. */
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(75, 172, 198, 0.45);
+  --halftone: rgba(43, 85, 128, 0.16);
+  --hatch: rgba(43, 85, 128, 0.10);
+  --on-brick: #eaf5fb;
+  --on-page: #eaf5fb;
+  --on-zap: #10262d;
+  --on-danger: #fff4ef;
+  --tick: #8fd6e8;
+  --title-shadow: #eaf5fb;
+  --zap-strong: #6cc4dc;
+  --input-settled: #c3dbe4;
+  --backdrop: rgba(10, 20, 32, 0.55);
+  /* MC01 wordmark: white letters on the deepest blue the sheet prints, extruded
+     into its aqua -- 6.6. This mark is built differently from the nine
+     publisher logos, and the roles had to be read off the rendered page rather
+     than assumed. It is white letters with an AQUA KEYLINE and a soft grey drop
+     shadow, over the bare paper: there is no plate to measure, and white on
+     white is 1.0. So the plate is the sheet's own #365F91 -- the darkest blue it
+     prints -- and the aqua keyline, which is what the mark is recognised by,
+     becomes the extrusion. That is the right role for it: the extrusion is the
+     token that separates by HUE rather than luminance, and it also draws the
+     plate's border, which is exactly where a keyline belongs. Measured off the
+     rendered pixmap, because the wordmark's own xref is a stencil mask and
+     reads as solid black. */
+  --logo-fill:   #ffffff;
+  --logo-plate:  #365f91;
+  --logo-shadow: #4aacc5;
+}
+/* --accent, --panel-border and --ink-shadow are left alone on purpose: they
+   are already defined as var(--bar) and follow it by themselves. */
+@media (prefers-color-scheme: dark) {
+  :root[data-campaign="csc"] {
+    --page: #0c1622; --bar: #74c3da; --brick: #1d3a55;
+    --panel-1: #14283c; --panel-2: #153440; --pill: #24506b;
+    --check: #10263a; --zap: #5cc7e0; --ink: #e8f3f8; --check-on: #5cc7e0;
+    --bg-input: #101f2f; --panel-border: #2e567a; --text-dim: #a8c0d2;
+    --accent: #74c3da; --accent-strong: #a9dcec; --accent-2: #8fd0e2;
+    --danger: #ff6b5c;
+    --glow: 0 0 0 3px rgba(92, 199, 224, 0.40);
+    --halftone: rgba(116, 195, 218, 0.12);
+    --hatch: rgba(116, 195, 218, 0.08);
+    --ink-shadow: 4px 4px 0 0 #060d16;
+    --on-brick: #e8f3f8;
+    --on-page: #e8f3f8;
+    --on-zap: #0a1c26;
+    --on-danger: #2b0a07;
+    --tick: #0a1c26;
+    --title-shadow: #060d16;
+    --zap-strong: #7fd7ea;
+    --input-settled: #0b1521;
+    --backdrop: rgba(5, 10, 17, 0.6);
+  }
+}
+:root[data-campaign="csc"][data-theme="light"] {
+  --page: #3f6f9e; --bar: #2b5580; --brick: #35618d;
+  --panel-1: #f4fbfd; --panel-2: #daeef3; --pill: #a8dbe8;
+  --check: #ffffff; --zap: #4bacc6; --ink: #1b2430;
+  --bg-input: #fbfeff; --panel-border: var(--bar); --text-dim: #41577a;
+  --accent: var(--bar); --accent-strong: #1c3d5f; --accent-2: #2f8ba6;
+  --danger: #a11208;
+  --glow: 0 0 0 3px rgba(75, 172, 198, 0.45);
+  --halftone: rgba(43, 85, 128, 0.16);
+  --hatch: rgba(43, 85, 128, 0.10);
+  --ink-shadow: 4px 4px 0 0 var(--bar);
+  --on-brick: #eaf5fb;
+  --on-page: #eaf5fb;
+  --on-zap: #10262d;
+  --on-danger: #fff4ef;
+  --check-on: var(--bar);
+  --tick: #8fd6e8;
+  --title-shadow: #eaf5fb;
+  --zap-strong: #6cc4dc;
+  --input-settled: #c3dbe4;
+  --backdrop: rgba(10, 20, 32, 0.55);
+  color-scheme: light;
+}
+:root[data-campaign="csc"][data-theme="dark"] {
+  --page: #0c1622; --bar: #74c3da; --brick: #1d3a55;
+  --panel-1: #14283c; --panel-2: #153440; --pill: #24506b;
+  --check: #10263a; --zap: #5cc7e0; --ink: #e8f3f8; --check-on: #5cc7e0;
+  --bg-input: #101f2f; --panel-border: #2e567a; --text-dim: #a8c0d2;
+  --accent: #74c3da; --accent-strong: #a9dcec; --accent-2: #8fd0e2;
+  --danger: #ff6b5c;
+  --glow: 0 0 0 3px rgba(92, 199, 224, 0.40);
+  --halftone: rgba(116, 195, 218, 0.12);
+  --hatch: rgba(116, 195, 218, 0.08);
+  --ink-shadow: 4px 4px 0 0 #060d16;
+  --on-brick: #e8f3f8;
+  --on-page: #e8f3f8;
+  --on-zap: #0a1c26;
+  --on-danger: #2b0a07;
+  --tick: #0a1c26;
+  --title-shadow: #060d16;
+  --zap-strong: #7fd7ea;
+  --input-settled: #0b1521;
+  --backdrop: rgba(5, 10, 17, 0.6);
   color-scheme: dark;
 }
 

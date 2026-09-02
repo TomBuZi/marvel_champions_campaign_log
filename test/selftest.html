@@ -1559,13 +1559,25 @@
           log("the choices are sorted by product number",
             codes.join() === codes.slice().sort(function (a, b) { return a - b; }).join(),
             codes.join());
+          /* WHICH campaign that is follows from the sort, so it is derived
+             rather than spelled out. This assertion used to name MC10, and MC01
+             is exactly the campaign that made it wrong: a sheet arriving with a
+             lower product number moves the preselection, and a named expectation
+             would have to be rewritten every time instead of holding. */
+          var firstChoice = choices.querySelector("input[type=radio]:checked");
+          var firstLabel = firstChoice.parentNode
+            .querySelector(".choice-text strong").textContent;
           log("so the lowest number is preselected",
-            radios[0].checked && radios[0].value === "rise-of-red-skull", radios[0].value);
+            firstChoice === radios[0] && codes[0] === Math.min.apply(null, codes),
+            firstLabel + " of " + codes.join());
           /* The preselected box and the proposed title have to mean the same
-             campaign, or the dialog names one thing and ticks another. */
+             campaign, or the dialog names one thing and ticks another. Read off
+             the label rather than written out, which also keeps it true in
+             either language. */
           log("the proposed title matches the preselected campaign",
-            d.getElementById("new-log-title").value === "The Rise of Red Skull",
-            d.getElementById("new-log-title").value);
+            d.getElementById("new-log-title").value ===
+              firstLabel.replace(/\s*\(MC\d+\)$/, ""),
+            d.getElementById("new-log-title").value + " vs " + firstLabel);
           log("the dialog names MC10",
             /The Rise of Red Skull \(MC10\)/.test(choices.textContent));
           log("the dialog no longer counts scenarios",
@@ -2893,6 +2905,210 @@
           log("print carries the one deck link there is",
             (text.match(/Deck: marvelcdb\.com\/deck\/view\/1213577/g) || []).length === 1,
             text);
+          finish();
+        });
+      }
+
+      // ----------------------------------------------------------- MC01
+      /* The leanest sheet in the app: four player blocks, four lines each, and
+         nothing else at all. So these cases are mostly about the ABSENCE being
+         real — one section, no boxes beyond the expert switch — and about the
+         two numbered boon lines, which this sheet shares with MC39 and which
+         are the only place a position carries meaning here.
+
+         MC01 is also the lowest product number, which makes it the campaign a
+         fresh visit preselects; caseRrsDialog is where that is asserted, and it
+         derives the name rather than spelling it out. */
+      function cscLog() {
+        return {
+          schemaVersion: 1, id: "csc1", campaignId: "core-set-campaign", stateVersion: 1,
+          title: "Grundspiel Kampagne",
+          createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-02T00:00:00.000Z",
+          state: {
+            /* Expert, because the hit points only exist there. caseCscExpert is
+               the one that starts at standard. */
+            expert: true,
+            players: [{ hero: "", hp: null }],
+          },
+        };
+      }
+
+      function caseCsc() {
+        seed({ csc1: cscLog() }, "csc1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var markTroubleCsc = wordmarkReads(w, d);
+          log("the wordmark names this campaign and reads on its plate",
+            markTroubleCsc === null, markTroubleCsc);
+
+          /* The whole sheet is one panel. Counted off the rendered sections
+             rather than asserted by name, so a section appearing here fails
+             loudly instead of being silently tolerated. */
+          var sections = d.querySelectorAll("#campaign [data-section]");
+          log("the sheet is a single section", sections.length === 1,
+            Array.prototype.map.call(sections, function (s) {
+              return s.getAttribute("data-section");
+            }).join());
+          log("and that section is the players",
+            !!d.querySelector("[data-section=players]"));
+          log("there are no scenario sections at all",
+            d.querySelectorAll('[data-section^="scenario-"]').length === 0);
+          /* The expert switch is the only checkbox the sheet grows, and it is
+             the frame's, not a printed field. Anything else would be invented. */
+          log("the only box on the sheet is the expert switch",
+            d.querySelectorAll("#campaign .sheet-check").length === 1,
+            d.querySelectorAll("#campaign .sheet-check").length);
+          /* No table, so nothing for cellsAreCells() to check — the player
+             blocks are a .player-grid, as in MC10, MC16, MC21 and MC39. */
+          log("the player blocks are a grid, not a table",
+            !!d.querySelector(".player-grid") && !d.querySelector(".sheet-table"));
+
+          var card = d.querySelectorAll(".player-card")[0];
+          /* Identity plus the two boon lines: three free-text fields on a card,
+             the same shape MC39's cards have. */
+          log("the card carries the identity and both boon lines",
+            card.querySelectorAll(".text-input").length === 3,
+            card.querySelectorAll(".text-input").length);
+
+          var hero = card.querySelector(".text-input");
+          hero.value = "Spider-Man * Peter Parker";
+          fire(hero, "input");
+          log("the hit point hint follows the hero",
+            /\d/.test(card.querySelector(".num-hint").textContent),
+            card.querySelector(".num-hint").textContent);
+
+          var hp = card.querySelector(".num-input");
+          hp.value = "8";
+          fire(hp, "input");
+          fire(hp, "blur");
+
+          /* The boon lines are numbered on paper and the number is the entry:
+             #1 was recorded after scenario 1, #2 after scenario 2. So they are
+             filled by position here, not by name. */
+          var boons = card.querySelectorAll(".text-input");
+          boons[1].value = "Med Team";
+          fire(boons[1], "input");
+          fire(boons[1], "blur");
+          boons[2].value = "Web-Shooter";
+          fire(boons[2], "input");
+          fire(boons[2], "blur");
+
+          d.querySelector(".btn-add").click();
+          log("a second player can be added",
+            d.querySelectorAll(".player-card").length === 2,
+            d.querySelectorAll(".player-card").length);
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).csc1.state;
+            log("the hero and hit points were stored",
+              st.players[0].hero === "Spider-Man * Peter Parker" &&
+              st.players[0].hp === 8,
+              st.players[0].hero + "/" + st.players[0].hp);
+            log("both boon lines were stored, in their own places",
+              st.players[0].boon1 === "Med Team" &&
+              st.players[0].boon2 === "Web-Shooter",
+              JSON.stringify([st.players[0].boon1, st.players[0].boon2]));
+            /* The state is as small as the sheet: a level and its players. */
+            log("nothing else was stored",
+              Object.keys(st).sort().join() === "expert,players",
+              Object.keys(st).join());
+            finish();
+          }, 500);
+        });
+      }
+
+      function caseCscExpert() {
+        var seeded = cscLog();
+        seeded.state.expert = false;
+        /* Filled in, but not visible at standard level — exactly the state that
+           would lose data if hiding were clearing. */
+        seeded.state.players = [{ hero: "Captain Marvel", hp: 7, boon1: "Med Team" }];
+        seed({ csc1: seeded }, "csc1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          var card = function () { return d.querySelector(".player-card"); };
+          var toggle = function () {
+            return d.querySelector("[data-section=players] .panel-head .flag .sheet-check");
+          };
+
+          log("the switch is in the player panel head", !!toggle());
+          log("it starts unticked", toggle().checked === false);
+          log("standard hides the hit points", !card().querySelector(".num-input"));
+          /* The level governs the hit points and nothing else: the boon lines
+             are recorded at both levels, so they stay. */
+          log("the boon lines are not hidden with them",
+            card().querySelectorAll(".text-input").length === 3,
+            card().querySelectorAll(".text-input").length);
+
+          toggle().checked = true;
+          fire(toggle(), "change");
+
+          log("expert reveals the hit points", !!card().querySelector(".num-input"));
+          log("and the value was still there",
+            card().querySelector(".num-input").value === "7",
+            card().querySelector(".num-input").value);
+
+          toggle().checked = false;
+          fire(toggle(), "change");
+          log("switching back hides them again", !card().querySelector(".num-input"));
+
+          w.dispatchEvent(new w.Event("pagehide"));
+          setTimeout(function () {
+            var st = JSON.parse(localStorage.getItem("mcclog:logs")).csc1.state;
+            log("the sheet is back at standard", st.expert === false);
+            log("but the hidden hit points survived", st.players[0].hp === 7,
+              st.players[0].hp);
+            log("and the boon line was never at risk",
+              st.players[0].boon1 === "Med Team", st.players[0].boon1);
+            finish();
+          }, 500);
+        });
+      }
+
+      function caseCscPrint() {
+        var seeded = cscLog();
+        seeded.state.players = [
+          { hero: "Spider-Man * Peter Parker", hp: 8, deck: "1213577",
+            boon1: "Med Team", boon2: "Web-Shooter" },
+          /* Only #1 filled: the number is the entry, so a blank #2 beside a
+             filled #1 has to stay readable as that on paper too. */
+          { hero: "Captain Marvel", hp: 7, boon1: "Energy Absorption" },
+        ];
+        seed({ csc1: seeded }, "csc1");
+        boot("", function (frame, w, d) {
+          f0 = w;
+          w.dispatchEvent(new w.Event("beforeprint"));
+          var pv = d.getElementById("print-view");
+          var text = pv.textContent;
+          log("print view built", pv.children.length > 0, pv.children.length);
+          log("print names the campaign",
+            /Grundspiel Kampagne \(MC01\)/.test(text), text.slice(0, 160));
+          log("print carries both heroes",
+            /Spider-Man/.test(text) && /Captain Marvel/.test(text));
+          log("print says which level was played",
+            /\[x\] Expertenmodus/.test(text), text.slice(0, 160));
+          /* Named, not just the bare number: textContent runs the lines
+             together, so a digit on its own proves nothing about where it sat. */
+          log("print carries the hit points",
+            /Lebenspunkte: 8/.test(text) && /Lebenspunkte: 7/.test(text));
+          log("print carries the boon lines by their number",
+            /Vorteil\/Upgrade #1: Med Team/.test(text) &&
+            /Vorteil\/Upgrade #2: Web-Shooter/.test(text), text);
+          /* An empty numbered line prints as empty rather than vanishing: which
+             scenario a card came from is the whole point of the number. */
+          log("and prints an empty one as empty",
+            /Vorteil\/Upgrade #2: —/.test(text), text);
+          /* Short enough to type off paper, and only for the player who has
+             one — the second player's line must not grow an empty address. */
+          log("print carries the one deck link there is",
+            (text.match(/Deck: marvelcdb\.com\/deck\/view\/1213577/g) || []).length === 1,
+            text);
+          /* One section on screen, one section on paper: the printout must not
+             invent a heading the sheet does not have. */
+          log("print is the one section the sheet has",
+            pv.querySelectorAll(".print-section").length === 1,
+            pv.querySelectorAll(".print-section").length);
           finish();
         });
       }
@@ -6379,7 +6595,9 @@
 
       var cases = { round: caseRound, roundlast: caseRoundLast, roundspread: caseRoundSpread, players: casePlayers, migrate: caseMigrate, random: caseRandom, randomspread: caseRandomSpread, appearance: caseAppearance, basic: caseBasic, quarantine: caseQuarantine, share: caseShare, lang: caseLang, langpath: caseLangPath, print: casePrint, "import": caseImport, lock: caseLock, lockconflict: caseLockConflict, rrs: caseRrs, rrsdialog: caseRrsDialog, rrsprint: caseRrsPrint, rrspools: caseRrsPools, rrsexpert: caseRrsExpert, expert: caseExpert, mts: caseMts, mtsexpert: caseMtsExpert, mtsprint: caseMtsPrint, mojo: caseMojo, mojoexpert: caseMojoExpert, mojoprint: caseMojoPrint, deck: caseDeck, help: caseHelp, sm: caseSm, smrep: caseSmRep, smexpert: caseSmExpert, smprint: caseSmPrint, mg: caseMg, mgrole: caseMgRole, mgexpert: caseMgExpert, mgprint: caseMgPrint, ne: caseNe, neschemes: caseNeSchemes, neexpert: caseNeExpert, neprint: caseNePrint, aoa: caseAoa, aoamissions: caseAoaMissions, aoaexpert: caseAoaExpert, aoaprint: caseAoaPrint, gmw: caseGmw, gmwmarket: caseGmwMarket, gmwunits: caseGmwUnits, gmwexpert: caseGmwExpert, gmwprint: caseGmwPrint,
         aos: caseAos, aosevidence: caseAosEvidence,
-        aosexpert: caseAosExpert, aosprint: caseAosPrint, sharebtn: caseShareButton };
+        aosexpert: caseAosExpert, aosprint: caseAosPrint,
+        csc: caseCsc, cscexpert: caseCscExpert, cscprint: caseCscPrint,
+        sharebtn: caseShareButton };
       (cases[CASE] || caseBasic)();
     </script>
   </body>

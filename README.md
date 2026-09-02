@@ -9,7 +9,9 @@ Umgesetzt sind die Kampagnen **Fear No Evil (MC60)**,
 **The Rise of Red Skull (MC10)**, **The Galaxy's Most Wanted (MC16)**,
 **The Mad Titan's Shadow (MC21)**, **Sinister Motives (MC27)**,
 **Mutant Genesis (MC32)**, **MojoMania (MC39)**, **NeXt Evolution (MC40)**,
-**Age of Apocalypse (MC45)** und **Agents of S.H.I.E.L.D. (MC50)**.
+**Age of Apocalypse (MC45)** und **Agents of S.H.I.E.L.D. (MC50)** — dazu
+die **Grundspiel Kampagne (MC01)**, die einzige, deren Bogen nicht vom
+Herausgeber stammt.
 Die Kampagne wird beim Anlegen eines Bogens gewählt
 und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
 [Eine Kampagne hinzufügen](#eine-kampagne-hinzufügen).
@@ -43,14 +45,14 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     Szenario 5: Ronan der Ankläger kommt auf dem gedruckten Bogen kein einziges
     Mal vor, die Kästchen tragen die Unterzeile „Sieg-Anweisung für Szenarien
     #1 – 4“, und im Finale gibt es nichts festzuhalten außer dem Sieg.
-  * *MojoMania (MC39)* — die einzige Kampagne ohne eigenen Bogen im Handel:
-    ihr Kampagnenlogbuch steht auf der **Rückseite des Regelhefts**, in beiden
-    Ausgaben. Je Spieler Identität, Lebenspunkte und zwei numerierte
+  * *MojoMania (MC39)* — die einzige Verlagskampagne ohne eigenen Bogen im
+    Handel: ihr Kampagnenlogbuch steht auf der **Rückseite des Regelhefts**, in
+    beiden Ausgaben. Je Spieler Identität, Lebenspunkte und zwei numerierte
     Freitextzeilen für einen Vorteil oder ein Upgrade — die Nummer sagt, aus
     welchem Szenario die Karte stammt. Dazu zwei Longshot-Kästchen und die
     sechs modularen Begegnungssets. Die beiden Drucke ordnen diese sechs
     verschieden an, deshalb folgt die Anzeige je Sprache ihrem eigenen Druck.
-  * *The Mad Titan's Shadow (MC21)* — der schlankeste von allen: je Spieler
+  * *The Mad Titan's Shadow (MC21)* — der schlankeste Verlagsbogen: je Spieler
     Identität und Lebenspunkte, dazu neun benannte Kästchen in vier
     Szenario-Abschnitten. Sieben von ihnen sagen auf Papier denselben Satz
     („… was added to campaign pool“), deshalb stehen sie hier als eine
@@ -96,8 +98,9 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     stehen fünf Szenarien gegenüber, eine Zeile bleibt am Ende also
     zwangsläufig leer.
   * *Age of Apocalypse (MC45)* — sehr schlank, wenn auch nicht ganz so knapp wie
-    MC21: je Spieler Identität und Lebenspunkte, darunter die Tabelle der vier
-    **Mission-Nebenpläne** und darunter fünf benannte Kästchen. Drei der vier Spalten sind gedruckter
+    MC21 und MC01: je Spieler Identität und Lebenspunkte, darunter die Tabelle
+    der vier **Mission-Nebenpläne** und darunter fünf benannte Kästchen. Drei
+    der vier Spalten sind gedruckter
     Regeltext — *Spielaufbau*, *Besiegt* und *Nicht besiegt* —, und in den
     beiden Ergebnisspalten sitzt je ein Kästchen: sie schließen einander aus,
     und beide streichen den Missionsnamen durch, denn die Regel streicht ihn
@@ -144,6 +147,21 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     Symbole des Bogens sind
     hier gezeichnet, nicht die Kunst des Herausgebers, und jedes trägt seinen
     Kartennamen als Namen für Screenreader und in der Legende darüber.
+  * *Grundspiel Kampagne (MC01)* — der schlankeste Bogen von allen, und der
+    einzige, der nicht vom Herausgeber stammt. Für das Grundspiel gibt es keine
+    offizielle Kampagne; diese hier verknüpft seine drei Szenarien — Rhino,
+    Klaw, Ultron — und kommt vom Podcast *Die Abteilung für übermenschliches
+    Recht* ([MarvelChampionsPodcast.de](http://www.MarvelChampionsPodcast.de/)),
+    der sie als PDF in beiden Sprachen herausgibt. Der Bogen ist eine Seite und
+    druckt vier Spielerblöcke mit je vier Zeilen: Identität, verbleibende
+    Lebenspunkte und zwei numerierte Freitextzeilen für einen Vorteil oder ein
+    Upgrade. Sonst **nichts** — keine Szenario-Tabelle, kein einziges gedrucktes
+    Kästchen, keine Notizen. Die Nummer der beiden Zeilen ist Teil der
+    Eintragung: #1 wurde nach Szenario 1 notiert, #2 nach Szenario 2, und der
+    Aufbau von Szenario 2 bringt #1 wieder ins Spiel, der von Szenario 3 beide.
+    Damit ist er baugleich mit dem Spielerbereich von MC39 — bis auf die
+    Wortlaute der beiden Zeilen, in denen die zwei Drucke unabhängig zur selben
+    Wahl kommen.
 * **Standard- oder Expertenstufe** — der Haken „Expertenmodus“ oben im
   Spielerbereich, in jeder Kampagne an derselben Stelle. Auf Standardstufe
   blendet der Bogen aus, was es dort nicht gibt, statt danach zu fragen:
@@ -189,6 +207,12 @@ und bleibt danach fest. Weitere kommen als jeweils eigenes Modul dazu — siehe
     Experten-Kampagne“. Die Geheimnismarker, die Szenariozahlen, die
     Adaptoid-Umgebungen, die Thunderbolts und die Beweiskarten bleiben auf beiden
     Stufen stehen.
+  * *Grundspiel Kampagne (MC01)* — die verbleibenden Lebenspunkte. Hier steht es
+    ausdrücklich im Dokument selbst, unter „Bleibender Schaden“: „Während einer
+    Experten-Kampagne muss jeder Spieler seine verbleibenden Lebenspunkte im
+    Kampagnenlogbuch notieren, nachdem ihr ein Szenario gewonnen habt.“ Die
+    beiden Vorteil/Upgrade-Zeilen bleiben auf beiden Stufen stehen: sie werden
+    nach jedem gewonnenen Szenario notiert, ganz unabhängig von der Stufe.
 
   **Ausblenden ist nicht Löschen**: wer versehentlich umschaltet, findet nach dem
   Zurückschalten alles wieder vor. Gedruckt wird der Haken mit, weil er
@@ -626,13 +650,14 @@ auch über `file://` und direkt aus dem Repo-Root über GitHub Pages.
 | `marvelcdb.js` | Deck-Verweise von MarvelCDB: Kennung erkennen, Link bauen, Helden nachschlagen — der einzige Netzwerkzugriff der App |
 | `campaigns/fear-no-evil.js` | die Kampagne MC60: eigenes Datenmodell, eigenes Rendering, eigene Strings |
 | `campaigns/rise-of-red-skull.js` | die Kampagne MC10: feste Kartenpools mit ihren Eindeutigkeitsregeln und drei Szenariofelder; bewusst ohne Szenario-Tabelle |
-| `campaigns/mad-titans-shadow.js` | die Kampagne MC21: Spieler und neun benannte Kästchen in vier Szenario-Abschnitten; das schlankeste der Module |
+| `campaigns/mad-titans-shadow.js` | die Kampagne MC21: Spieler und neun benannte Kästchen in vier Szenario-Abschnitten; das schlankeste Modul einer Verlagskampagne |
 | `campaigns/sinister-motives.js` | die Kampagne MC27: die vier Kartensätze der Kampagne, drei Belohnungsfelder in der Spielerkarte und die Reputationsleiste, die Stufen *und* Felder freischaltet |
 | `campaigns/mutant-genesis.js` | die Kampagne MC32: benannte Kästchen über fünf gedruckten Kartensätzen, ein Gitter aus Kartensatz × Szenario, und Beschriftungen, die aus der gewählten Rolle eines Spielers fallen |
 | `campaigns/next-evolution.js` | die Kampagne MC40: drei numerierte Auswahlfelder aus einem gedruckten Schurkensatz, zwei freie Zahlen, und ein Gitter, dessen drei gedruckte Spalten nur gelesen werden |
-| `campaigns/age-of-apocalypse.js` | die Kampagne MC45: eine Tabelle, deren zwei gedruckte Ergebnisspalten je ein Kästchen tragen, das das andere ausschließt und den Zeilennamen durchstreicht, dazu eine Überschrift über fünf benannten Kästchen; das schlankeste Datenmodell aller Module |
+| `campaigns/age-of-apocalypse.js` | die Kampagne MC45: eine Tabelle, deren zwei gedruckte Ergebnisspalten je ein Kästchen tragen, das das andere ausschließt und den Zeilennamen durchstreicht, dazu eine Überschrift über fünf benannten Kästchen |
 | `campaigns/galaxys-most-wanted.js` | die Kampagne MC16: Units als Währung, gruppenweit eindeutige Marktkarten, Bezahlbarkeitssperre, abgeleitete Zeilen |
-| `campaigns/mojomania.js` | die Kampagne MC39: der kleinste Bogen, und der einzige, der auf der Rückseite eines Regelhefts steht |
+| `campaigns/mojomania.js` | die Kampagne MC39: der kleinste Verlagsbogen, und der einzige, der auf der Rückseite eines Regelhefts steht |
+| `campaigns/core-set-campaign.js` | die Kampagne MC01: nur Spieler, mit zwei numerierten Freitextzeilen je Spieler — der schlankeste Bogen und das schlankeste Datenmodell von allen, und der einzige Bogen, der nicht vom Herausgeber stammt |
 | `campaigns/agents-of-shield.js` | die Kampagne MC50: eine Zählertabelle aus gedruckten Zeilen mal gedruckten Spalten, vier Szenariokästen, und ein Block aus 27 gedruckten Kombinationen, der nicht eingetragen, sondern aus neun Kästchen gerechnet wird — samt neun gezeichneten Symbolen, die ihren Kartennamen tragen |
 | `test/lint.js` | Prüfungen ohne Browser: Wörterbücher, Kampagnendefinition, Datenmodell, Paketierung |
 | `test/selftest.html`, `test/run-browser.js` | Selbsttest, der die echte Seite in einem iframe fernsteuert |
@@ -719,14 +744,16 @@ einer Sperre und einem Hinweis; `campaigns/next-evolution.js` ist das
 tabellenförmigste — eine Tabelle, deren Zeile durch eine gedruckte Karte bestimmt
 ist und deren gedruckte Spalten nur gelesen werden, mit einer Auswahl über die
 Zeilen hinweg und einem Feld, das erst mit dieser Auswahl aufgeht;
-`campaigns/age-of-apocalypse.js` hat das schlankeste Datenmodell — zwei
+`campaigns/age-of-apocalypse.js` ist sehr schlank — zwei
 Wahrheitswerte je gedruckter Zeile, die sich gegenseitig ausschließen und
 gemeinsam die Zeile durchstreichen, und eine Wahrheitswert-Karte über einem
 gedruckten Kartensatz; `campaigns/agents-of-shield.js` zeigt den umgekehrten
 Fall zu MC40 — ein großer gedruckter Block, an dem **nichts** eingetragen wird,
 weil er sich vollständig aus einer Handvoll Kästchen ergibt, dazu eine Tabelle
 aus gedruckten Zeilen mal gedruckten Spalten und neun gezeichnete Symbole, die
-ihre Bedeutung als Namen tragen.
+ihre Bedeutung als Namen tragen; und `campaigns/core-set-campaign.js` ist der
+Gegenpol dazu — Spieler und sonst nichts, also die Vorlage dafür, wie wenig ein
+Modul enthalten darf, wenn der Bogen nicht mehr hergibt.
 
 `ctx` liefert `{ state, lang, t(key, …args), save(), rerender(), toast(msg), w }`;
 `w` ist die Widget-Sammlung aus `widgets.js`.
@@ -768,8 +795,8 @@ BROWSER_LANG=de-DE node test/run-browser.js   # unter einer anderen Browser-Spra
 praktisch für Screenshots und für den Druckvergleich. `?c=mc10` nimmt den MC10-Bogen,
 `?c=mc16` den MC16-Bogen, `?c=mc21` den MC21-Bogen, `?c=mc27` den MC27-Bogen,
 `?c=mc32` den MC32-Bogen, `?c=mc39` den MC39-Bogen, `?c=mc40` den MC40-Bogen,
-`?c=mc45` den MC45-Bogen und
-`?c=mc50` den MC50-Bogen statt MC60, `?expert=0` stellt
+`?c=mc45` den MC45-Bogen, `?c=mc50` den MC50-Bogen und
+`?c=mc01` den MC01-Bogen statt MC60, `?expert=0` stellt
 den Bogen auf
 Standardstufe, und `?theme=dark` nagelt das
 Theme fest; letzteres braucht man, um zu prüfen, dass der Druck auch aus einer
@@ -857,21 +884,38 @@ ist im Druck `display: none`.
 `[data-campaign]` am `<html>`: MC60 ist comic-orange auf Dunkelrot, MC10 salbeigrün
 auf Tiefgrün mit Senfgelb, MC21 Indigo und Lavendel auf Rostorange mit Gold, MC27
 Karminrot und Altrosa auf Violett mit Pink, MC32 Teal und Minze auf Tiefteal mit
-Gold, MC39 Schiefer und Rosa mit Magenta — jede aus dem Bogen der eigenen
+Gold, MC39 Schiefer und Rosa mit Magenta, MC01 Mittelblau und Hellblau mit
+Cyan — jede aus dem Bogen der eigenen
 Kampagne gemessen. Bei MC32 reichte die reine
 Vektormessung nicht: die orange Comic-Schraffur seines Randes ist ein Rasterbild und
 kommt in keiner Vektorfläche vor, sie lebt hier deshalb im Halbtonraster und in der
-Schraffur — was sie auf dem Bogen auch ist. Ein
+Schraffur — was sie auf dem Bogen auch ist. MC01 ist der Gegenfall: sein Bogen
+ist ein Word-Dokument, die Messung also vollständig, dafür hat er gar kein
+Seitenfeld — weißes Papier mit hellblauen Kästen. `--page` und `--bar` sind dort
+aus den beiden Blautönen abgeleitet, die der Bogen als *Schrift* druckt, weil
+eine weiße Seitenfläche die fast weißen Panels verschluckt hätte. Ein
 solcher Skin muss dieselben **vier** Blöcke spiegeln. Ein einzelner
 `[data-campaign]`-Block wäre spezifischer als das bloße `:root` in der
 Dark-Media-Query und würde im Dunkelmodus die helle Palette malen; umgekehrt muss
 der Print-Reset `[data-campaign][data-theme]` mitnennen, sonst druckt eine
-Dark-Mode-Sitzung die Kampagnenfarben statt Schwarz auf Weiß.
+Dark-Mode-Sitzung die Kampagnenfarben statt Schwarz auf Weiß. Und die vier Blöcke
+müssen **vollständig** sein, nicht bloß die Unterschiede tragen: was im
+Dark-Media-Block steht und im `[data-theme="light"]`-Block fehlt, behält für
+jeden mit dunklem Desktop seinen dunklen Wert, auch wenn die App auf Hell steht.
+`test/lint.js` prüft das je Kampagne.
 
 Der Kampagnenname steht als **Wortmarke** in der Topbar — das größte Element der
 Seite, in den Logofarben statt in der Bogenpalette. Die Buchstaben werfen ihren
-gedruckten Versatzschatten in `--logo-shadow`: alle zehn Logos sind so gebaut, und
-bei MC16 ist genau dieser Schatten das Lila, das die Marke ausmacht. Die Plakette
+gedruckten Versatzschatten in `--logo-shadow`: alle zehn Verlagslogos sind so
+gebaut, und bei MC16 ist genau dieser Schatten das Lila, das die Marke ausmacht.
+MC01 ist die Ausnahme und zeigt, dass die drei Rollen am gerenderten Logo
+vergeben werden, nicht nach Schema: seine Wortmarke ist weiß mit **Aqua-Kontur**
+auf blankem Papier, hat also gar keine Plakette. Gemessen wird die Kontur, und
+sie wird der Schatten — die Rolle, die über den Farbton trennt und die den Ring
+um die Plakette zieht, wo eine Kontur hingehört; die Plakette ist das dunkelste
+Blau, das der Bogen druckt.
+
+Die Plakette
 umschließt nur den Text, wie das gedruckte Logo, und trägt zwei Ringe: den inneren
 in `--logo-shadow`, der zum Logo gehört, und einen äußeren in `--panel-border`, der
 es nicht tut. Der äußere ist trotzdem nötig, denn eine gemessene Plakette verliert
@@ -921,10 +965,12 @@ Als Regel für dieses Repository:
    unbrauchbar.
 4. **Kein Kartentext, kein Regeltext, keine Regelbuch-Prosa.** Erklärungsbedürftige
    Felder werden in der Hilfe in eigenen Worten beschrieben.
-5. Der originale Kampagnenbogen (`mc60_campaign_log.pdf`) ist in `.gitignore` und
-   liegt nur lokal als Layout-Referenz. Sein Fußtext erlaubt „print or photocopy for
-   personal use“ — das deckt nicht, ihn hier öffentlich weiterzuverbreiten. Wer ihn
-   braucht, bekommt ihn beim Herausgeber.
+5. Die originalen Kampagnenbögen sind über `*.pdf` in `.gitignore` und liegen nur
+   lokal als Layout-Referenz. Der Fußtext der Verlagsbögen erlaubt „print or
+   photocopy for personal use“ — das deckt nicht, sie hier öffentlich
+   weiterzuverbreiten. Wer sie braucht, bekommt sie beim Herausgeber; den
+   MC01-Bogen gibt der Podkast *Die Abteilung für übermenschliches Recht* auf
+   [MarvelChampionsPodcast.de](http://www.MarvelChampionsPodcast.de/) heraus.
 
 ## Kontakt und Danke
 
@@ -985,6 +1031,12 @@ im Footer der Seite. Der Ko-fi-Link öffnet in einem neuen Tab und trägt
   nach Karte statt nach Position, weil der alphabetisch nach der *angezeigten*
   Sprache sortiert und die beiden Sprachen ihn deshalb verschieden ordnen
   können.
+* **MC39 und MC01 haben gar keine Kartentabelle**, und das ist ausdrücklich
+  gesagt, damit niemand den fehlenden Fall sucht. Auf beiden Bögen sind die
+  Kartenfelder Freitext, weil die Karte aus dem eigenen Deck des Spielers kommt
+  — es gibt dort also nichts zu übersetzen und kein `de: null`, in keiner der
+  beiden Bedeutungen. MC16 ist der umgekehrte Sonderfall: eine Tabelle ohne ein
+  einziges `de: null`, weil alle 28 Marktkarten übersetzt sind.
 * **Die deutschen Szenarionamen sind vorläufig.** Von MC60 gibt es noch keine
   offizielle deutsche Ausgabe; sie stehen als eine Zeile je Szenario in
   `campaigns/fear-no-evil.js` und sind dort zu korrigieren, sobald es eine gibt.

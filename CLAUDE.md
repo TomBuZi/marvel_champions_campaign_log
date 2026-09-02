@@ -25,9 +25,12 @@ Der **Modulvertrag** (`registerCampaign`, `emptyState`, `normalize`, `migrate`,
 
 ### 0. Vorbereitung
 
-Den offiziellen Kampagnenbogen als PDF ins Repo-Wurzelverzeichnis legen. `*.pdf`
-ist **gitignoriert** — das Referenzmaterial des Herausgebers wird nicht
-mitveröffentlicht, es liegt nur lokal.
+Den Kampagnenbogen als PDF ins Repo-Wurzelverzeichnis legen. `*.pdf`
+ist **gitignoriert** — das Referenzmaterial wird nicht mitveröffentlicht, es
+liegt nur lokal. Meist ist es der Bogen des Herausgebers; MC01 zeigt, dass es
+auch ein Fan-Bogen sein darf, und dann sagt der Dateikopf des Moduls das
+ausdrücklich, sonst sucht ein späterer Leser einen Verlagsbogen, den es nicht
+gibt.
 
 ```bash
 git checkout -b preview/<kurzname>
@@ -160,7 +163,7 @@ hellen Block gilt in allen vier Zuständen, weil die anderen drei Blöcke dassel
 `:root` treffen und diese Namen nie nennen. Im Print-Reset fehlen sie ebenfalls
 absichtlich; der Kommentar dort sagt, warum.
 
-**Alle zehn Logos sind gleich gebaut, und wer das übersieht, misst falsch:
+**Die zehn Verlagslogos sind gleich gebaut, und wer das übersieht, misst falsch:
 Buchstaben in einer Farbe, hart versetzt in einen Block einer zweiten Farbe, über
 einem Grund, der mal zum Logo gehört und mal einfach der Bogen ist.** Der Versatz
 ist der **Schatten** — bei MC16 lila, bei MC10 schwarz, bei MC40 dunkelrot — und
@@ -172,11 +175,27 @@ Marineblau, das auf der Seite **nirgends vorkommt**. Aufgefallen ist es erst, al
 jemand Bogen und Bildschirm nebeneinander gehalten hat. Also: erst am gerenderten
 Logo entscheiden, welche der drei Rollen welche Farbe hat, dann messen.
 
+**Und die Regel gilt genau so weit, wie die Vorlage sie trägt.** MC01 ist keine
+Verlagskampagne, seine Wortmarke ist Word-Grafik und **anders gebaut**: weiße
+Buchstaben mit einer **Aqua-Kontur** und einem weichen grauen Schlagschatten, auf
+blankem Papier. Es gibt dort keine Plakette zu messen, und Weiß auf Weiß ist 1,0.
+Die Rollen werden also nicht nach Schema vergeben, sondern nach dem, was die
+Marke tatsächlich hat: die Kontur wird der **Schatten**, denn sie trennt über den
+Farbton und zieht zugleich den Ring um die Plakette, wo eine Kontur hingehört;
+die Plakette ist das dunkelste Blau, das der Bogen druckt. Wer hier stur nach dem
+Muster der zehn sucht, findet keinen Versatzschatten und keinen Grund — und
+erfindet dann beides.
+
 Das Logo ist ein **Rasterbild** mit eigenem Xref, keine Vektorfläche — gemessen
-wird per Median-Cut darüber, die Rollen dann **mit dem Auge** vergeben. Wortmarke
-und Grund automatisch zu trennen scheitert: ein Flood-Fill leckt durch die
+wird per Median-Cut darüber, die Rollen dann **mit dem Auge** vergeben. Bei MC01
+scheitert auch das: sein Xref ist eine **Schablonenmaske** ohne eigene Farbe und
+liest sich als 100 % Schwarz, die Farbe steckt in der Füllung darunter. Kommen
+lauter Nullen zurück, ist das die Erklärung — dann über das **gerenderte** Pixmap
+messen, so wie bei den Rasterrändern weiter oben.
+
+Wortmarke und Grund automatisch zu trennen scheitert: ein Flood-Fill leckt durch die
 antialiasierten Konturen und hat bei MC60 98 % der Marke mitgefressen. Und die
-Rollen kippen je Kampagne — sieben Marken sind helle Buchstaben auf dunklem
+Rollen kippen je Kampagne — die meisten Marken sind helle Buchstaben auf dunklem
 Grund, MC32 und MC60 dunkle auf hellem. Wer das verwechselt, bekommt 1,0.
 
 **Kontrast nur zwischen Füllung und Plakette: mindestens 4,5.** Der Schatten wird
@@ -205,13 +224,14 @@ Vorlagen, bewusst verschieden:
 |---|---|
 | `campaigns/fear-no-evil.js` | abgeleiteter Zustand, gegenseitige Sperren, Auslosung, `migrate()` |
 | `campaigns/rise-of-red-skull.js` | feste Kartenpools mit Eindeutigkeitsregeln |
-| `campaigns/mad-titans-shadow.js` | das schlankeste: Spieler plus benannte Kästchen |
+| `campaigns/mad-titans-shadow.js` | das schlankeste einer Verlagskampagne: Spieler plus benannte Kästchen |
 | `campaigns/sinister-motives.js` | eine Zahl, aus der zwei abgeleitete Zustände fallen: erreichte Stufen und freigeschaltete Felder; dazu eine Liste, in der die Position Teil der Eintragung ist |
 | `campaigns/mutant-genesis.js` | Beschriftungen, die aus einer Wahl abgeleitet werden, ohne dass die Wahl entscheidet, was gespeichert bleibt; ein Gitter aus Kartensatz × Szenario; und die Grenze zwischen einer Sperre und einem Hinweis |
-| `campaigns/mojomania.js` | der kleinste Bogen, und der einzige, der gar nicht als Bogen verkauft wird: er steht auf der **Rückseite des Regelhefts**. Numerierte Freitextzeilen, deren Position die Eintragung mitträgt, und eine Anzeigereihenfolge, die je Sprache dem eigenen Druck folgt, weil die beiden Ausgaben dieselben sechs Kästchen verschieden anordnen |
+| `campaigns/mojomania.js` | der kleinste Verlagsbogen, und der einzige, der gar nicht als Bogen verkauft wird: er steht auf der **Rückseite des Regelhefts**. Numerierte Freitextzeilen, deren Position die Eintragung mitträgt, und eine Anzeigereihenfolge, die je Sprache dem eigenen Druck folgt, weil die beiden Ausgaben dieselben sechs Kästchen verschieden anordnen |
 | `campaigns/next-evolution.js` | eine Tabelle, deren Zeile eine gedruckte Karte ist und deren gedruckte Spalten nur gelesen werden; eine Auswahl mit Eindeutigkeit über die Zeilen hinweg; und ein Feld, das erst mit dieser Auswahl aufgeht |
 | `campaigns/galaxys-most-wanted.js` | eine **wachsende** Auswahlliste aus einem festen Pool, deren Eindeutigkeit über alle Spieler hinweg gilt; ein gedrucktes Feld, das nicht abgefragt, sondern gerechnet wird — samt `migrate()`, die den alten Kontostand *exakt* umrechnet statt einen Standardwert zu raten; ein Feld, das per Index auf einen Spieler zeigt statt auf seinen Namen; und zwei Zahlen, aus denen der nächste Spielaufbau abgeleitet wird |
 | `campaigns/age-of-apocalypse.js` | sehr schlank: zwei Wahrheitswerte je gedruckter Zeile, die sich gegenseitig ausschließen und gemeinsam den Zeilennamen durchstreichen — dazu ein Bogen, dessen deutscher Druck vorlag, also nichts als Platzhalter stehen ließ |
+| `campaigns/core-set-campaign.js` | der schlankeste von allen und der einzige Bogen, der **nicht vom Herausgeber** stammt — eine Fan-Kampagne, die die drei Grundspiel-Szenarien verknüpft. Spieler und sonst nichts: kein Abschnitt, kein gedrucktes Kästchen. Die Vorlage dafür, wie wenig ein Modul enthalten darf, wenn der Bogen nicht mehr hergibt |
 | `campaigns/agents-of-shield.js` | der umgekehrte Fall zu MC40: ein großer **gedruckter Block, an dem nichts eingetragen wird**, weil er sich aus einer Handvoll Kästchen vollständig ergibt; dazu eine Tabelle aus gedruckten Zeilen mal gedruckten Spalten, gezeichnete Symbole, die ihre Bedeutung als `aria-label` tragen, und ein Bogen, dessen deutscher Druck vorlag, dessen Kartennamen aber trotzdem offen sind, weil das Papier gar keine druckt |
 
 Harte Punkte:
@@ -238,11 +258,11 @@ Harte Punkte:
   Identität und Deck, Expertenmodus, Listen, Durchstreichen, Export, Druck.
   Das war einmal anders, und es ist teuer geworden: der Absatz über den
   Expertenmodus und der Satz „Ausblenden heißt nicht löschen“ standen in
-  **allen neun** Modulen einzeln (heute sind es zehn), „es gibt hier bewusst keine Szenario-Tabelle“
-  in sieben, die Begründung einseitiger Sperren in fünf, und ein Modul
-  wiederholte wörtlich einen Absatz des Rahmens. Zusammen war das die Hälfte
-  des Textes. `helpDe`/`helpEn` sind **Arrays von Absätzen**, gleich lang in
-  beiden Sprachen — `lint.js` prüft beides.
+  **allen neun** Modulen einzeln (heute sind es mehr), „es gibt hier bewusst
+  keine Szenario-Tabelle“ in sieben, die Begründung einseitiger Sperren in fünf,
+  und ein Modul wiederholte wörtlich einen Absatz des Rahmens. Zusammen war das
+  die Hälfte des Textes. `helpDe`/`helpEn` sind **Arrays von Absätzen**, gleich
+  lang in beiden Sprachen — `lint.js` prüft beides.
 * **Symbole im Regeltext.** Setzt der Bogen ein Zeichen aus der Icon-Schrift des
   Herausgebers (`MarvelLCGIcons`, z. B. `` = „pro Spieler"), wird es
   **gezeichnet**, nicht eingebettet — die Schrift ist nicht unsere. Im
@@ -409,6 +429,21 @@ nichts übrig ist.
   Was von einer Variante übrig bleibt, sind ihre Farben — also genau das, was
   auch gezeichnet wird. Eine Regel, die nichts tut, ist kein harmloser Rest: sie
   liest sich als Absicht.
+* **Ein Delta-Block im Hellmodus malt dunkle Werte.** Die Vier-Block-Regel oben
+  sagt, dass ein einzelner `[data-campaign]`-Block im Dunkelmodus die helle
+  Palette malen würde. Die Umkehrung ist genauso wahr und war lange offen: was
+  im Dark-Media-Block steht und im `[data-theme="light"]`-Block **fehlt**,
+  behält für jeden mit dunklem Desktop seinen *dunklen* Wert, auch wenn die App
+  ausdrücklich auf Hell steht. Der Light-Block ist spezifischer — aber nur für
+  die Eigenschaften, die er auch nennt; alles andere löst weiter über die
+  Media-Query auf. Ein Delta-Block driftet also nicht bloß auseinander, er
+  zeichnet falsch. Genau so ausgeliefert war `--check-on` bei MC21, MC27 und
+  MC39: auf Hell erzwungen wurde der Haken in seiner hellen Farbe auf den
+  **dunklen** Grund gemalt, MC21 landete bei 1,20 — ein unsichtbares Häkchen,
+  das wie ein leeres Kästchen aussieht. Gefunden hat es niemand, weil ein heller
+  Desktop den Fall nie sieht. **Jetzt fängt es ein Test**: `lint.js` vergleicht
+  je Kampagne die Tokens des Dark-Media-Blocks mit denen des Light-Blocks und
+  verlangt, dass keines fehlt.
 * **Ein eigenes `display` hebelt das `hidden`-Attribut aus.** `[hidden]` ist
   eine Regel des UA-Stylesheets, und jede Autorenregel mit `display` schlägt
   sie. Die Wortmarke hatte `display: inline-flex` und stand deshalb als leere
@@ -425,7 +460,12 @@ nichts übrig ist.
   Regelhefts**, in beiden Ausgaben, mit der üblichen Kopiererlaubnis. Vor
   diesem Schluss gehört ein Blick auf die letzte Seite jedes Regelhefts. Und
   der Unterschied ist groß: mit Bogen ist es der übliche feldtreue Weg, ohne
-  müsste man etwas erfinden, was dieses Projekt nirgends tut.
+  müsste man etwas erfinden, was dieses Projekt nirgends tut. **Und er muss
+  nicht vom Herausgeber stammen:** für das Grundspiel gibt es gar keine
+  offizielle Kampagne, MC01 ist die des Podcasts „Die Abteilung für
+  übermenschliches Recht“ — ein gedruckter Bogen in beiden Sprachen, also
+  derselbe feldtreue Weg. Was zählt, ist ein Bogen zum Lesen, nicht wer ihn
+  gesetzt hat.
 * **Zwei Drucke, zwei Anordnungen.** MC39 druckt dieselben sechs Kästchen
   deutsch und englisch an verschiedenen Plätzen. Feldtreue heißt dann: je
   Sprache dem eigenen Druck folgen, nicht einen der beiden zum Original
