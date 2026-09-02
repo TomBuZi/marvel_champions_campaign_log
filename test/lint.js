@@ -1644,6 +1644,50 @@ for (const def of campaigns) {
     check(p + "an unknown set falls away",
       def.normalize({ sets: { "reality-tv": true } }).sets["reality-tv"] === undefined);
   }
+
+  if (def.id === "core-set-campaign") {
+    /* The leanest sheet in the app: four player blocks and nothing else. So the
+       assertion is about the SHAPE being that small, not just about the usual
+       foreign fields falling away -- if a section ever appears here, the paper
+       did not grow it. */
+    check(p + "the whole sheet is a level and its players",
+      eq(Object.keys(empty).sort(), ["expert", "players"]),
+      JSON.stringify(Object.keys(empty)));
+    check(p + "no scenarios key on this sheet", once.scenarios === undefined);
+    check(p + "no flags key on this sheet", once.flags === undefined);
+    check(p + "a notes field is not part of this sheet",
+      def.normalize({ notes: "anything" }).notes === undefined);
+    /* MC39 is this sheet's structural twin, and an export of one could easily
+       be pointed at the other. Its two extra sections must not come along. */
+    check(p + "MC39's Longshot boxes do not come along",
+      def.normalize({ longshot: { s1: true } }).longshot === undefined);
+    check(p + "nor its modular sets",
+      def.normalize({ sets: { crime: true } }).sets === undefined);
+
+    check(p + "the level defaults to standard", empty.expert === false);
+    check(p + "a tolerant truthy level reads as expert",
+      def.normalize({ expert: "true" }).expert === true);
+    check(p + "a standard sheet keeps its hidden hit points",
+      def.normalize({ expert: false, players: [{ hero: "Spider-Man", hp: 6 }] })
+        .players[0].hp === 6);
+
+    check(p + "player list capped at 4", once.players.length === 4, once.players.length);
+    check(p + "an empty player list still yields one player",
+      def.normalize({ players: [] }).players.length === 1);
+
+    /* The two boon lines are per player and free text: the card comes out of
+       the player's own deck, so there is no set to check it against — only the
+       same trimming and capping every name field here gets. */
+    const csBoons = def.normalize({
+      players: [{ boon1: "  Enhanced Reflexes  ", boon2: "x".repeat(200) }],
+    }).players[0];
+    check(p + "a boon line is trimmed free text",
+      csBoons.boon1 === "Enhanced Reflexes", JSON.stringify(csBoons.boon1));
+    check(p + "and capped like every other name field",
+      csBoons.boon2.length === 60, csBoons.boon2.length);
+    check(p + "both boon lines exist on a fresh player",
+      empty.players[0].boon1 === "" && empty.players[0].boon2 === "");
+  }
 }
 
 // ------------------------------------------------------------------- roster
@@ -1782,6 +1826,82 @@ for (const def of campaigns) {
     check(p + "extrusion is not the letters it comes off",
       fill[1].toLowerCase() !== shadow[1].toLowerCase(), fill[1]);
   }
+}
+
+/* The second palette check, and it is here for the same reason as the first: the
+   failure is INVISIBLE to anyone whose desktop is set the other way.
+
+   A token declared inside @media (prefers-color-scheme: dark) but not re-stated
+   in the explicit [data-theme="light"] block keeps its DARK value for a user on
+   a dark desktop who switches the app to light. The light block is the more
+   specific selector, but only for the properties it actually names; everything
+   it leaves out still resolves through the media query. So a delta-only light
+   block does not merely drift — it paints dark values in light mode.
+
+   That is not hypothetical. --check-on shipped this way in MC21, MC27 and MC39:
+   forced to light on a dark desktop, the tick was drawn in its light colour on
+   the DARK ground, and MC21 came out at 1.20 — an invisible tick that looks like
+   an empty box. Nothing caught it, because a light desktop never sees it and the
+   suite reads no palettes.
+
+   Only the campaign blocks are walked. The base pair (:root and
+   :root[data-theme="light"]) is checked the same way, because it has the same
+   shape and the same failure mode. color-scheme is excluded: it is a real
+   property rather than a token and the light block sets it explicitly. */
+function tokensOf(text) {
+  const out = new Map();
+  for (const m of text.matchAll(/--([a-z0-9-]+):\s*([^;]+);/g)) out.set(m[1], m[2].trim());
+  return out;
+}
+/* The block a selector opens, brace-counted rather than matched to the first
+   "\n}" — a media query wraps another block inside it. */
+function blockAfter(text, selector, from) {
+  const i = text.indexOf(selector, from || 0);
+  if (i === -1) return null;
+  const open = text.indexOf("{", i);
+  let depth = 1, k = open + 1;
+  while (depth > 0 && k < text.length) {
+    if (text[k] === "{") depth++;
+    else if (text[k] === "}") depth--;
+    k++;
+  }
+  return text.slice(open + 1, k - 1);
+}
+const darkPairs = [[":root {", ':root[data-theme="light"] {', "mc60(base)"]];
+for (const def of campaigns) {
+  const theme = def.theme || def.id;
+  if (css.indexOf(':root[data-campaign="' + theme + '"] {') === -1) continue;
+  darkPairs.push([
+    ':root[data-campaign="' + theme + '"] {',
+    ':root[data-campaign="' + theme + '"][data-theme="light"] {',
+    def.id,
+  ]);
+}
+for (const [darkSel, lightSel, label] of darkPairs) {
+  /* The dark declarations are the ones INSIDE the media query, so the search
+     starts there rather than at the first match of the same selector. When
+     there is no media query at all, indexOf returns -1 — which must NOT be
+     handed on as a starting offset: indexOf(sel, -1) searches from 0 and would
+     find the LIGHT block, reporting its tokens as the dark ones. That is a
+     check failing for the wrong reason, which is worse than one that passes,
+     because it sends the next reader after the wrong thing. */
+  const mqAt = css.indexOf("@media (prefers-color-scheme: dark)",
+    css.indexOf(darkSel));
+  const darkBody = mqAt === -1 ? null : blockAfter(css, darkSel, mqAt);
+  const lightBody = blockAfter(css, lightSel);
+  /* Both blocks have to EXIST, or the comparison below is between two empty
+     sets and passes by saying nothing — the silent-green failure this file
+     warns about elsewhere. A campaign missing either block is a four-block
+     violation in its own right, so it fails here rather than skipping. */
+  check(label + ": has both a dark-media and a light block",
+    darkBody !== null && lightBody !== null,
+    "dark=" + (darkBody !== null) + " light=" + (lightBody !== null));
+  const dark = tokensOf(darkBody || "");
+  const light = tokensOf(lightBody || "");
+  check(label + ": the dark block actually declares tokens", dark.size > 0, dark.size);
+  const gap = [...dark.keys()].filter((k) => k !== "color-scheme" && !light.has(k));
+  check(label + ": every dark-mode token is re-stated in the light block",
+    gap.length === 0, gap.map((k) => "--" + k).join(", "));
 }
 
 /* applyLanguage() (core.js) translates by writing node.textContent, so a

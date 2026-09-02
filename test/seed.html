@@ -5,9 +5,9 @@
    "?c=mc16" den MC16-Bogen, "?c=mc21" den MC21-Bogen, "?c=mc27" den
    MC27-Bogen, "?c=mc32" den MC32-Bogen, "?c=mc40" den MC40-Bogen,
    "?c=mc39" den MC39-Bogen, "?c=mc45" den MC45-Bogen, "?c=mc50" den
-   MC50-Bogen, ohne Angabe kommt MC60. */
+   MC50-Bogen, "?c=mc01" den MC01-Bogen, ohne Angabe kommt MC60. */
 var q = new URLSearchParams(location.search);
-var which = { mc10: "mc10", mc16: "mc16", mc21: "mc21", mc27: "mc27", mc32: "mc32", mc39: "mc39", mc40: "mc40", mc45: "mc45", mc50: "mc50" }[q.get("c")] || "mc60";
+var which = { mc01: "mc01", mc10: "mc10", mc16: "mc16", mc21: "mc21", mc27: "mc27", mc32: "mc32", mc39: "mc39", mc40: "mc40", mc45: "mc45", mc50: "mc50" }[q.get("c")] || "mc60";
 /* "?theme=dark" (oder light) nagelt das Theme fest — sonst folgt es dem System.
    Gebraucht fuer den Druckvergleich: der Druck muss schwarz auf weiss sein,
    auch aus einer Dark-Mode-Sitzung und auch mit einem Kampagnen-Skin. */
@@ -36,6 +36,28 @@ var logs = {
       ],
       removed: ["~Foggy Nelson", "Karen Page", "Ben Urich"],
       flags: { trustEstablished: true, maryDefeated: false }
+    }
+  },
+  /* Der schlankeste Bogen von allen: vier Spielerbloecke und nichts sonst.
+     Deshalb zeigt dieser Beispielbogen alles, was er zeigen kann — drei
+     Spieler, einer mit verknuepftem Deck, und die beiden numerierten Zeilen
+     in allen Fuellzustaenden. */
+  mc01: {
+    schemaVersion: 1, id: "seed-11", campaignId: "core-set-campaign", stateVersion: 1,
+    title: "Grundspiel Kampagne, Durchgang 1",
+    createdAt: "2026-09-01T18:00:00.000Z", updatedAt: "2026-09-02T19:30:00.000Z",
+    state: {
+      expert: true,
+      players: [
+        /* Einer mit verknuepftem Deck, damit der Chip im Screenshot steht. */
+        { hero: "Spider-Man * Peter Parker", hp: 8, deck: "1213577",
+          boon1: "Med Team", boon2: "Web-Shooter" },
+        /* Nur #1 gefuellt: die Nummer ist Teil der Eintragung, eine leere #2
+           neben einer gefuellten #1 muss im Screenshot als das lesbar sein. */
+        { hero: "Captain Marvel", hp: 7, boon1: "Energy Absorption", boon2: "" },
+        /* Und einer, bei dem beide Zeilen noch offen sind. */
+        { hero: "She-Hulk", hp: 12, boon1: "", boon2: "" }
+      ]
     }
   },
   mc10: {
